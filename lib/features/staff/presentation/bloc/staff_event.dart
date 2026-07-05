@@ -17,7 +17,13 @@ class CreateStaffEvent extends StaffEvent {
 class UpdateStaffEvent extends StaffEvent {
   final UserModel staff;
   final String ownerId;
-  UpdateStaffEvent(this.staff, this.ownerId);
+  final List<String> selectedBusinessIds;
+  UpdateStaffEvent(this.staff, this.ownerId, this.selectedBusinessIds);
+}
+
+class LoadStaffBusinessesEvent extends StaffEvent {
+  final String staffId;
+  LoadStaffBusinessesEvent(this.staffId);
 }
 
 class DeleteStaffEvent extends StaffEvent {

@@ -77,6 +77,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // final authState = context.watch<AuthBloc>().state;
+    // if (authState is! Authenticated) return const SizedBox.shrink();
+    // final user = authState.user;
+
+    // final isFinaceAcess = user.hasPermission('view_accounts', businessId: "");
     final theme = Theme.of(context);
     return Scaffold(
       body: BlocBuilder<BusinessBloc, BusinessState>(
@@ -185,6 +190,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 const SizedBox(height: 20),
 
                 // Preview Info Panel
+                // if (!isFinaceAcess)
                 const GlassCard(
                   padding: EdgeInsets.all(32),
                   child: Center(
@@ -196,6 +202,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           color: AppTheme.error,
                         ),
                         SizedBox(height: 12),
+
                         Text(
                           'Task Access Restricted',
                           style: TextStyle(

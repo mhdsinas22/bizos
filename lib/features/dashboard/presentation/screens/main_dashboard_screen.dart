@@ -71,7 +71,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Bizos ERP',
+                  'Voryn ERP',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
                 ),
                 Text(
@@ -99,15 +99,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           //   },
           //   tooltip: 'Toggle Theme',
           // ),
-
           IconButton(
             icon: const Icon(Icons.psychology, color: AppTheme.primaryColor),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const AiChatScreen(),
-                ),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const AiChatScreen()));
             },
             tooltip: 'Voryn AI Assistant',
           ),
@@ -439,9 +436,7 @@ class DashboardView extends StatelessWidget {
                       final isIncome = act['type'] == 'income';
                       final amt = act['amount'] as double;
                       final date = act['date'] as DateTime;
-                      final formattedAmt = CurrencyFormatter.format(
-                        amt.abs(),
-                      );
+                      final formattedAmt = CurrencyFormatter.format(amt.abs());
 
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(

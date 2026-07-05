@@ -1,5 +1,6 @@
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasource.dart';
+import 'package:bizos/features/staff/data/models/staff_business_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -91,11 +92,19 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
       rethrow;
     }
 
-    // 2. Query businesses owned by this owner
-    // await supabaseClient
-    //     .from('businesses')
-    //     .select('id')
-    //     .eq('owner_id', ownerId);
+    // 2. Insert into staff_businesses
+    if (selectedBusinessIds.isNotEmpty) {
+      final staffBizInserts = selectedBusinessIds
+          .map(
+            (bId) => {
+              'staff_id': uuid,
+              'business_id': bId,
+              'created_at': DateTime.now().toIso8601String(),
+            },
+          )
+          .toList();
+      await supabaseClient.from('staff_businesses').insert(staffBizInserts);
+    }
 
     // 3. Grant permissions for all businesses owned by this owner
     if (selectedBusinessIds.isNotEmpty) {
@@ -127,7 +136,7 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
   }
 
   @override
-  Future<void> updateStaff(UserModel staff) async {
+  Future<void> updateStaff(UserModel staff, List<String> selectedBusinessIds) async {
     // 1. Resolve user UUID by username/userid
     final userResponse = await supabaseClient
         .from('users')
@@ -147,19 +156,34 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
         .update({'name': staff.name})
         .eq('id', userUuid);
 
-    // 3. Clear existing staff permissions
+    // 3. Delete previous records from staff_businesses using staff_id
+    await supabaseClient
+        .from('staff_businesses')
+        .delete()
+        .eq('staff_id', userUuid);
+
+    // 4. Insert newly selected businesses
+    if (selectedBusinessIds.isNotEmpty) {
+      final staffBizInserts = selectedBusinessIds
+          .map(
+            (bId) => {
+              'staff_id': userUuid,
+              'business_id': bId,
+              'created_at': DateTime.now().toIso8601String(),
+            },
+          )
+          .toList();
+      await supabaseClient.from('staff_businesses').insert(staffBizInserts);
+    }
+
+    // 5. Delete old permissions
     await supabaseClient
         .from('staff_permissions')
         .delete()
         .eq('user_id', userUuid);
 
-    // 4. Insert updated permissions for businesses owned by this owner
-    final businesses = await supabaseClient
-        .from('businesses')
-        .select('id')
-        .eq('owner_id', staff.ownerId);
-
-    if (businesses.isNotEmpty) {
+    // 6. Insert permissions again only for selected businesses
+    if (selectedBusinessIds.isNotEmpty) {
       final viewTasks =
           staff.customPermissions.contains('view_tasks') ||
           staff.permissions.contains('view_tasks');
@@ -170,12 +194,12 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
           staff.customPermissions.contains('view_accounts') ||
           staff.permissions.contains('view_accounts');
 
-      final permInserts = businesses
+      final permInserts = selectedBusinessIds
           .map(
-            (b) => {
+            (bId) => {
               'id': const Uuid().v4(),
               'user_id': userUuid,
-              'business_id': b['id'],
+              'business_id': bId,
               'can_view_tasks': viewTasks,
               'can_add_tasks': addTasks,
               'can_view_accounts': viewAccounts,
@@ -200,13 +224,19 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
 
     final String userUuid = userResponse['id'] as String;
 
-    // 2. Clear permissions
-    await supabaseClient
-        .from('staff_permissions')
-        .delete()
-        .eq('user_id', userUuid);
-
-    // 3. Delete user
+    // 2. Delete user only
     await supabaseClient.from('users').delete().eq('id', userUuid);
+  }
+
+  @override
+  Future<List<StaffBusinessModel>> getStaffBusinesses(String staffId) async {
+    final response = await supabaseClient
+        .from('staff_businesses')
+        .select()
+        .eq('staff_id', staffId);
+
+    return (response as List)
+        .map((row) => StaffBusinessModel.fromJson(row))
+        .toList();
   }
 }

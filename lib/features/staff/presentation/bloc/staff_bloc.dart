@@ -34,10 +34,22 @@ class StaffBloc extends Bloc<StaffEvent, StaffState> {
     on<UpdateStaffEvent>((event, emit) async {
       emit(StaffLoading());
       try {
-        await staffRepository.updateStaff(event.staff);
+        await staffRepository.updateStaff(event.staff, event.selectedBusinessIds);
         add(FetchStaffEvent(event.ownerId));
       } catch (e) {
         emit(StaffError(e.toString()));
+      }
+    });
+
+    on<LoadStaffBusinessesEvent>((event, emit) async {
+      final currentState = state;
+      if (currentState is StaffLoaded) {
+        try {
+          final businesses = await staffRepository.getStaffBusinesses(event.staffId);
+          emit(StaffLoaded(currentState.staffList, businesses));
+        } catch (e) {
+          emit(StaffError(e.toString()));
+        }
       }
     });
 

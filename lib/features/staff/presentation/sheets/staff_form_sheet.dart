@@ -9,6 +9,7 @@ import 'package:bizos/features/business/bloc/business_event.dart';
 import 'package:bizos/features/business/bloc/business_state.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_bloc.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_event.dart';
+import 'package:bizos/features/staff/domain/repo/staff_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -51,6 +52,22 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
       _canViewTasks = widget.staff!.permissions.contains('view_tasks');
       _canAddTasks = widget.staff!.permissions.contains('add_tasks');
       _canViewAccounts = widget.staff!.permissions.contains('view_accounts');
+      context.read<StaffBloc>().add(LoadStaffBusinessesEvent(widget.staff!.id));
+      _loadAssignedBusinesses();
+    }
+  }
+
+  Future<void> _loadAssignedBusinesses() async {
+    try {
+      final repo = context.read<StaffRepository>();
+      final list = await repo.getStaffBusinesses(widget.staff!.id);
+      if (mounted) {
+        setState(() {
+          selectedBusinessIds = list.map((e) => e.businessId).toList();
+        });
+      }
+    } catch (e) {
+      print("Error loading assigned businesses: $e");
     }
   }
 
@@ -85,7 +102,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
 
       if (isEditing) {
         context.read<StaffBloc>().add(
-          UpdateStaffEvent(staffMember, currentUserId),
+          UpdateStaffEvent(staffMember, currentUserId, selectedBusinessIds),
         );
       } else {
         context.read<StaffBloc>().add(

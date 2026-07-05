@@ -28,7 +28,7 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     final authState = context.watch<AuthBloc>().state;
     final user = authState.user;
 
@@ -102,7 +102,8 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
                     return const EmptyState(
                       icon: Icons.checklist,
                       title: 'No Assigned Tasks',
-                      message: 'You currently do not have any tasks assigned to you.',
+                      message:
+                          'You currently do not have any tasks assigned to you.',
                     );
                   }
 
@@ -116,7 +117,12 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final t = assignedTasks[index];
-                        return _buildStaffTaskCard(t, user, state.userNames, state.businessNames);
+                        return _buildStaffTaskCard(
+                          t,
+                          user,
+                          state.userNames,
+                          state.businessNames,
+                        );
                       },
                     ),
                   );
@@ -144,9 +150,7 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
       businessNames: businessNames,
       isOwnerView: false,
       onMarkComplete: () {
-        context.read<TaskBloc>().add(
-              ToggleTaskStatusEvent(t, isGlobal: true),
-            );
+        context.read<TaskBloc>().add(ToggleTaskStatusEvent(t, isGlobal: true));
       },
     );
   }
