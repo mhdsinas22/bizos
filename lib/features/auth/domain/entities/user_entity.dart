@@ -41,6 +41,7 @@ class UserEntity {
       if (perms != null) {
         return perms.contains(permission);
       }
+      return false; // Unassigned business has no permissions
     }
     return customPermissions.contains(permission);
   }

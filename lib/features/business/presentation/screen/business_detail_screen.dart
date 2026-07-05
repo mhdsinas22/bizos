@@ -9,6 +9,7 @@ import 'package:bizos/features/business/presentation/tabs/to_do_tab.dart';
 import 'package:bizos/features/finance/presentation/bloc/finance_bloc.dart';
 import 'package:bizos/features/finance/presentation/bloc/finance_event.dart';
 import 'package:bizos/features/task/presentation/bloc/task_event.dart';
+import 'package:bizos/core/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/theme/app_theme.dart';
@@ -61,6 +62,20 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen>
     final authState = context.watch<AuthBloc>().state;
     if (authState is! Authenticated) return const SizedBox.shrink();
     final user = authState.user;
+
+    final isAssigned = user.isOwner || user.businessPermissions.containsKey(widget.business.id);
+    if (!isAssigned) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.business.name),
+        ),
+        body: const EmptyState(
+          icon: Icons.lock_outline,
+          title: 'Access Restricted',
+          message: 'Your Staff account does not have access to this business.',
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

@@ -1,6 +1,8 @@
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
+import 'package:bizos/core/widgets/empty_state.dart';
+import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_state.dart';
 import 'package:bizos/features/money_management/presentation/bloc/personal_money_management_bloc.dart';
 import 'package:bizos/features/money_management/presentation/bloc/business_money_management_bloc.dart';
@@ -154,6 +156,24 @@ class MoneyManagementDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final user = authState.user;
+
+    if (user != null && businessId != null) {
+      final hasFinanceAccess = user.hasPermission(
+        'view_accounts',
+        businessId: businessId,
+      );
+      if (!hasFinanceAccess) {
+        return const EmptyState(
+          icon: Icons.lock_outline,
+          title: 'Access Restricted',
+          message:
+              'Your Staff account does not have access to Money Management.',
+        );
+      }
+    }
+
     if (businessId != null) {
       return BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(
         builder: (context, state) => _buildContent(context, state),

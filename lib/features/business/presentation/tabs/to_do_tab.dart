@@ -139,7 +139,7 @@ class _ToDoTabState extends State<ToDoTab> {
     if (!canView) {
       return const EmptyState(
         icon: Icons.lock_outline,
-        title: 'Access Denied',
+        title: 'Access Restricted',
         message: 'Your staff account permissions restrict viewing tasks.',
       );
     }

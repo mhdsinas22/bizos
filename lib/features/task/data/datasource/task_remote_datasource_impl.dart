@@ -22,6 +22,15 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           .eq('owner_id', userId)
           .maybeSingle();
       if (bizCheck == null) return [];
+    } else {
+      // Security check: Verify that this business is assigned to this staff member
+      final assignedCheck = await supabaseClient
+          .from('staff_businesses')
+          .select('business_id')
+          .eq('staff_id', userId)
+          .eq('business_id', businessId)
+          .maybeSingle();
+      if (assignedCheck == null) return [];
     }
 
     var query = supabaseClient
@@ -57,10 +66,19 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           .inFilter('business_id', businessIds);
       return response.map((row) => _fromRow(row)).toList();
     } else {
-      // Staff: fetch all tasks assigned to them
+      // Staff: fetch all tasks assigned to them which belong to their assigned businesses
+      final assignedResponse = await supabaseClient
+          .from('staff_businesses')
+          .select('business_id')
+          .eq('staff_id', userId);
+      
+      final businessIds = assignedResponse.map((b) => b['business_id'] as String).toList();
+      if (businessIds.isEmpty) return [];
+
       final response = await supabaseClient
           .from('tasks')
           .select()
+          .inFilter('business_id', businessIds)
           .eq('assigned_to', userId);
       return response.map((row) => _fromRow(row)).toList();
     }

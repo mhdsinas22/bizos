@@ -32,13 +32,13 @@ class BusinessRemoteDatasourceImpl implements BusinessRemoteDatasource {
           .select()
           .eq('owner_id', userUuid);
     } else {
-      // Staff fetches only businesses they have permissions for
-      final permsResponse = await supabaseClient
-          .from('staff_permissions')
+      // Staff fetches only businesses they are assigned to
+      final assignedResponse = await supabaseClient
+          .from('staff_businesses')
           .select('business_id')
-          .eq('user_id', userUuid);
+          .eq('staff_id', userUuid);
 
-      final businessIds = permsResponse
+      final businessIds = assignedResponse
           .map((row) => row['business_id'] as String)
           .toList();
       if (businessIds.isNotEmpty) {

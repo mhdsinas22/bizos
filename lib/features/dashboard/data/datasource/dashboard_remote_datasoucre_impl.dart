@@ -30,11 +30,11 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
           .select()
           .eq("owner_id", currentuserid);
     } else {
-      final permsResponse = await supabaseClient
-          .from('staff_permissions')
+      final assignedResponse = await supabaseClient
+          .from('staff_businesses')
           .select('business_id')
-          .eq('user_id', currentuserid);
-      final businessIds = permsResponse
+          .eq('staff_id', currentuserid);
+      final businessIds = assignedResponse
           .map((row) => row['business_id'] as String)
           .toList();
       if (businessIds.isNotEmpty) {

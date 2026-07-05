@@ -9,6 +9,8 @@ import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/reports/domain/repo/report_repository.dart';
 import 'package:bizos/features/business/bloc/business_bloc.dart';
 import 'package:bizos/features/business/bloc/business_state.dart';
+import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -77,11 +79,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final authState = context.watch<AuthBloc>().state;
-    // if (authState is! Authenticated) return const SizedBox.shrink();
-    // final user = authState.user;
+    final authState = context.watch<AuthBloc>().state;
+    if (authState is! Authenticated) return const SizedBox.shrink();
+    final user = authState.user;
 
-    // final isFinaceAcess = user.hasPermission('view_accounts', businessId: "");
     final theme = Theme.of(context);
     return Scaffold(
       body: BlocBuilder<BusinessBloc, BusinessState>(
@@ -108,6 +109,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
             // Keep it updated with the latest instance from the list to avoid reference mismatches
             _selectedBusiness = businesses.firstWhere(
               (b) => b.id == _selectedBusiness!.id,
+            );
+          }
+
+          final hasReportAccess = user.hasPermission(
+            _reportType == 'Task' ? 'view_tasks' : 'view_accounts',
+            businessId: _selectedBusiness?.id,
+          );
+
+          if (!hasReportAccess) {
+            return const EmptyState(
+              icon: Icons.lock_outline,
+              title: 'Access Restricted',
+              message:
+                  'Your Staff account does not have access to this report.',
             );
           }
 
@@ -188,38 +203,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Preview Info Panel
-                // if (!isFinaceAcess)
-                const GlassCard(
-                  padding: EdgeInsets.all(32),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.lock_outline,
-                          size: 48,
-                          color: AppTheme.error,
-                        ),
-                        SizedBox(height: 12),
-
-                        Text(
-                          'Task Access Restricted',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Your credentials do not permit viewing tasks.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
 
                 GlassCard(
                   padding: const EdgeInsets.all(20),
