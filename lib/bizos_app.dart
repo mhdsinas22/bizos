@@ -4,6 +4,10 @@ import 'package:bizos/features/auth/data/datasources/auth_remote_datasource_impl
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:bizos/features/business/data/datasources/business_remote_datasource_impl.dart';
+import 'package:bizos/features/contacts/data/datasoucres/contact_local_datasource_impl.dart';
+import 'package:bizos/features/contacts/data/repositories/contact_repositories_impl.dart';
+import 'package:bizos/features/contacts/domain/usecases/pick_contact.dart';
+import 'package:bizos/features/contacts/presentation/bloc/contact_bloc.dart';
 import 'package:bizos/features/finance/data/datasoucre/expense_remote_datasource_impl.dart';
 import 'package:bizos/features/finance/data/datasoucre/income_remote_datasource_impl.dart';
 import 'package:bizos/features/finance/presentation/bloc/finance_bloc.dart';
@@ -58,6 +62,12 @@ import 'package:bizos/features/money_management/domain/usecases/update_transacti
 import 'package:bizos/features/money_management/domain/usecases/delete_transaction_usecase.dart';
 import 'package:bizos/features/money_management/presentation/bloc/personal_money_management_bloc.dart';
 import 'package:bizos/features/money_management/presentation/bloc/business_money_management_bloc.dart';
+import 'package:bizos/features/activity/data/datasources/activity_remote_datasource.dart';
+import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
+import 'package:bizos/features/activity/data/repositories/activity_repository_impl.dart';
+import 'package:bizos/features/activity/domain/usecases/get_activities.dart';
+import 'package:bizos/features/activity/presentation/bloc/activity_bloc.dart';
+import 'package:bizos/features/activity/presentation/bloc/activity_event.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -100,6 +110,9 @@ class BizosApp extends StatelessWidget {
     final moneyManagementDatasource = MoneyManagementRemoteDatasourceImpl(
       supabaseClient: supabaseClient,
     );
+    final activityDatasource = ActivityRemoteDatasourceImpl(
+      supabaseClient: supabaseClient,
+    );
 
     final geminiModel = GenerativeModel(
       model: 'gemini-2.0-flash',
@@ -108,26 +121,29 @@ class BizosApp extends StatelessWidget {
     final aiDatasource = AiRemoteDatasouceImpl(geminiModel);
 
     // Repositories
+    final activityRepo = ActivityRepositoryImpl(
+      activityRemoteDatasource: activityDatasource,
+    );
     final authRepo = AuthRepositoryImpl(authRemoteDataSource: authDatasource);
     final businessRepo = BusinessRepositoryImpl(
       businessRemoteDatasource: businessDatasource,
-      dashboardRemoteDatasource: dashboardDatasource,
+      activityRepository: activityRepo,
     );
     final taskRepo = TaskRepositoryImpl(
       taskRemoteDatasource: taskDatasource,
-      dashboardRemoteDatasource: dashboardDatasource,
+      activityRepository: activityRepo,
     );
     final incomeRepo = IncomeRepositoryImpl(
       incomeRemoteDatasource: incomeDatasource,
-      dashboardRemoteDatasource: dashboardDatasource,
+      activityRepository: activityRepo,
     );
     final expenseRepo = ExpenseRepositoryImpl(
       expenseRemoteDatasource: expenseDatasource,
-      dashboardRemoteDatasource: dashboardDatasource,
+      activityRepository: activityRepo,
     );
     final staffRepo = StaffRepositoryImpl(
       staffRemoteDatasource: staffDatasource,
-      dashboardRemoteDatasource: dashboardDatasource,
+      activityRepository: activityRepo,
     );
     final dashboardRepo = DashboardRepositoryImpl(
       dashboardRemoteDatasource: dashboardDatasource,
@@ -140,13 +156,18 @@ class BizosApp extends StatelessWidget {
     );
     final moneyManagementRepo = MoneyManagementRepositoryImpl(
       remoteDatasource: moneyManagementDatasource,
+      activityRepository: activityRepo,
     );
 
     final aiRepo = AiRepositoryImpl(aiDatasource);
     final askAiUsecase = AskAiUsecase(aiRepo);
+    final contactDatasource = ContactLocalDatasourceImpl();
+    final contactRepo = ContactRepositoriesImpl(contactDatasource);
+    final pickContactUsecase = PickContact(contactRepo);
 
     return MultiRepositoryProvider(
       providers: [
+        RepositoryProvider<ActivityRepository>(create: (_) => activityRepo),
         RepositoryProvider<AuthRepository>(create: (_) => authRepo),
         RepositoryProvider<AiRepository>(create: (_) => aiRepo),
         RepositoryProvider<BusinessRepository>(create: (_) => businessRepo),
@@ -247,6 +268,13 @@ class BizosApp extends StatelessWidget {
             ),
           ),
           BlocProvider<AiBloc>(create: (context) => AiBloc(askAiUsecase)),
+          BlocProvider<ActivityBloc>(
+            create: (context) => ActivityBloc(
+              getActivities: GetActivities(context.read<ActivityRepository>()),
+              authBloc: context.read<AuthBloc>(),
+            )..add(FetchActivitiesEvent()),
+          ),
+          BlocProvider(create: (context) => ContactBloc(pickContactUsecase)),
         ],
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, themeState) {

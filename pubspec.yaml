@@ -49,6 +49,9 @@ dependencies:
   equatable: ^2.0.8
   flutter_dotenv: ^6.0.1
   google_generative_ai: ^0.4.7
+  flutter_native_contact_picker: ^0.0.12
+  firebase_core: ^4.12.1
+  firebase_messaging: ^16.4.3
 
 dev_dependencies:
   flutter_test:

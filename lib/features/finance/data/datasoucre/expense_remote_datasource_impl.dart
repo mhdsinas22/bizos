@@ -51,8 +51,14 @@ class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
   }
 
   @override
-  Future<void> deleteExpense(String id) async {
-    await supabaseClient.from('expenses').delete().eq('id', id);
+  Future<ExpenseModel?> deleteExpense(String id) async {
+    final response = await supabaseClient.from('expenses').select().eq('id', id).maybeSingle();
+    if (response != null) {
+      final model = _fromRow(response);
+      await supabaseClient.from('expenses').delete().eq('id', id);
+      return model;
+    }
+    return null;
   }
 
   ExpenseModel _fromRow(Map<String, dynamic> row) {

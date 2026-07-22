@@ -38,19 +38,23 @@ class CustomButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 18),
-                const SizedBox(width: 8),
+                Icon(icon, size: 16),
+                const SizedBox(width: 6),
               ],
-              Text(
-                text,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  color: isSecondary
-                      ? (isDark
-                            ? AppTheme.primaryLightColor
-                            : AppTheme.primaryColor)
-                      : Colors.white,
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: isSecondary
+                        ? (isDark
+                              ? AppTheme.primaryLightColor
+                              : AppTheme.primaryColor)
+                        : Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -58,7 +62,7 @@ class CustomButton extends StatelessWidget {
 
     final buttonStyle = isSecondary
         ? OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             side: BorderSide(
               color: isDark
                   ? AppTheme.primaryLightColor
@@ -73,7 +77,7 @@ class CustomButton extends StatelessWidget {
             backgroundColor: AppTheme.primaryColor,
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

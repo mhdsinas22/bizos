@@ -96,8 +96,10 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
         .limit(15);
 
     final recentActivities = activitiesResponse.map((row) {
-      final title = row['title'] as String;
-      final createdAt = DateTime.parse(row['created_at'] as String);
+      final title = row['title'] as String? ?? '';
+      final createdAt =
+          DateTime.tryParse(row['created_at'] as String? ?? '') ??
+          DateTime.now();
       final rawDesc = row['description'] as String? ?? '';
 
       final parts = rawDesc.split('|');
@@ -114,12 +116,18 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
                 : 'other');
 
       return {
+        'id': row['id'] as String? ?? '',
+        'business_id': row['business_id'] as String?,
         'type': type,
         'title': title,
         'subtitle': desc,
         'amount': amount,
         'date': createdAt,
         'tag': type == 'income' ? 'INFLOW' : 'OUTFLOW',
+        'created_by': row['created_by'] as String? ?? 'system',
+        'module': row['module'] as String? ?? type,
+        'action': row['action'] as String? ?? '',
+        'description': rawDesc,
       };
     }).toList();
 
@@ -232,8 +240,10 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
       final totalProfit = totalIncome - totalExpense;
 
       final recentActivities = activities.map((row) {
-        final title = row['title'] as String;
-        final createdAt = DateTime.parse(row['created_at'] as String);
+        final title = row['title'] as String? ?? '';
+        final createdAt =
+            DateTime.tryParse(row['created_at'] as String? ?? '') ??
+            DateTime.now();
         final rawDesc = row['description'] as String? ?? '';
 
         final parts = rawDesc.split('|');
@@ -252,12 +262,18 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
                   : 'other');
 
         return {
+          'id': row['id'] as String? ?? '',
+          'business_id': row['business_id'] as String?,
           'type': type,
           'title': title,
           'subtitle': desc,
           'amount': amount,
           'date': createdAt,
           'tag': type == 'income' ? 'INFLOW' : 'OUTFLOW',
+          'created_by': row['created_by'] as String? ?? 'system',
+          'module': row['module'] as String? ?? type,
+          'action': row['action'] as String? ?? '',
+          'description': rawDesc,
         };
       }).toList();
 

@@ -1,6 +1,9 @@
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bizos/features/contacts/presentation/bloc/contact_bloc.dart';
+import 'package:bizos/features/contacts/presentation/bloc/contact_event.dart';
+import 'package:bizos/features/contacts/presentation/bloc/contact_state.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_event.dart';
 import 'package:bizos/features/money_management/presentation/bloc/personal_money_management_bloc.dart';
@@ -8,6 +11,9 @@ import 'package:bizos/features/money_management/presentation/bloc/business_money
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+
+import 'package:bizos/core/utils/responsive_breakpoints.dart';
+import 'package:bizos/core/widgets/responsive_layout.dart';
 
 class AddTransactionPage extends StatefulWidget {
   final String transactionType; // 'pay' or 'receive'
@@ -81,8 +87,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     _balanceController.text = balance.toStringAsFixed(2);
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  Future<void> _selectDateTime(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
@@ -94,16 +100,45 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
               primary: AppTheme.primaryColor,
               onPrimary: Colors.white,
               surface: Theme.of(context).cardColor,
-              onSurface: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+              onSurface:
+                  Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
             ),
           ),
           child: child!,
         );
       },
     );
-    if (picked != null && picked != _selectedDate) {
+
+    if (pickedDate != null) {
+      if (!context.mounted) return;
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_selectedDate),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: AppTheme.primaryColor,
+                onPrimary: Colors.white,
+                surface: Theme.of(context).cardColor,
+                onSurface:
+                    Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+
       setState(() {
-        _selectedDate = picked;
+        final time = pickedTime ?? TimeOfDay.fromDateTime(_selectedDate);
+        _selectedDate = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          time.hour,
+          time.minute,
+        );
       });
     }
   }
@@ -159,22 +194,22 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       if (isPersonal) {
         if (widget.editTransaction != null) {
           context.read<PersonalMoneyManagementBloc>().add(
-                UpdateTransactionEvent(transaction, isPersonal: true),
-              );
+            UpdateTransactionEvent(transaction, isPersonal: true),
+          );
         } else {
           context.read<PersonalMoneyManagementBloc>().add(
-                AddTransactionEvent(transaction, isPersonal: true),
-              );
+            AddTransactionEvent(transaction, isPersonal: true),
+          );
         }
       } else {
         if (widget.editTransaction != null) {
           context.read<BusinessMoneyManagementBloc>().add(
-                UpdateTransactionEvent(transaction, isPersonal: false),
-              );
+            UpdateTransactionEvent(transaction, isPersonal: false),
+          );
         } else {
           context.read<BusinessMoneyManagementBloc>().add(
-                AddTransactionEvent(transaction, isPersonal: false),
-              );
+            AddTransactionEvent(transaction, isPersonal: false),
+          );
         }
       }
 
@@ -207,7 +242,9 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEdit = widget.editTransaction != null;
-    final typeLabel = widget.transactionType == 'pay' ? 'Money to Pay' : 'Money to Receive';
+    final typeLabel = widget.transactionType == 'pay'
+        ? 'Money to Pay'
+        : 'Money to Receive';
 
     return Scaffold(
       appBar: AppBar(
@@ -215,49 +252,86 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
+        child: ResponsiveCenterBody(
+          maxWidth: ResponsiveBreakpoints.maxFormWidth,
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Person Details',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _personNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Person Name *',
-                  prefixIcon: Icon(Icons.person_outline),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Person name is required' : null,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number *',
-                  prefixIcon: Icon(Icons.phone_outlined),
-                ),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Phone number is required' : null,
+              BlocConsumer<ContactBloc, ContactState>(
+                builder: (context, state) {
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        readOnly: true,
+                        onTap: () {
+                          context.read<ContactBloc>().add(SelectContactEvent());
+                        },
+                        controller: _personNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Person Name *',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        validator: (val) => val == null || val.trim().isEmpty
+                            ? 'Person name is required'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _phoneController,
+                        readOnly: true,
+                        onTap: () => context.read<ContactBloc>().add(
+                          SelectContactEvent(),
+                        ),
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone Number *',
+                          prefixIcon: Icon(Icons.phone_outlined),
+                        ),
+                        validator: (val) => val == null || val.trim().isEmpty
+                            ? 'Phone number is required'
+                            : null,
+                      ),
+                    ],
+                  );
+                },
+                listener: (context, state) {
+                  if (state.status == contactstatus.selected &&
+                      state.contact != null) {
+                    _personNameController.text = state.contact!.name;
+                    _phoneController.text = state.contact!.phoneNumber;
+                  }
+                },
               ),
+
               const SizedBox(height: 24),
               Text(
                 'Transaction Details',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Total Amount *',
                   prefixIcon: Icon(Icons.currency_rupee),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Total amount is required';
+                  if (val == null || val.trim().isEmpty)
+                    return 'Total amount is required';
                   final numVal = double.tryParse(val);
                   if (numVal == null) return 'Please enter a valid number';
                   if (numVal <= 0) return 'Amount must be greater than 0';
@@ -267,18 +341,23 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _paidAmountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Paid Amount *',
                   prefixIcon: Icon(Icons.payments_outlined),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Paid amount is required (enter 0 if unpaid)';
+                  if (val == null || val.trim().isEmpty)
+                    return 'Paid amount is required (enter 0 if unpaid)';
                   final numVal = double.tryParse(val);
                   if (numVal == null) return 'Please enter a valid number';
                   if (numVal < 0) return 'Paid amount cannot be negative';
-                  final totalAmt = double.tryParse(_amountController.text) ?? 0.0;
-                  if (numVal > totalAmt) return 'Paid amount cannot exceed total amount';
+                  final totalAmt =
+                      double.tryParse(_amountController.text) ?? 0.0;
+                  if (numVal > totalAmt)
+                    return 'Paid amount cannot exceed total amount';
                   return null;
                 },
               ),
@@ -294,14 +373,14 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
               ),
               const SizedBox(height: 16),
               InkWell(
-                onTap: () => _selectDate(context),
+                onTap: () => _selectDateTime(context),
                 child: InputDecorator(
                   decoration: const InputDecoration(
-                    labelText: 'Due Date *',
-                    prefixIcon: Icon(Icons.calendar_month_outlined),
+                    labelText: 'Due Date & Time *',
+                    prefixIcon: Icon(Icons.access_time_outlined),
                   ),
                   child: Text(
-                    DateFormat.yMMMd().format(_selectedDate),
+                    DateFormat.yMMMd().add_jm().format(_selectedDate),
                     style: theme.textTheme.bodyLarge,
                   ),
                 ),
@@ -315,7 +394,10 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 ),
                 items: const [
                   DropdownMenuItem(value: 'Pending', child: Text('Pending')),
-                  DropdownMenuItem(value: 'Completed', child: Text('Completed')),
+                  DropdownMenuItem(
+                    value: 'Completed',
+                    child: Text('Completed'),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -344,6 +426,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

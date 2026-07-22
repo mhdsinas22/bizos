@@ -1,3 +1,5 @@
+import 'package:bizos/core/utils/responsive_breakpoints.dart';
+import 'package:bizos/core/widgets/responsive_layout.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/business/bloc/business_bloc.dart';
 import 'package:bizos/features/business/bloc/business_event.dart';
@@ -52,7 +54,9 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   void initState() {
     super.initState();
     
-    final ownerId = widget.user.isOwner ? widget.user.id : widget.user.ownerId;
+    final ownerId = widget.user.isOwner
+        ? (widget.user.userId.isNotEmpty ? widget.user.userId : widget.user.id)
+        : (widget.user.ownerId.isNotEmpty ? widget.user.ownerId : widget.user.id);
     
     // Fetch businesses and staff lists if needed
     context.read<BusinessBloc>().add(FetchBusinessesEvent(ownerId));
@@ -138,9 +142,11 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
+        child: ResponsiveCenterBody(
+          maxWidth: ResponsiveBreakpoints.maxFormWidth,
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -323,6 +329,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

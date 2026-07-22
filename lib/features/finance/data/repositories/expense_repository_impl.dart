@@ -1,15 +1,15 @@
 import 'package:bizos/features/finance/data/datasoucre/expense_remote_datasource.dart';
-import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
+import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/finance/data/models/expense_model.dart';
 import 'package:bizos/features/finance/domain/repositories/expense_repository.dart';
 
 class ExpenseRepositoryImpl implements ExpenseRepository {
   final ExpenseRemoteDatasource expenseRemoteDatasource;
-  final DashboardRemoteDatasource dashboardRemoteDatasource;
+  final ActivityRepository activityRepository;
 
   ExpenseRepositoryImpl({
     required this.expenseRemoteDatasource,
-    required this.dashboardRemoteDatasource,
+    required this.activityRepository,
   });
 
   @override
@@ -37,12 +37,13 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     try {
       await expenseRemoteDatasource.addExpense(expense);
       // Automatically log activity
-      await dashboardRemoteDatasource.logActivity(
+      await activityRepository.logActivity(
         businessId: expense.businessId,
-        title: "Add Expense",
-        description:
-            "Logged Expense: ${expense.category} - ${expense.description}",
-        amount: expense.amount,
+        title: "Expense Added",
+        description: "Category: ${expense.category} | Amount: ${expense.amount} | Description: ${expense.description}",
+        module: "Expense",
+        action: "Add",
+        referenceId: expense.id,
       );
     } catch (e) {
       print("Error adding expense: $e");
@@ -54,6 +55,15 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<void> updateExpense(ExpenseModel expense) async {
     try {
       await expenseRemoteDatasource.updateExpense(expense);
+      // Automatically log activity
+      await activityRepository.logActivity(
+        businessId: expense.businessId,
+        title: "Expense Updated",
+        description: "Category: ${expense.category} | Amount: ${expense.amount} | Description: ${expense.description}",
+        module: "Expense",
+        action: "Update",
+        referenceId: expense.id,
+      );
     } catch (e) {
       print("Error updating expense: $e");
       rethrow;
@@ -63,7 +73,18 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   @override
   Future<void> deleteExpense(String id) async {
     try {
-      await expenseRemoteDatasource.deleteExpense(id);
+      final deleted = await expenseRemoteDatasource.deleteExpense(id);
+      if (deleted != null) {
+        // Automatically log activity
+        await activityRepository.logActivity(
+          businessId: deleted.businessId,
+          title: "Expense Deleted",
+          description: "Category: ${deleted.category} | Amount: ${deleted.amount} | Description: ${deleted.description}",
+          module: "Expense",
+          action: "Delete",
+          referenceId: deleted.id,
+        );
+      }
     } catch (e) {
       print("Error deleting expense: $e");
       rethrow;

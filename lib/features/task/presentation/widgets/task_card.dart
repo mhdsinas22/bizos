@@ -234,7 +234,10 @@ class TaskCard extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // 4. Priority + Due Date Row
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     // Priority Badge
                     Container(
@@ -255,20 +258,24 @@ class TaskCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
                     // Due Date
-                    Icon(
-                      Icons.calendar_today,
-                      size: 12,
-                      color: theme.disabledColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Due: ${DateFormat.yMMMd().format(task.dueDate)}',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.disabledColor,
-                        fontSize: 11,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 12,
+                          color: theme.disabledColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Due: ${DateFormat.yMMMd().format(task.dueDate)}',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.disabledColor,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

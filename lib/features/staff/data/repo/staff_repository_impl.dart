@@ -1,16 +1,16 @@
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasource.dart';
-import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
+import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/staff/data/models/staff_business_model.dart';
 import 'package:bizos/features/staff/domain/repo/staff_repository.dart';
 
 class StaffRepositoryImpl implements StaffRepository {
   final StaffRemoteDatasource staffRemoteDatasource;
-  final DashboardRemoteDatasource dashboardRemoteDatasource;
+  final ActivityRepository activityRepository;
 
   StaffRepositoryImpl({
     required this.staffRemoteDatasource,
-    required this.dashboardRemoteDatasource,
+    required this.activityRepository,
   });
 
   @override
@@ -37,11 +37,13 @@ class StaffRepositoryImpl implements StaffRepository {
         selectedBusinessIds,
       );
       // Automatically log activity
-      await dashboardRemoteDatasource.logActivity(
+      await activityRepository.logActivity(
         businessId: null,
-        title: "Create Staff",
+        title: "Staff Added",
         description: "Staff member '${staff.name}' was registered",
-        amount: 0.0,
+        module: "Staff",
+        action: "Add",
+        referenceId: staff.id,
       );
     } catch (e) {
       print("Error creating staff: $e");
@@ -56,6 +58,15 @@ class StaffRepositoryImpl implements StaffRepository {
   ) async {
     try {
       await staffRemoteDatasource.updateStaff(staff, selectedBusinessIds);
+      // Automatically log activity
+      await activityRepository.logActivity(
+        businessId: null,
+        title: "Staff Updated",
+        description: "Staff member '${staff.name}' details were updated",
+        module: "Staff",
+        action: "Update",
+        referenceId: staff.id,
+      );
     } catch (e) {
       print("Error updating staff: $e");
       rethrow;
@@ -65,7 +76,17 @@ class StaffRepositoryImpl implements StaffRepository {
   @override
   Future<void> deleteStaff(String userId) async {
     try {
-      await staffRemoteDatasource.deleteStaff(userId);
+      final name = await staffRemoteDatasource.deleteStaff(userId);
+      if (name != null) {
+        // Automatically log activity
+        await activityRepository.logActivity(
+          businessId: null,
+          title: "Staff Deleted",
+          description: "Staff member '$name' was deleted",
+          module: "Staff",
+          action: "Delete",
+        );
+      }
     } catch (e) {
       print("Error deleting staff: $e");
       rethrow;

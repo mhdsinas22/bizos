@@ -212,20 +212,22 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
   }
 
   @override
-  Future<void> deleteStaff(String userId) async {
-    // 1. Resolve user UUID
+  Future<String?> deleteStaff(String userId) async {
+    // 1. Resolve user UUID and name
     final userResponse = await supabaseClient
         .from('users')
-        .select('id')
+        .select('id, name')
         .eq('userid', userId.trim().toLowerCase())
         .maybeSingle();
 
-    if (userResponse == null) return;
+    if (userResponse == null) return null;
 
     final String userUuid = userResponse['id'] as String;
+    final String name = userResponse['name'] as String;
 
     // 2. Delete user only
     await supabaseClient.from('users').delete().eq('id', userUuid);
+    return name;
   }
 
   @override

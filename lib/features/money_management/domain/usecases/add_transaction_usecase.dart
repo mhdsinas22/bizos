@@ -6,7 +6,7 @@ class AddTransactionUseCase {
 
   AddTransactionUseCase(this.repository);
 
-  Future<void> execute(MoneyTransactionEntity transaction, bool isPersonal) async {
-    await repository.addTransaction(transaction, isPersonal);
+  Future<MoneyTransactionEntity> execute(MoneyTransactionEntity transaction, bool isPersonal) async {
+    return await repository.addTransaction(transaction, isPersonal);
   }
 }

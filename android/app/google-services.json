@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "861575802256",
+    "project_id": "voryn-app",
+    "storage_bucket": "voryn-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:861575802256:android:8cd2112e9465c83b30d715",
+        "android_client_info": {
+          "package_name": "com.example.bizos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDx_7ElDDuFVTFO69fkv4KAs5_d14h7RUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -59,7 +59,7 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
       data['business_id'] = businessId;
     }
     if (dueDate != null) {
-      data['due_date'] = dueDate!.toIso8601String().split('T')[0];
+      data['due_date'] = dueDate!.toIso8601String();
     }
     return data;
   }

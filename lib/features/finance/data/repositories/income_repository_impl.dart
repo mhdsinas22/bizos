@@ -1,15 +1,15 @@
 import 'package:bizos/features/finance/data/datasoucre/income_remote_datasource.dart';
-import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
+import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/finance/data/models/income_model.dart';
 import 'package:bizos/features/finance/domain/repositories/income_repository.dart';
 
 class IncomeRepositoryImpl implements IncomeRepository {
   final IncomeRemoteDatasource incomeRemoteDatasource;
-  final DashboardRemoteDatasource dashboardRemoteDatasource;
+  final ActivityRepository activityRepository;
 
   IncomeRepositoryImpl({
     required this.incomeRemoteDatasource,
-    required this.dashboardRemoteDatasource,
+    required this.activityRepository,
   });
 
   @override
@@ -37,12 +37,13 @@ class IncomeRepositoryImpl implements IncomeRepository {
     try {
       await incomeRemoteDatasource.addIncome(income);
       // Automatically log activity
-      await dashboardRemoteDatasource.logActivity(
+      await activityRepository.logActivity(
         businessId: income.businessId,
-        title: "Add Income",
-        description:
-            "Received Income: ${income.category} - ${income.description}",
-        amount: income.amount,
+        title: "Income Added",
+        description: "Category: ${income.category} | Amount: ${income.amount} | Description: ${income.description}",
+        module: "Income",
+        action: "Add",
+        referenceId: income.id,
       );
     } catch (e) {
       print("Error adding income: $e");
@@ -54,6 +55,15 @@ class IncomeRepositoryImpl implements IncomeRepository {
   Future<void> updateIncome(IncomeModel income) async {
     try {
       await incomeRemoteDatasource.updateIncome(income);
+      // Automatically log activity
+      await activityRepository.logActivity(
+        businessId: income.businessId,
+        title: "Income Updated",
+        description: "Category: ${income.category} | Amount: ${income.amount} | Description: ${income.description}",
+        module: "Income",
+        action: "Update",
+        referenceId: income.id,
+      );
     } catch (e) {
       print("Error updating income: $e");
       rethrow;
@@ -63,7 +73,18 @@ class IncomeRepositoryImpl implements IncomeRepository {
   @override
   Future<void> deleteIncome(String id) async {
     try {
-      await incomeRemoteDatasource.deleteIncome(id);
+      final deleted = await incomeRemoteDatasource.deleteIncome(id);
+      if (deleted != null) {
+        // Automatically log activity
+        await activityRepository.logActivity(
+          businessId: deleted.businessId,
+          title: "Income Deleted",
+          description: "Category: ${deleted.category} | Amount: ${deleted.amount} | Description: ${deleted.description}",
+          module: "Income",
+          action: "Delete",
+          referenceId: deleted.id,
+        );
+      }
     } catch (e) {
       print("Error deleting income: $e");
       rethrow;

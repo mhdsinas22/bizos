@@ -1,15 +1,15 @@
 import 'package:bizos/features/task/data/datasource/task_remote_datasource.dart';
-import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
+import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
 import 'package:bizos/features/task/domain/repositories/task_repository.dart';
 
 class TaskRepositoryImpl implements TaskRepository {
   final TaskRemoteDatasource taskRemoteDatasource;
-  final DashboardRemoteDatasource dashboardRemoteDatasource;
+  final ActivityRepository activityRepository;
 
   TaskRepositoryImpl({
     required this.taskRemoteDatasource,
-    required this.dashboardRemoteDatasource,
+    required this.activityRepository,
   });
 
   @override
@@ -54,11 +54,13 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       await taskRemoteDatasource.createTask(task);
       // Automatically log activity
-      await dashboardRemoteDatasource.logActivity(
+      await activityRepository.logActivity(
         businessId: task.businessId,
-        title: "Add Task",
+        title: "Task Added",
         description: "Task '${task.title}' was added",
-        amount: 0.0,
+        module: "Task",
+        action: "Add",
+        referenceId: task.id,
       );
     } catch (e) {
       print("Error creating task: $e");
@@ -69,7 +71,20 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<void> updateTask(TaskModel task) async {
     try {
+      final original = await taskRemoteDatasource.getTaskById(task.id);
       await taskRemoteDatasource.updateTask(task);
+
+      if (!original.isCompleted && task.isCompleted) {
+        // Automatically log activity
+        await activityRepository.logActivity(
+          businessId: task.businessId,
+          title: "Task Completed",
+          description: "Task '${task.title}' was marked as completed",
+          module: "Task",
+          action: "Complete",
+          referenceId: task.id,
+        );
+      }
     } catch (e) {
       print("Error updating task: $e");
       rethrow;
@@ -85,11 +100,13 @@ class TaskRepositoryImpl implements TaskRepository {
       await taskRemoteDatasource.deleteTask(id);
 
       // Log activity
-      await dashboardRemoteDatasource.logActivity(
+      await activityRepository.logActivity(
         businessId: task.businessId,
-        title: "Delete Task",
+        title: "Task Deleted",
         description: "Task '${task.title}' was deleted",
-        amount: 0.0,
+        module: "Task",
+        action: "Delete",
+        referenceId: task.id,
       );
     } catch (e) {
       print("Error deleting task: $e");

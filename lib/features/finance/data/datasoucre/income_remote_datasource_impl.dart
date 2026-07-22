@@ -51,8 +51,14 @@ class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
   }
 
   @override
-  Future<void> deleteIncome(String id) async {
-    await supabaseClient.from('incomes').delete().eq('id', id);
+  Future<IncomeModel?> deleteIncome(String id) async {
+    final response = await supabaseClient.from('incomes').select().eq('id', id).maybeSingle();
+    if (response != null) {
+      final model = _fromRow(response);
+      await supabaseClient.from('incomes').delete().eq('id', id);
+      return model;
+    }
+    return null;
   }
 
   IncomeModel _fromRow(Map<String, dynamic> row) {

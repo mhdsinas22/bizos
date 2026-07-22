@@ -11,12 +11,20 @@ class BusinessRemoteDatasourceImpl implements BusinessRemoteDatasource {
   @override
   Future<List<BusinessModel>> getBusinesses(String userStringId) async {
     print("Repository Owner Id: $userStringId");
-    // 1. Resolve user profile
-    final userResponse = await supabaseClient
-        .from('users')
-        .select()
-        .eq('userid', userStringId.trim().toLowerCase())
-        .maybeSingle();
+    if (userStringId.trim().isEmpty) return [];
+
+    final uuidRegex = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
+    final isUuid = uuidRegex.hasMatch(userStringId.trim());
+
+    // 1. Resolve user profile (support both UUID and userid username)
+    final userQuery = supabaseClient.from('users').select();
+    final userResponse = isUuid
+        ? await userQuery.eq('id', userStringId.trim()).maybeSingle()
+        : await userQuery
+            .eq('userid', userStringId.trim().toLowerCase())
+            .maybeSingle();
 
     if (userResponse == null) return [];
 
@@ -127,7 +135,13 @@ class BusinessRemoteDatasourceImpl implements BusinessRemoteDatasource {
   }
 
   @override
-  Future<void> deleteBusiness(String id) async {
+  Future<BusinessModel?> deleteBusiness(String id) async {
+    final response = await supabaseClient
+        .from('businesses')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+
     // Manual cascade delete for robust DB independence
     await supabaseClient
         .from('staff_permissions')
@@ -138,7 +152,8 @@ class BusinessRemoteDatasourceImpl implements BusinessRemoteDatasource {
     await supabaseClient.from('expenses').delete().eq('business_id', id);
     await supabaseClient.from('activities').delete().eq('business_id', id);
 
-    // Finally delete the business
     await supabaseClient.from('businesses').delete().eq('id', id);
+
+    return response != null ? BusinessModel.fromMap(response) : null;
   }
 }

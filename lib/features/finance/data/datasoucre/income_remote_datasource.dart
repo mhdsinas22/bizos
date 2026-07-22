@@ -5,5 +5,5 @@ abstract class IncomeRemoteDatasource {
   Future<List<IncomeModel>> getAllIncome();
   Future<void> addIncome(IncomeModel income);
   Future<void> updateIncome(IncomeModel income);
-  Future<void> deleteIncome(String id);
+  Future<IncomeModel?> deleteIncome(String id);
 }

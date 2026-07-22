@@ -1,15 +1,15 @@
 import 'package:bizos/features/business/data/datasources/business_remote_datasource.dart';
-import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
+import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
 
 class BusinessRepositoryImpl implements BusinessRepository {
   final BusinessRemoteDatasource businessRemoteDatasource;
-  final DashboardRemoteDatasource dashboardRemoteDatasource;
+  final ActivityRepository activityRepository;
 
   BusinessRepositoryImpl({
     required this.businessRemoteDatasource,
-    required this.dashboardRemoteDatasource,
+    required this.activityRepository,
   });
 
   @override
@@ -27,11 +27,13 @@ class BusinessRepositoryImpl implements BusinessRepository {
     try {
       await businessRemoteDatasource.createBusiness(business);
       // Automatically log activity
-      await dashboardRemoteDatasource.logActivity(
+      await activityRepository.logActivity(
         businessId: business.id,
-        title: "Create Business",
+        title: "Business Created",
         description: "Business '${business.name}' was created",
-        amount: 0.0,
+        module: "Business",
+        action: "Create",
+        referenceId: business.id,
       );
     } catch (e) {
       print("Error creating business: $e");
@@ -44,11 +46,13 @@ class BusinessRepositoryImpl implements BusinessRepository {
     try {
       await businessRemoteDatasource.updateBusiness(business);
       // Automatically log activity
-      await dashboardRemoteDatasource.logActivity(
+      await activityRepository.logActivity(
         businessId: business.id,
-        title: "Update Business",
+        title: "Business Updated",
         description: "Business '${business.name}' was updated",
-        amount: 0.0,
+        module: "Business",
+        action: "Update",
+        referenceId: business.id,
       );
     } catch (e) {
       print("Error updating business: $e");
@@ -59,7 +63,18 @@ class BusinessRepositoryImpl implements BusinessRepository {
   @override
   Future<void> deleteBusiness(String id) async {
     try {
-      await businessRemoteDatasource.deleteBusiness(id);
+      final deleted = await businessRemoteDatasource.deleteBusiness(id);
+      if (deleted != null) {
+        // Automatically log activity
+        await activityRepository.logActivity(
+          businessId: deleted.id,
+          title: "Business Deleted",
+          description: "Business '${deleted.name}' was deleted",
+          module: "Business",
+          action: "Delete",
+          referenceId: deleted.id,
+        );
+      }
     } catch (e) {
       print("Error deleting business: $e");
       rethrow;

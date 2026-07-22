@@ -9,6 +9,6 @@ abstract class StaffRemoteDatasource {
     List<String> selectedBusinessIds,
   );
   Future<void> updateStaff(UserModel staff, List<String> selectedBusinessIds);
-  Future<void> deleteStaff(String userId);
+  Future<String?> deleteStaff(String userId);
   Future<List<StaffBusinessModel>> getStaffBusinesses(String staffId);
 }

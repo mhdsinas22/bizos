@@ -5,5 +5,5 @@ abstract class ExpenseRemoteDatasource {
   Future<List<ExpenseModel>> getAllExpenses();
   Future<void> addExpense(ExpenseModel expense);
   Future<void> updateExpense(ExpenseModel expense);
-  Future<void> deleteExpense(String id);
+  Future<ExpenseModel?> deleteExpense(String id);
 }
