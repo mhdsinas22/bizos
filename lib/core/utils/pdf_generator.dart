@@ -291,7 +291,7 @@ class PdfGenerator {
                       (t) => [
                         t.title,
                         t.priority,
-                        DateFormat.yMMMd().format(t.dueDate),
+                        DateFormat.yMMMd().add_jm().format(t.dueDate),
                         t.isCompleted ? 'COMPLETED' : 'PENDING',
                       ],
                     )

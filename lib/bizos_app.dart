@@ -11,6 +11,10 @@ import 'package:bizos/features/contacts/presentation/bloc/contact_bloc.dart';
 import 'package:bizos/features/finance/data/datasoucre/expense_remote_datasource_impl.dart';
 import 'package:bizos/features/finance/data/datasoucre/income_remote_datasource_impl.dart';
 import 'package:bizos/features/finance/presentation/bloc/finance_bloc.dart';
+import 'package:bizos/features/notifications/data/datasource/notifications_remote_datasource_impl.dart';
+import 'package:bizos/features/notifications/data/repositories/notification_repository_impl.dart';
+import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
+import 'package:bizos/features/notifications/presentation/bloc/notification_bloc.dart';
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasouceimpl.dart';
 import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasoucre_impl.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
@@ -52,6 +56,7 @@ import 'package:bizos/features/ai/data/repositories/ai_repository_impl.dart';
 import 'package:bizos/features/ai/domain/repositories/ai_repository.dart';
 import 'package:bizos/features/ai/domain/usecases/ask_ai_usecase.dart';
 import 'package:bizos/features/ai/presentation/bloc/ai_bloc.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:bizos/features/money_management/data/datasources/money_management_remote_datasource.dart';
 import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
@@ -80,6 +85,7 @@ class BizosApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final supabaseClient = Supabase.instance.client;
+    final firebaseMessaging = FirebaseMessaging.instance;
 
     // Data Sources
     final authDatasource = AuthRemoteDataSourceImpl(supabase: supabaseClient);
@@ -158,12 +164,19 @@ class BizosApp extends StatelessWidget {
       remoteDatasource: moneyManagementDatasource,
       activityRepository: activityRepo,
     );
-
+    final notificationsremotedatasouce = NotificationsRemoteDatasourceImpl(
+      firebaseMessaging: firebaseMessaging,
+      supabaseClient: supabaseClient,
+    );
+    final notificationRepo = NotificationRepositoryImpl(
+      notificationsremotedatasouce,
+    );
     final aiRepo = AiRepositoryImpl(aiDatasource);
     final askAiUsecase = AskAiUsecase(aiRepo);
     final contactDatasource = ContactLocalDatasourceImpl();
     final contactRepo = ContactRepositoriesImpl(contactDatasource);
     final pickContactUsecase = PickContact(contactRepo);
+    final saveFcmTokenUsecase = SaveFcmToken(notificationRepo);
 
     return MultiRepositoryProvider(
       providers: [
@@ -190,9 +203,10 @@ class BizosApp extends StatelessWidget {
             create: (_) => ThemeBloc()..add(LoadThemeEvent()),
           ),
           BlocProvider<AuthBloc>(
-            create: (context) =>
-                AuthBloc(authRepo: context.read<AuthRepository>())
-                  ..add(CheckAuthEvent()),
+            create: (context) => AuthBloc(
+              authRepo: context.read<AuthRepository>(),
+              saveFcmTokenUsecase: saveFcmTokenUsecase,
+            )..add(CheckAuthEvent()),
           ),
           BlocProvider<BusinessBloc>(
             create: (context) =>
@@ -275,6 +289,10 @@ class BizosApp extends StatelessWidget {
             )..add(FetchActivitiesEvent()),
           ),
           BlocProvider(create: (context) => ContactBloc(pickContactUsecase)),
+          BlocProvider(
+            create: (context) =>
+                NotificationBloc(saveFcmTokenUsecase: saveFcmTokenUsecase),
+          ),
         ],
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, themeState) {

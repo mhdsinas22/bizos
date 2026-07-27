@@ -16,6 +16,7 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
     required super.status,
     required super.createdAt,
     required super.updatedAt,
+    super.isNotified,
   });
 
   factory MoneyTransactionModel.fromJson(Map<String, dynamic> json) {
@@ -29,11 +30,18 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       paidAmount: (json['paid_amount'] as num?)?.toDouble() ?? 0.0,
       balanceAmount: (json['balance_amount'] as num?)?.toDouble() ?? 0.0,
-      dueDate: json['due_date'] != null ? DateTime.tryParse(json['due_date'] as String) : null,
+      dueDate: json['due_date'] != null
+          ? DateTime.tryParse(json['due_date'] as String)?.toLocal()
+          : null,
       notes: json['notes'] as String? ?? '',
       status: json['status'] as String? ?? 'Pending',
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : DateTime.now(),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : DateTime.now(),
+      isNotified: json['is_notified'] as bool? ?? false,
     );
   }
 
@@ -47,6 +55,7 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
       'balance_amount': balanceAmount,
       'notes': notes,
       'status': status,
+      'is_notified': isNotified,
     };
 
     if (id.isNotEmpty) {
@@ -59,7 +68,7 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
       data['business_id'] = businessId;
     }
     if (dueDate != null) {
-      data['due_date'] = dueDate!.toIso8601String();
+      data['due_date'] = dueDate!.toUtc().toIso8601String();
     }
     return data;
   }
@@ -80,6 +89,7 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
       status: entity.status,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      isNotified: entity.isNotified,
     );
   }
 }

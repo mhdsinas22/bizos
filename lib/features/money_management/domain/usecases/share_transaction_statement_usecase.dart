@@ -1,0 +1,157 @@
+import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
+import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
+import 'package:intl/intl.dart';
+
+class ShareTransactionStatementUseCase {
+  final MoneyManagementRepository repository;
+
+  ShareTransactionStatementUseCase(this.repository);
+
+  Future<String> generateStatementText({
+    required MoneyTransactionEntity transaction,
+    required bool isPersonal,
+    String appName = 'VORYN',
+  }) async {
+    // Fetch full transaction history sorted from oldest to newest (ascending: true)
+    final history = await repository.getTransactionHistory(
+      transactionId: transaction.id,
+      isPersonal: isPersonal,
+      limit: 500,
+      offset: 0,
+      filterEventType: 'All',
+      searchQuery: null,
+      ascending: true,
+    );
+
+    final currencyFormat = NumberFormat.currency(
+      symbol: '₹',
+      decimalDigits: 2,
+      locale: 'en_IN',
+    );
+    final dateFormat = DateFormat('dd MMM yyyy');
+    final nowDateFormat = DateFormat('dd MMM yyyy');
+    final nowTimeFormat = DateFormat('hh:mm a');
+
+    final isPay = transaction.transactionType == 'pay';
+    final now = DateTime.now();
+
+    final buffer = StringBuffer();
+    buffer.writeln(appName);
+    buffer.writeln();
+    buffer.writeln('Transaction Statement');
+    buffer.writeln();
+    buffer.writeln('Customer');
+    buffer.writeln(transaction.personName);
+    buffer.writeln();
+    if (transaction.phone.isNotEmpty) {
+      buffer.writeln('Phone');
+      buffer.writeln(transaction.phone);
+      buffer.writeln();
+    }
+    buffer.writeln('Status');
+    buffer.writeln(transaction.status);
+    buffer.writeln();
+    buffer.writeln('----------------------------------------');
+    buffer.writeln();
+    buffer.writeln('Financial Summary');
+    buffer.writeln();
+    buffer.writeln(isPay ? 'Total Payable' : 'Total Debt');
+    buffer.writeln(currencyFormat.format(transaction.amount));
+    buffer.writeln();
+    buffer.writeln('Total Paid');
+    buffer.writeln(currencyFormat.format(transaction.paidAmount));
+    buffer.writeln();
+    buffer.writeln('Outstanding Balance');
+    buffer.writeln(currencyFormat.format(transaction.balanceAmount));
+    buffer.writeln();
+    buffer.writeln('Due Date');
+    buffer.writeln(
+      transaction.dueDate != null ? dateFormat.format(transaction.dueDate!) : 'N/A',
+    );
+    buffer.writeln();
+    buffer.writeln('----------------------------------------');
+    buffer.writeln();
+    buffer.writeln('Transaction History');
+    buffer.writeln();
+
+    // Filter out deleted items
+    final activeHistory = history.where((h) => h.eventType != 'payment_deleted').toList();
+
+    if (activeHistory.isEmpty) {
+      buffer.writeln('No transaction history available.');
+      buffer.writeln();
+    } else {
+      for (int i = 0; i < activeHistory.length; i++) {
+        final item = activeHistory[i];
+        final eventDate = dateFormat.format(item.createdAt.toLocal());
+
+        buffer.writeln(eventDate);
+        buffer.writeln();
+
+        String eventTitle = '• ';
+        switch (item.eventType) {
+          case 'debt_created':
+            eventTitle += 'Debt Created';
+            break;
+          case 'payment':
+          case 'payment_updated':
+            eventTitle += isPay ? 'Payment Made' : 'Payment Received';
+            break;
+          case 'adjustment':
+            eventTitle += 'Adjustment';
+            break;
+          case 'reminder_sent':
+            eventTitle += 'Reminder Sent';
+            break;
+          case 'status_changed':
+            eventTitle += 'Status Changed';
+            break;
+          default:
+            eventTitle += item.eventType.replaceAll('_', ' ').toUpperCase();
+        }
+
+        buffer.writeln(eventTitle);
+        buffer.writeln();
+
+        if (item.amount > 0 ||
+            item.eventType == 'payment' ||
+            item.eventType == 'debt_created' ||
+            item.eventType == 'adjustment') {
+          buffer.writeln('Amount : ${currencyFormat.format(item.amount)}');
+          buffer.writeln();
+        }
+
+        if (item.paymentMethod != null && item.paymentMethod!.isNotEmpty) {
+          buffer.writeln('Payment Method');
+          buffer.writeln(item.paymentMethod);
+          buffer.writeln();
+        }
+
+        buffer.writeln('Balance After');
+        buffer.writeln(currencyFormat.format(item.balanceAfter));
+        buffer.writeln();
+
+        if (item.notes.isNotEmpty) {
+          buffer.writeln('Notes');
+          buffer.writeln(item.notes);
+          buffer.writeln();
+        }
+
+        if (i < activeHistory.length - 1) {
+          buffer.writeln('----------------------------------------');
+          buffer.writeln();
+        }
+      }
+    }
+
+    buffer.writeln('----------------------------------------');
+    buffer.writeln();
+    buffer.writeln('Generated by $appName');
+    buffer.writeln();
+    buffer.writeln('Date');
+    buffer.writeln(nowDateFormat.format(now));
+    buffer.writeln(nowTimeFormat.format(now));
+
+    return buffer.toString();
+  }
+}

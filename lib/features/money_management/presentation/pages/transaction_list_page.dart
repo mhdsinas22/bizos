@@ -3,14 +3,26 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/empty_state.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
+import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
+import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
+import 'package:bizos/features/money_management/domain/usecases/add_adjustment_history_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/add_payment_history_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/add_reminder_history_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/delete_history_item_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/get_transaction_history_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/share_transaction_statement_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/update_history_item_usecase.dart';
+import 'package:bizos/features/money_management/presentation/bloc/business_money_management_bloc.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_event.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_state.dart';
 import 'package:bizos/features/money_management/presentation/bloc/personal_money_management_bloc.dart';
-import 'package:bizos/features/money_management/presentation/bloc/business_money_management_bloc.dart';
+import 'package:bizos/features/money_management/presentation/bloc/transaction_details_bloc.dart';
 import 'package:bizos/features/money_management/presentation/pages/add_transaction_page.dart';
+import 'package:bizos/features/money_management/presentation/pages/transaction_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 class TransactionListPage extends StatefulWidget {
   final String transactionType; // 'pay' or 'receive'
@@ -47,6 +59,61 @@ class _TransactionListPageState extends State<TransactionListPage> {
     super.dispose();
   }
 
+  void _navigateToDetails(BuildContext context, MoneyTransactionEntity tx) {
+    final repository = context.read<MoneyManagementRepository>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (context) => TransactionDetailsBloc(
+            getTransactionHistoryUseCase: GetTransactionHistoryUseCase(repository),
+            addPaymentHistoryUseCase: AddPaymentHistoryUseCase(repository),
+            addAdjustmentHistoryUseCase: AddAdjustmentHistoryUseCase(repository),
+            addReminderHistoryUseCase: AddReminderHistoryUseCase(repository),
+            updateHistoryItemUseCase: UpdateHistoryItemUseCase(repository),
+            deleteHistoryItemUseCase: DeleteHistoryItemUseCase(repository),
+          ),
+          child: TransactionDetailsPage(
+            transaction: tx,
+            isPersonal: widget.businessId == null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _shareStatement(BuildContext context, MoneyTransactionEntity tx) async {
+    try {
+      final repository = context.read<MoneyManagementRepository>();
+      final useCase = ShareTransactionStatementUseCase(repository);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Generating statement...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      final statementText = await useCase.generateStatementText(
+        transaction: tx,
+        isPersonal: widget.businessId == null,
+        appName: 'VORYN',
+      );
+
+      await Share.share(statementText);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating statement: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   void _confirmDelete(BuildContext context, String id) {
     if (id.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,9 +127,9 @@ class _TransactionListPageState extends State<TransactionListPage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Transaction?'),
+        title: const Text('Delete Account Record?'),
         content: const Text(
-          'Are you sure you want to permanently delete this transaction records? This action cannot be undone.',
+          'Are you sure you want to permanently delete this customer transaction record and all associated history? This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -241,6 +308,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                         final isPending = tx.status.toLowerCase() == 'pending';
 
                         return GlassCard(
+                          onTap: () => _navigateToDetails(context, tx),
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +352,11 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                   ),
                                   PopupMenuButton<String>(
                                     onSelected: (val) {
-                                      if (val == 'edit') {
+                                      if (val == 'details') {
+                                        _navigateToDetails(context, tx);
+                                      } else if (val == 'share') {
+                                        _shareStatement(context, tx);
+                                      } else if (val == 'edit') {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -303,12 +375,32 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                     icon: const Icon(Icons.more_vert, size: 20),
                                     itemBuilder: (_) => [
                                       const PopupMenuItem(
+                                        value: 'details',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.timeline_outlined, size: 16),
+                                            SizedBox(width: 8),
+                                            Text('History & Details'),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'share',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.share_outlined, size: 16),
+                                            SizedBox(width: 8),
+                                            Text('Share Statement'),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
                                         value: 'edit',
                                         child: Row(
                                           children: [
                                             Icon(Icons.edit_outlined, size: 16),
                                             SizedBox(width: 8),
-                                            Text('Edit'),
+                                            Text('Edit Customer'),
                                           ],
                                         ),
                                       ),
@@ -335,24 +427,26 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.phone_outlined,
-                                    size: 14,
-                                    color: Colors.grey,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    tx.phone,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: Colors.grey),
-                                  ),
-                                ],
-                              ),
+                              if (tx.phone.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.phone_outlined,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      tx.phone,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               const SizedBox(height: 16),
                               const Divider(height: 1),
                               const SizedBox(height: 12),
@@ -363,7 +457,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                 childAspectRatio: 2.2,
                                 children: [
                                   _buildDetailItem(
-                                    'Total',
+                                    'Total Debt',
                                     CurrencyFormatter.format(tx.amount),
                                   ),
                                   _buildDetailItem(
@@ -372,7 +466,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                     color: AppTheme.success,
                                   ),
                                   _buildDetailItem(
-                                    'Balance',
+                                    'Outstanding',
                                     CurrencyFormatter.format(tx.balanceAmount),
                                     color: isPending
                                         ? AppTheme.error
@@ -394,7 +488,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Due: ${tx.dueDate != null ? DateFormat.yMMMd().add_jm().format(tx.dueDate!) : 'N/A'}',
+                                        'Due: ${tx.dueDate != null ? DateFormat.yMMMd().format(tx.dueDate!) : 'N/A'}',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
@@ -402,27 +496,26 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                       ),
                                     ],
                                   ),
-                                  if (tx.notes.isNotEmpty)
-                                    Tooltip(
-                                      message: tx.notes,
-                                      child: const Row(
-                                        children: [
-                                          Icon(
-                                            Icons.notes_outlined,
-                                            size: 14,
-                                            color: Colors.grey,
-                                          ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            'Notes',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey,
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'View History Timeline',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: AppTheme.primaryColor,
+                                              fontWeight: FontWeight.bold,
                                             ),
-                                          ),
-                                        ],
                                       ),
-                                    ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 12,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ],
@@ -472,7 +565,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
 
     return Scaffold(
       appBar: AppBar(title: Text(typeLabel)),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -484,7 +577,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
         ),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(widget.transactionType == 'pay' ? 'Add Debt' : 'Add Credit'),
       ),
       body: widget.businessId != null
           ? BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(

@@ -72,11 +72,11 @@ class ReportRemoteDatasourceImpl implements ReportRemoteDatasource {
       title: row['title'] as String,
       description: row['description'] ?? '',
       priority: row['priority'] ?? 'Medium',
-      dueDate: DateTime.parse(row['due_date'] as String),
+      dueDate: TaskModel.parseDueDate(row['due_date']),
       isCompleted: (row['status'] as String).toLowerCase() == 'completed',
       assignedto: row["assigned_to"]?.toString() ?? "",
       createdAt: row['created_at'] != null
-          ? DateTime.parse(row['created_at'])
+          ? TaskModel.parseDueDate(row['created_at'])
           : DateTime.now(),
       createdBy: row['created_by']?.toString() ?? "",
       ownerId: row['owner_id']?.toString() ?? "",

@@ -14,7 +14,6 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
     bool isOwner,
   ) async {
     if (isOwner) {
-      // Security check: Verify that this business belongs to this owner
       final bizCheck = await supabaseClient
           .from('businesses')
           .select('id')
@@ -23,7 +22,6 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           .maybeSingle();
       if (bizCheck == null) return [];
     } else {
-      // Security check: Verify that this business is assigned to this staff member
       final assignedCheck = await supabaseClient
           .from('staff_businesses')
           .select('business_id')
@@ -51,13 +49,14 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
     required bool isOwner,
   }) async {
     if (isOwner) {
-      // Fetch all business IDs belonging to this owner
       final businessResponse = await supabaseClient
           .from('businesses')
           .select('id')
           .eq('owner_id', userId);
-      
-      final businessIds = businessResponse.map((b) => b['id'] as String).toList();
+
+      final businessIds = businessResponse
+          .map((b) => b['id'] as String)
+          .toList();
       if (businessIds.isEmpty) return [];
 
       final response = await supabaseClient
@@ -66,13 +65,14 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           .inFilter('business_id', businessIds);
       return response.map((row) => _fromRow(row)).toList();
     } else {
-      // Staff: fetch all tasks assigned to them which belong to their assigned businesses
       final assignedResponse = await supabaseClient
           .from('staff_businesses')
           .select('business_id')
           .eq('staff_id', userId);
-      
-      final businessIds = assignedResponse.map((b) => b['business_id'] as String).toList();
+
+      final businessIds = assignedResponse
+          .map((b) => b['business_id'] as String)
+          .toList();
       if (businessIds.isEmpty) return [];
 
       final response = await supabaseClient
@@ -87,16 +87,18 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
   @override
   Future<void> createTask(TaskModel task) async {
     await supabaseClient.from('tasks').insert({
-      'id': task.id,
+      if (task.id.isNotEmpty)
+        'id': task.id, // ID pass cheythitilengil auto UUID
       'business_id': task.businessId,
-      'created_at': DateTime.now().toIso8601String(),
+      'created_at': DateTime.now().toUtc().toIso8601String(),
       'title': task.title,
       'description': task.description,
       'priority': task.priority,
-      'due_date': task.dueDate.toIso8601String(),
+      'due_date': task.dueDate.toUtc().toIso8601String(), // 👈 UTC timezone fix
       'status': task.isCompleted ? 'Completed' : 'Pending',
-      "assigned_to": task.assignedto,
-      "created_by": task.createdBy,
+      'assigned_to': task.assignedto,
+      'created_by': task.createdBy,
+      'is_notified': false, // 👈 New tasks default false
     });
   }
 
@@ -108,17 +110,25 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           'title': task.title,
           'description': task.description,
           'priority': task.priority,
-          'due_date': task.dueDate.toIso8601String(),
+          'due_date': task.dueDate
+              .toUtc()
+              .toIso8601String(), // 👈 UTC timezone fix
           'status': task.isCompleted ? 'Completed' : 'Pending',
-          "assigned_to": task.assignedto,
-          "created_by": task.createdBy,
+          'assigned_to': task.assignedto,
+          'created_by': task.createdBy,
+          'is_notified':
+              task.isNotified, // 👈 Model update aakkumbol passes current state
         })
         .eq('id', task.id);
   }
 
   @override
   Future<TaskModel> getTaskById(String id) async {
-    final response = await supabaseClient.from('tasks').select().eq('id', id).single();
+    final response = await supabaseClient
+        .from('tasks')
+        .select()
+        .eq('id', id)
+        .single();
     return _fromRow(response);
   }
 
@@ -185,6 +195,7 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
     }
   }
 
+  // Row mapper logic with Local Time conversion
   TaskModel _fromRow(Map<String, dynamic> row) {
     return TaskModel(
       id: row['id'] as String,
@@ -192,12 +203,13 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
       title: row['title'] as String,
       description: row['description'] ?? '',
       priority: row['priority'] ?? 'Medium',
-      dueDate: DateTime.parse(row['due_date'] as String),
+      dueDate: TaskModel.parseDueDate(row['due_date']),
       isCompleted: (row['status'] as String).toLowerCase() == 'completed',
+      isNotified: row['is_notified'] ?? false, // 👈 Added missing parameter
       createdBy: row['created_by']?.toString() ?? '',
-      assignedto: row["assigned_to"]?.toString() ?? "",
+      assignedto: row['assigned_to']?.toString() ?? '',
       createdAt: row['created_at'] != null
-          ? DateTime.parse(row['created_at'])
+          ? TaskModel.parseDueDate(row['created_at'])
           : DateTime.now(),
       ownerId: '',
     );

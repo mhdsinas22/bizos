@@ -258,18 +258,18 @@ class TaskCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Due Date
+                    // Due Date & Time
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.calendar_today,
+                          Icons.access_time_outlined,
                           size: 12,
                           color: theme.disabledColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Due: ${DateFormat.yMMMd().format(task.dueDate)}',
+                          'Due: ${DateFormat.yMMMd().add_jm().format(task.dueDate)}',
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: theme.disabledColor,
                             fontSize: 11,

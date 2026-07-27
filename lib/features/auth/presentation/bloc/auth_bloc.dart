@@ -1,3 +1,4 @@
+import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/domain/usecases/login_usecase.dart';
@@ -10,12 +11,13 @@ import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepo;
+  final SaveFcmToken saveFcmTokenUsecase;
   final LoginUseCase loginUseCase;
   final LogoutUseCase logoutUseCase;
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final ChangePasswordUseCase changePasswordUseCase;
 
-  AuthBloc({required this.authRepo})
+  AuthBloc({required this.authRepo, required this.saveFcmTokenUsecase})
     : loginUseCase = LoginUseCase(repository: authRepo),
       logoutUseCase = LogoutUseCase(repository: authRepo),
       checkAuthStatusUseCase = CheckAuthStatusUseCase(repository: authRepo),
@@ -35,11 +37,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await loginUseCase.execute(event.userId, event.password);
       emit(AuthAuthenticated(user));
+      _saveFcmToken(user.id);
     } on AppAuthException catch (e) {
       print("BLOC AUTH EXCEPTION: ${e.message}");
-      final requireContact = e is UserNotFoundException || 
-                             e is AccountInactiveException || 
-                             e is UserNotAuthorizedException;
+      final requireContact =
+          e is UserNotFoundException ||
+          e is AccountInactiveException ||
+          e is UserNotAuthorizedException;
       emit(AuthError(e.message, isContactOwnerRequired: requireContact));
     } catch (e) {
       print("BLOC CATCH: $e");
@@ -100,10 +104,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError('Password change failed.', user: currentUser));
       }
     } catch (e) {
-      emit(AuthError(
-        e.toString().replaceAll('Exception:', '').trim(),
-        user: currentUser,
-      ));
+      emit(
+        AuthError(
+          e.toString().replaceAll('Exception:', '').trim(),
+          user: currentUser,
+        ),
+      );
+    }
+  }
+
+  void _saveFcmToken(String userid) async {
+    try {
+      await saveFcmTokenUsecase(userid);
+      print("✅ FCM Token saved successfully via AuthBloc");
+    } catch (e) {
+      print("❌ Failed to save FCM Token in AuthBloc: $e");
     }
   }
 }

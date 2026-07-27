@@ -76,11 +76,60 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
     }
   }
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descController.dispose();
-    super.dispose();
+  Future<void> _selectDateTime(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _dueDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: Theme.of(context).cardColor,
+              onSurface:
+                  Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      if (!context.mounted) return;
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_dueDate),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: AppTheme.primaryColor,
+                onPrimary: Colors.white,
+                surface: Theme.of(context).cardColor,
+                onSurface:
+                    Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      setState(() {
+        final time = pickedTime ?? TimeOfDay.fromDateTime(_dueDate);
+        _dueDate = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          time.hour,
+          time.minute,
+        );
+      });
+    }
   }
 
   void _save() {
@@ -289,35 +338,17 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                   }
                 },
               ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.calendar_today,
-                  color: AppTheme.primaryColor,
-                ),
-                title: const Text(
-                  'Due Date',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                subtitle: Text(DateFormat.yMMMd().format(_dueDate)),
-                trailing: TextButton(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _dueDate,
-                      firstDate: DateTime.now().subtract(
-                        const Duration(days: 365),
-                      ),
-                      lastDate: DateTime.now().add(const Duration(days: 3650)),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _dueDate = picked;
-                      });
-                    }
-                  },
-                  child: const Text('Choose Date'),
+              InkWell(
+                onTap: () => _selectDateTime(context),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Due Date & Time *',
+                    prefixIcon: Icon(Icons.access_time_outlined),
+                  ),
+                  child: Text(
+                    DateFormat.yMMMd().add_jm().format(_dueDate),
+                    style: theme.textTheme.bodyLarge,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

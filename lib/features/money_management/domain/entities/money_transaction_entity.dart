@@ -15,6 +15,7 @@ class MoneyTransactionEntity extends Equatable {
   final String status; // 'Pending' or 'Completed'
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isNotified;
 
   const MoneyTransactionEntity({
     required this.id,
@@ -31,6 +32,7 @@ class MoneyTransactionEntity extends Equatable {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.isNotified = false,
   });
 
   MoneyTransactionEntity copyWith({
@@ -48,6 +50,7 @@ class MoneyTransactionEntity extends Equatable {
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isNotified,
   }) {
     return MoneyTransactionEntity(
       id: id ?? this.id,
@@ -64,24 +67,26 @@ class MoneyTransactionEntity extends Equatable {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isNotified: isNotified ?? this.isNotified,
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        businessId,
-        transactionType,
-        personName,
-        phone,
-        amount,
-        paidAmount,
-        balanceAmount,
-        dueDate,
-        notes,
-        status,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    userId,
+    businessId,
+    transactionType,
+    personName,
+    phone,
+    amount,
+    paidAmount,
+    balanceAmount,
+    dueDate,
+    notes,
+    status,
+    createdAt,
+    updatedAt,
+    isNotified,
+  ];
 }

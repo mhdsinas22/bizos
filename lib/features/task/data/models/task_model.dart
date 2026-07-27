@@ -10,6 +10,7 @@ class TaskModel {
   final String createdBy;
   final String assignedto;
   final DateTime createdAt;
+  final bool isNotified;
 
   TaskModel({
     required this.id,
@@ -23,7 +24,31 @@ class TaskModel {
     required this.createdAt,
     this.ownerId = '',
     this.createdBy = '',
+    this.isNotified = false,
   });
+
+  static DateTime parseDueDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    final str = value.toString().trim();
+    if (str.isEmpty) return DateTime.now();
+
+    // Check for pure date format (YYYY-MM-DD) without time component
+    final dateOnlyRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+    if (dateOnlyRegex.hasMatch(str)) {
+      final parts = str.split('-');
+      return DateTime(
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+        int.parse(parts[2]),
+        0,
+        0,
+      );
+    }
+
+    final parsed = DateTime.tryParse(str);
+    if (parsed == null) return DateTime.now();
+    return parsed.toLocal();
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -32,12 +57,13 @@ class TaskModel {
       'title': title,
       'description': description,
       'priority': priority,
-      'dueDate': dueDate.toIso8601String(),
+      'due_date': dueDate.toUtc().toIso8601String(),
       'isCompleted': isCompleted,
       'ownerId': ownerId,
       'created_by': createdBy,
       "assigned_to": assignedto,
-      "created_at": createdAt.toIso8601String(),
+      "created_at": createdAt.toUtc().toIso8601String(),
+      "is_notified": isNotified,
     };
   }
 
@@ -48,16 +74,15 @@ class TaskModel {
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       priority: map['priority'] ?? 'Medium',
-      dueDate: map['dueDate'] != null
-          ? DateTime.parse(map['dueDate'])
-          : DateTime.now(),
+      dueDate: parseDueDate(map['due_date']),
       isCompleted: map['isCompleted'] ?? false,
       ownerId: map['ownerId'] ?? '',
       createdBy: map['created_by'] ?? '',
       assignedto: map["assigned_to"] ?? "",
       createdAt: map['created_at'] != null
-          ? DateTime.parse(map['created_at'])
+          ? parseDueDate(map['created_at'])
           : DateTime.now(),
+      isNotified: map["is_notified"] ?? false,
     );
   }
 
@@ -73,6 +98,7 @@ class TaskModel {
     String? createdBy,
     String? assignedto,
     DateTime? createdAt,
+    bool? isNotified,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -86,6 +112,7 @@ class TaskModel {
       createdBy: createdBy ?? this.createdBy,
       assignedto: assignedto ?? this.assignedto,
       createdAt: createdAt ?? this.createdAt,
+      isNotified: isNotified ?? this.isNotified,
     );
   }
 }
