@@ -1,31 +1,38 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
 import 'package:bizos/features/money_management/domain/usecases/get_transaction_history_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/get_transaction_by_id_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/add_payment_history_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/add_adjustment_history_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/add_reminder_history_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/update_history_item_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/delete_history_item_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/add_debt_usecase.dart';
 import 'package:bizos/features/money_management/presentation/bloc/transaction_details_event.dart';
 import 'package:bizos/features/money_management/presentation/bloc/transaction_details_state.dart';
 
-class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDetailsState> {
+class TransactionDetailsBloc
+    extends Bloc<TransactionDetailsEvent, TransactionDetailsState> {
   final GetTransactionHistoryUseCase getTransactionHistoryUseCase;
+  final GetTransactionByIdUseCase getTransactionByIdUseCase;
   final AddPaymentHistoryUseCase addPaymentHistoryUseCase;
   final AddAdjustmentHistoryUseCase addAdjustmentHistoryUseCase;
   final AddReminderHistoryUseCase addReminderHistoryUseCase;
   final UpdateHistoryItemUseCase updateHistoryItemUseCase;
   final DeleteHistoryItemUseCase deleteHistoryItemUseCase;
+  final AddDebtUseCase addDebtUseCase;
 
   static const int pageSize = 15;
 
   TransactionDetailsBloc({
     required this.getTransactionHistoryUseCase,
+    required this.getTransactionByIdUseCase,
     required this.addPaymentHistoryUseCase,
     required this.addAdjustmentHistoryUseCase,
     required this.addReminderHistoryUseCase,
     required this.updateHistoryItemUseCase,
     required this.deleteHistoryItemUseCase,
+    required this.addDebtUseCase,
   }) : super(TransactionDetailsInitial()) {
     on<LoadTransactionHistoryEvent>(_onLoadHistory);
     on<LoadMoreHistoryEvent>(_onLoadMoreHistory);
@@ -34,6 +41,7 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
     on<AddReminderEvent>(_onAddReminder);
     on<UpdateHistoryItemEvent>(_onUpdateHistoryItem);
     on<DeleteHistoryItemEvent>(_onDeleteHistoryItem);
+    on<AddDebtEvent>(_onAddDebt);
   }
 
   Future<void> _onLoadHistory(
@@ -55,13 +63,21 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
         ascending: event.ascending,
       );
 
-      emit(TransactionHistoryLoaded(
-        history: items,
-        hasMore: items.length >= pageSize,
-        filterEventType: event.filterEventType ?? 'All',
-        searchQuery: event.searchQuery ?? '',
-        ascending: event.ascending,
-      ));
+      final parentTx = await getTransactionByIdUseCase.execute(
+        id: event.transactionId,
+        isPersonal: event.isPersonal,
+      );
+
+      emit(
+        TransactionHistoryLoaded(
+          history: items,
+          parentTransaction: parentTx,
+          hasMore: items.length >= pageSize,
+          filterEventType: event.filterEventType ?? 'All',
+          searchQuery: event.searchQuery ?? '',
+          ascending: event.ascending,
+        ),
+      );
     } catch (e) {
       emit(TransactionDetailsError(e.toString()));
     }
@@ -72,7 +88,9 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
     Emitter<TransactionDetailsState> emit,
   ) async {
     final currentState = state;
-    if (currentState is! TransactionHistoryLoaded || !currentState.hasMore || currentState.isLoadingMore) {
+    if (currentState is! TransactionHistoryLoaded ||
+        !currentState.hasMore ||
+        currentState.isLoadingMore) {
       return;
     }
 
@@ -89,13 +107,17 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
         ascending: currentState.ascending,
       );
 
-      final updatedList = List<MoneyTransactionHistoryEntity>.from(currentState.history)..addAll(moreItems);
+      final updatedList = List<MoneyTransactionHistoryEntity>.from(
+        currentState.history,
+      )..addAll(moreItems);
 
-      emit(currentState.copyWith(
-        history: updatedList,
-        hasMore: moreItems.length >= pageSize,
-        isLoadingMore: false,
-      ));
+      emit(
+        currentState.copyWith(
+          history: updatedList,
+          hasMore: moreItems.length >= pageSize,
+          isLoadingMore: false,
+        ),
+      );
     } catch (e) {
       emit(currentState.copyWith(isLoadingMore: false));
     }
@@ -117,14 +139,22 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
         createdBy: event.createdBy,
       );
 
-      add(LoadTransactionHistoryEvent(
-        transactionId: event.transactionId,
-        isPersonal: event.isPersonal,
-        isRefresh: true,
-        filterEventType: currentState is TransactionHistoryLoaded ? currentState.filterEventType : 'All',
-        searchQuery: currentState is TransactionHistoryLoaded ? currentState.searchQuery : '',
-        ascending: currentState is TransactionHistoryLoaded ? currentState.ascending : false,
-      ));
+      add(
+        LoadTransactionHistoryEvent(
+          transactionId: event.transactionId,
+          isPersonal: event.isPersonal,
+          isRefresh: true,
+          filterEventType: currentState is TransactionHistoryLoaded
+              ? currentState.filterEventType
+              : 'All',
+          searchQuery: currentState is TransactionHistoryLoaded
+              ? currentState.searchQuery
+              : '',
+          ascending: currentState is TransactionHistoryLoaded
+              ? currentState.ascending
+              : false,
+        ),
+      );
     } catch (e) {
       emit(TransactionDetailsError(e.toString()));
     }
@@ -145,14 +175,22 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
         createdBy: event.createdBy,
       );
 
-      add(LoadTransactionHistoryEvent(
-        transactionId: event.transactionId,
-        isPersonal: event.isPersonal,
-        isRefresh: true,
-        filterEventType: currentState is TransactionHistoryLoaded ? currentState.filterEventType : 'All',
-        searchQuery: currentState is TransactionHistoryLoaded ? currentState.searchQuery : '',
-        ascending: currentState is TransactionHistoryLoaded ? currentState.ascending : false,
-      ));
+      add(
+        LoadTransactionHistoryEvent(
+          transactionId: event.transactionId,
+          isPersonal: event.isPersonal,
+          isRefresh: true,
+          filterEventType: currentState is TransactionHistoryLoaded
+              ? currentState.filterEventType
+              : 'All',
+          searchQuery: currentState is TransactionHistoryLoaded
+              ? currentState.searchQuery
+              : '',
+          ascending: currentState is TransactionHistoryLoaded
+              ? currentState.ascending
+              : false,
+        ),
+      );
     } catch (e) {
       emit(TransactionDetailsError(e.toString()));
     }
@@ -172,14 +210,22 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
         createdBy: event.createdBy,
       );
 
-      add(LoadTransactionHistoryEvent(
-        transactionId: event.transactionId,
-        isPersonal: event.isPersonal,
-        isRefresh: true,
-        filterEventType: currentState is TransactionHistoryLoaded ? currentState.filterEventType : 'All',
-        searchQuery: currentState is TransactionHistoryLoaded ? currentState.searchQuery : '',
-        ascending: currentState is TransactionHistoryLoaded ? currentState.ascending : false,
-      ));
+      add(
+        LoadTransactionHistoryEvent(
+          transactionId: event.transactionId,
+          isPersonal: event.isPersonal,
+          isRefresh: true,
+          filterEventType: currentState is TransactionHistoryLoaded
+              ? currentState.filterEventType
+              : 'All',
+          searchQuery: currentState is TransactionHistoryLoaded
+              ? currentState.searchQuery
+              : '',
+          ascending: currentState is TransactionHistoryLoaded
+              ? currentState.ascending
+              : false,
+        ),
+      );
     } catch (e) {
       emit(TransactionDetailsError(e.toString()));
     }
@@ -197,14 +243,22 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
         isPersonal: event.isPersonal,
       );
 
-      add(LoadTransactionHistoryEvent(
-        transactionId: event.historyItem.transactionId,
-        isPersonal: event.isPersonal,
-        isRefresh: true,
-        filterEventType: currentState is TransactionHistoryLoaded ? currentState.filterEventType : 'All',
-        searchQuery: currentState is TransactionHistoryLoaded ? currentState.searchQuery : '',
-        ascending: currentState is TransactionHistoryLoaded ? currentState.ascending : false,
-      ));
+      add(
+        LoadTransactionHistoryEvent(
+          transactionId: event.historyItem.transactionId,
+          isPersonal: event.isPersonal,
+          isRefresh: true,
+          filterEventType: currentState is TransactionHistoryLoaded
+              ? currentState.filterEventType
+              : 'All',
+          searchQuery: currentState is TransactionHistoryLoaded
+              ? currentState.searchQuery
+              : '',
+          ascending: currentState is TransactionHistoryLoaded
+              ? currentState.ascending
+              : false,
+        ),
+      );
     } catch (e) {
       emit(TransactionDetailsError(e.toString()));
     }
@@ -223,16 +277,60 @@ class TransactionDetailsBloc extends Bloc<TransactionDetailsEvent, TransactionDe
         isPersonal: event.isPersonal,
       );
 
-      add(LoadTransactionHistoryEvent(
-        transactionId: event.transactionId,
+      add(
+        LoadTransactionHistoryEvent(
+          transactionId: event.transactionId,
+          isPersonal: event.isPersonal,
+          isRefresh: true,
+          filterEventType: currentState is TransactionHistoryLoaded
+              ? currentState.filterEventType
+              : 'All',
+          searchQuery: currentState is TransactionHistoryLoaded
+              ? currentState.searchQuery
+              : '',
+          ascending: currentState is TransactionHistoryLoaded
+              ? currentState.ascending
+              : false,
+        ),
+      );
+    } catch (e) {
+      emit(TransactionDetailsError(e.toString()));
+    }
+  }
+
+  Future<void> _onAddDebt(
+    AddDebtEvent event,
+    Emitter<TransactionDetailsState> emit,
+  ) async {
+    final currentState = state;
+    emit(TransactionDetailsActionSubmitting());
+    try {
+      final updatedTx = await addDebtUseCase.execute(
+        debt: event.debt,
         isPersonal: event.isPersonal,
-        isRefresh: true,
-        filterEventType: currentState is TransactionHistoryLoaded ? currentState.filterEventType : 'All',
-        searchQuery: currentState is TransactionHistoryLoaded ? currentState.searchQuery : '',
-        ascending: currentState is TransactionHistoryLoaded ? currentState.ascending : false,
-      ));
+      );
+
+      emit(const DebtAddedSuccess(message: 'Debt added successfully.'));
+
+      add(
+        LoadTransactionHistoryEvent(
+          transactionId: updatedTx.id,
+          isPersonal: event.isPersonal,
+          isRefresh: true,
+          filterEventType: currentState is TransactionHistoryLoaded
+              ? currentState.filterEventType
+              : 'All',
+          searchQuery: currentState is TransactionHistoryLoaded
+              ? currentState.searchQuery
+              : '',
+          ascending: currentState is TransactionHistoryLoaded
+              ? currentState.ascending
+              : false,
+        ),
+      );
     } catch (e) {
       emit(TransactionDetailsError(e.toString()));
     }
   }
 }
+

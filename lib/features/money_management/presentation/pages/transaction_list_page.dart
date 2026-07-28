@@ -6,9 +6,11 @@ import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
 import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
 import 'package:bizos/features/money_management/domain/usecases/add_adjustment_history_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/add_debt_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/add_payment_history_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/add_reminder_history_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/delete_history_item_usecase.dart';
+import 'package:bizos/features/money_management/domain/usecases/get_transaction_by_id_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/get_transaction_history_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/share_transaction_statement_usecase.dart';
 import 'package:bizos/features/money_management/domain/usecases/update_history_item_usecase.dart';
@@ -19,6 +21,7 @@ import 'package:bizos/features/money_management/presentation/bloc/personal_money
 import 'package:bizos/features/money_management/presentation/bloc/transaction_details_bloc.dart';
 import 'package:bizos/features/money_management/presentation/pages/add_transaction_page.dart';
 import 'package:bizos/features/money_management/presentation/pages/transaction_details_page.dart';
+import 'package:bizos/features/money_management/presentation/utils/transaction_event_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -61,29 +64,58 @@ class _TransactionListPageState extends State<TransactionListPage> {
 
   void _navigateToDetails(BuildContext context, MoneyTransactionEntity tx) {
     final repository = context.read<MoneyManagementRepository>();
+    final isPersonal = widget.businessId == null;
+
+    final personalBloc = isPersonal
+        ? context.read<PersonalMoneyManagementBloc>()
+        : null;
+    final businessBloc = !isPersonal
+        ? context.read<BusinessMoneyManagementBloc>()
+        : null;
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BlocProvider(
-          create: (context) => TransactionDetailsBloc(
-            getTransactionHistoryUseCase: GetTransactionHistoryUseCase(repository),
-            addPaymentHistoryUseCase: AddPaymentHistoryUseCase(repository),
-            addAdjustmentHistoryUseCase: AddAdjustmentHistoryUseCase(repository),
-            addReminderHistoryUseCase: AddReminderHistoryUseCase(repository),
-            updateHistoryItemUseCase: UpdateHistoryItemUseCase(repository),
-            deleteHistoryItemUseCase: DeleteHistoryItemUseCase(repository),
-          ),
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            if (isPersonal && personalBloc != null)
+              BlocProvider.value(value: personalBloc),
+            if (!isPersonal && businessBloc != null)
+              BlocProvider.value(value: businessBloc),
+            BlocProvider(
+              create: (context) => TransactionDetailsBloc(
+                getTransactionHistoryUseCase: GetTransactionHistoryUseCase(
+                  repository,
+                ),
+                getTransactionByIdUseCase: GetTransactionByIdUseCase(
+                  repository,
+                ),
+                addPaymentHistoryUseCase: AddPaymentHistoryUseCase(repository),
+                addAdjustmentHistoryUseCase: AddAdjustmentHistoryUseCase(
+                  repository,
+                ),
+                addReminderHistoryUseCase: AddReminderHistoryUseCase(
+                  repository,
+                ),
+                updateHistoryItemUseCase: UpdateHistoryItemUseCase(repository),
+                deleteHistoryItemUseCase: DeleteHistoryItemUseCase(repository),
+                addDebtUseCase: AddDebtUseCase(repository),
+              ),
+            ),
+          ],
           child: TransactionDetailsPage(
             transaction: tx,
-            isPersonal: widget.businessId == null,
+            isPersonal: isPersonal,
           ),
         ),
       ),
     );
   }
 
-  Future<void> _shareStatement(BuildContext context, MoneyTransactionEntity tx) async {
+  Future<void> _shareStatement(
+    BuildContext context,
+    MoneyTransactionEntity tx,
+  ) async {
     try {
       final repository = context.read<MoneyManagementRepository>();
       final useCase = ShareTransactionStatementUseCase(repository);
@@ -193,9 +225,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
     }
 
     if (state is TransactionsLoaded) {
-      final allList = widget.transactionType == 'pay'
-          ? state.payTransactions
-          : state.receiveTransactions;
+      final isPay = widget.transactionType == 'pay';
+      final allList = isPay ? state.payTransactions : state.receiveTransactions;
 
       // Apply Search Filter
       var filteredList = allList.where((tx) {
@@ -211,10 +242,24 @@ class _TransactionListPageState extends State<TransactionListPage> {
 
         return matchesSearch && matchesStatus;
       }).toList();
+      filteredList.sort((a, b) {
+        final aIsPending = a.status.toLowerCase() == 'pending';
+        final bIsPending = b.status.toLowerCase() == 'pending';
 
-      final typeLabel = widget.transactionType == 'pay'
-          ? 'Money to Pay'
-          : 'Money to Receive';
+        if (aIsPending && !bIsPending) {
+          return -1; // 'a' (Pending) primary aayi mukhalil varum
+        } else if (!aIsPending && bIsPending) {
+          return 1; // 'b' (Pending) primary aayi mukhalil varum
+        }
+
+        // Render order based on latest due dates if both have same status
+        if (a.dueDate != null && b.dueDate != null) {
+          return a.dueDate!.compareTo(b.dueDate!);
+        }
+
+        return 0;
+      });
+      final typeLabel = isPay ? 'Money to Pay' : 'Money to Receive';
 
       return ResponsiveCenterBody(
         child: Column(
@@ -320,6 +365,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                   Expanded(
                                     child: Text(
                                       tx.personName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium
@@ -328,6 +375,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                           ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
@@ -341,6 +389,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                     ),
                                     child: Text(
                                       tx.status,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: isPending
                                             ? AppTheme.warning
@@ -378,7 +428,10 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                         value: 'details',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.timeline_outlined, size: 16),
+                                            Icon(
+                                              Icons.timeline_outlined,
+                                              size: 16,
+                                            ),
                                             SizedBox(width: 8),
                                             Text('History & Details'),
                                           ],
@@ -388,7 +441,10 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                         value: 'share',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.share_outlined, size: 16),
+                                            Icon(
+                                              Icons.share_outlined,
+                                              size: 16,
+                                            ),
                                             SizedBox(width: 8),
                                             Text('Share Statement'),
                                           ],
@@ -437,12 +493,16 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                       color: Colors.grey,
                                     ),
                                     const SizedBox(width: 6),
-                                    Text(
-                                      tx.phone,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(color: Colors.grey),
+                                    Expanded(
+                                      child: Text(
+                                        tx.phone,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(color: Colors.grey),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -457,29 +517,41 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                 childAspectRatio: 2.2,
                                 children: [
                                   _buildDetailItem(
-                                    'Total Debt',
+                                    TransactionEventMapper.getTotalAmountLabel(
+                                      transactionType: widget.transactionType,
+                                    ),
                                     CurrencyFormatter.format(tx.amount),
                                   ),
                                   _buildDetailItem(
-                                    'Paid',
+                                    TransactionEventMapper.getPaidAmountLabel(
+                                      transactionType: widget.transactionType,
+                                    ),
                                     CurrencyFormatter.format(tx.paidAmount),
                                     color: AppTheme.success,
                                   ),
                                   _buildDetailItem(
-                                    'Outstanding',
+                                    TransactionEventMapper.getBalanceAmountLabel(
+                                      transactionType: widget.transactionType,
+                                    ),
                                     CurrencyFormatter.format(tx.balanceAmount),
                                     color: isPending
-                                        ? AppTheme.error
+                                        ? (isPay
+                                              ? AppTheme.error
+                                              : AppTheme.success)
                                         : Colors.grey,
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final dueDateText = tx.dueDate != null
+                                      ? DateFormat('dd MMM yyyy • h:mm a')
+                                          .format(tx.dueDate!)
+                                      : 'N/A';
+
+                                  final dueDateWidget = Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const Icon(
                                         Icons.calendar_month_outlined,
@@ -487,36 +559,78 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                         color: Colors.grey,
                                       ),
                                       const SizedBox(width: 6),
-                                      Text(
-                                        'Due: ${tx.dueDate != null ? DateFormat.yMMMd().format(tx.dueDate!) : 'N/A'}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(color: Colors.grey),
+                                      Flexible(
+                                        child: Text(
+                                          'Due: $dueDateText',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(color: Colors.grey),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ],
-                                  ),
-                                  Row(
+                                  );
+
+                                  final actionWidget = InkWell(
+                                    onTap: () =>
+                                        _navigateToDetails(context, tx),
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'View History Timeline',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(
+                                                  color:
+                                                      AppTheme.primaryColor,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 12,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+
+                                  if (constraints.maxWidth < 340) {
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        dueDateWidget,
+                                        const SizedBox(height: 8),
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: actionWidget,
+                                        ),
+                                      ],
+                                    );
+                                  }
+
+                                  return Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'View History Timeline',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(
-                                              color: AppTheme.primaryColor,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.arrow_forward_ios,
-                                        size: 12,
-                                        color: AppTheme.primaryColor,
-                                      ),
+                                      Expanded(child: dueDateWidget),
+                                      const SizedBox(width: 8),
+                                      actionWidget,
                                     ],
-                                  ),
-                                ],
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -538,6 +652,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
       children: [
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: 10,
             color: Colors.grey,
@@ -545,12 +661,16 @@ class _TransactionListPageState extends State<TransactionListPage> {
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: color,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ),
       ],
@@ -578,7 +698,11 @@ class _TransactionListPageState extends State<TransactionListPage> {
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: Text(widget.transactionType == 'pay' ? 'Add Debt' : 'Add Credit'),
+        label: Text(
+          TransactionEventMapper.getAddTransactionLabel(
+            transactionType: widget.transactionType,
+          ),
+        ),
       ),
       body: widget.businessId != null
           ? BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(

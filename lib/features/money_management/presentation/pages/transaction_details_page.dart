@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/core/widgets/empty_state.dart';
 import 'package:bizos/core/widgets/responsive_layout.dart';
+import 'package:bizos/features/money_management/domain/entities/debt_entity.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
 import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
@@ -14,9 +16,9 @@ import 'package:bizos/features/money_management/presentation/bloc/transaction_de
 import 'package:bizos/features/money_management/presentation/bloc/transaction_details_event.dart';
 import 'package:bizos/features/money_management/presentation/bloc/transaction_details_state.dart';
 import 'package:bizos/features/money_management/presentation/pages/add_transaction_page.dart';
-import 'package:bizos/features/money_management/presentation/widgets/add_adjustment_modal.dart';
+import 'package:bizos/features/money_management/presentation/utils/transaction_event_mapper.dart';
+import 'package:bizos/features/money_management/presentation/widgets/add_debt_modal.dart';
 import 'package:bizos/features/money_management/presentation/widgets/add_payment_modal.dart';
-import 'package:bizos/features/money_management/presentation/widgets/add_reminder_modal.dart';
 import 'package:bizos/features/money_management/presentation/widgets/history_skeleton_loader.dart';
 import 'package:bizos/features/money_management/presentation/widgets/timeline_bottom_sheet_widget.dart';
 import 'package:bizos/features/money_management/presentation/widgets/timeline_card_widget.dart';
@@ -24,7 +26,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class TransactionDetailsPage extends StatefulWidget {
   final MoneyTransactionEntity transaction;
@@ -48,14 +49,9 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   bool _ascending = false;
   late MoneyTransactionEntity _currentTransaction;
 
-  final List<String> _filters = [
-    'All',
-    'Payments',
-    'Debt Created',
-    'Adjustments',
-    'Reminders',
-    'Status',
-  ];
+  List<String> get _filters => TransactionEventMapper.getFilterOptions(
+        transactionType: _currentTransaction.transactionType,
+      );
 
   @override
   void initState() {
@@ -82,47 +78,57 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       context.read<TransactionDetailsBloc>().add(
-            LoadMoreHistoryEvent(
-              transactionId: _currentTransaction.id,
-              isPersonal: widget.isPersonal,
-            ),
-          );
+        LoadMoreHistoryEvent(
+          transactionId: _currentTransaction.id,
+          isPersonal: widget.isPersonal,
+        ),
+      );
     }
   }
 
   void _loadHistory({bool isRefresh = false}) {
     context.read<TransactionDetailsBloc>().add(
-          LoadTransactionHistoryEvent(
-            transactionId: _currentTransaction.id,
-            isPersonal: widget.isPersonal,
-            isRefresh: isRefresh,
-            filterEventType: _selectedFilter,
-            searchQuery: _searchController.text.trim(),
-            ascending: _ascending,
-          ),
-        );
+      LoadTransactionHistoryEvent(
+        transactionId: _currentTransaction.id,
+        isPersonal: widget.isPersonal,
+        isRefresh: isRefresh,
+        filterEventType: TransactionEventMapper.mapFilterToEventType(_selectedFilter),
+        searchQuery: _searchController.text.trim(),
+        ascending: _ascending,
+      ),
+    );
   }
 
-  Future<void> _makeCall() async {
-    final cleanPhone = _currentTransaction.phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    if (cleanPhone.isEmpty) return;
-    final uri = Uri.parse('tel:$cleanPhone');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
+  // Future<void> _makeCall() async {
+  //   final cleanPhone = _currentTransaction.phone.replaceAll(
+  //     RegExp(r'[^0-9+]'),
+  //     '',
+  //   );
+  //   if (cleanPhone.isEmpty) return;
+  //   final uri = Uri.parse('tel:$cleanPhone');
+  //   if (await canLaunchUrl(uri)) {
+  //     await launchUrl(uri);
+  //   }
+  // }
 
-  Future<void> _sendWhatsApp() async {
-    final cleanPhone = _currentTransaction.phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    if (cleanPhone.isEmpty) return;
-    final text = 'Hi ${_currentTransaction.personName}, regarding account balance ₹${_currentTransaction.balanceAmount.toStringAsFixed(2)}. Thank you!';
-    final uri = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(text)}');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
+  // Future<void> _sendWhatsApp() async {
+  //   final cleanPhone = _currentTransaction.phone.replaceAll(
+  //     RegExp(r'[^0-9+]'),
+  //     '',
+  //   );
+  //   if (cleanPhone.isEmpty) return;
+  //   final text =
+  //       'Hi ${_currentTransaction.personName}, regarding account balance ₹${_currentTransaction.balanceAmount.toStringAsFixed(2)}. Thank you!';
+  //   final uri = Uri.parse(
+  //     'https://wa.me/$cleanPhone?text=${Uri.encodeComponent(text)}',
+  //   );
+  //   if (await canLaunchUrl(uri)) {
+  //     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  //   }
+  // }
 
   Future<void> _shareSummary() async {
     try {
@@ -155,6 +161,73 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     }
   }
 
+  void _openAddDebt() {
+    final detailsBloc = context.read<TransactionDetailsBloc>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => AddDebtModal(
+        transactionId: _currentTransaction.id,
+        personName: _currentTransaction.personName,
+        phone: _currentTransaction.phone,
+        transactionType: _currentTransaction.transactionType,
+        isPersonal: widget.isPersonal,
+        userId: _currentTransaction.userId,
+        businessId: _currentTransaction.businessId,
+        onSave: (amount, dueDate, notes) async {
+          final now = DateTime.now();
+          final debt = DebtEntity(
+            transactionId: _currentTransaction.id,
+            userId: _currentTransaction.userId,
+            businessId: _currentTransaction.businessId,
+            transactionType: _currentTransaction.transactionType,
+            personName: _currentTransaction.personName,
+            phone: _currentTransaction.phone,
+            amount: amount,
+            paidAmount: 0.0,
+            balanceAmount: amount,
+            dueDate: dueDate,
+            notes: notes,
+            status: 'Pending',
+            createdAt: now,
+            updatedAt: now,
+          );
+
+          final completer = Completer<void>();
+          late StreamSubscription sub;
+
+          sub = detailsBloc.stream.listen((state) {
+            if (state is DebtAddedSuccess) {
+              sub.cancel();
+              completer.complete();
+            } else if (state is TransactionDetailsError) {
+              sub.cancel();
+              completer.completeError(Exception(state.message));
+            }
+          });
+
+          detailsBloc.add(
+            AddDebtEvent(
+              debt: debt,
+              isPersonal: widget.isPersonal,
+            ),
+          );
+
+          try {
+            await completer.future;
+            _loadHistory(isRefresh: true);
+          } finally {
+            sub.cancel();
+          }
+        },
+      ),
+    );
+  }
+
   void _openAddPayment() {
     showModalBottomSheet(
       context: context,
@@ -166,67 +239,17 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         transactionId: _currentTransaction.id,
         isPersonal: widget.isPersonal,
         currentBalance: _currentTransaction.balanceAmount,
+        transactionType: _currentTransaction.transactionType,
         onSave: (amount, method, notes) {
           context.read<TransactionDetailsBloc>().add(
-                AddPaymentEvent(
-                  transactionId: _currentTransaction.id,
-                  amount: amount,
-                  paymentMethod: method,
-                  notes: notes,
-                  isPersonal: widget.isPersonal,
-                ),
-              );
-        },
-      ),
-    );
-  }
-
-  void _openAddAdjustment() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => AddAdjustmentModal(
-        transactionId: _currentTransaction.id,
-        isPersonal: widget.isPersonal,
-        onSave: (amount, notes) {
-          context.read<TransactionDetailsBloc>().add(
-                AddAdjustmentEvent(
-                  transactionId: _currentTransaction.id,
-                  amount: amount,
-                  notes: notes,
-                  isPersonal: widget.isPersonal,
-                ),
-              );
-        },
-      ),
-    );
-  }
-
-  void _openAddReminder() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => AddReminderModal(
-        transactionId: _currentTransaction.id,
-        personName: _currentTransaction.personName,
-        phone: _currentTransaction.phone,
-        balance: _currentTransaction.balanceAmount,
-        transactionType: _currentTransaction.transactionType,
-        isPersonal: widget.isPersonal,
-        onSave: (notes) {
-          context.read<TransactionDetailsBloc>().add(
-                AddReminderEvent(
-                  transactionId: _currentTransaction.id,
-                  notes: notes,
-                  isPersonal: widget.isPersonal,
-                ),
-              );
+            AddPaymentEvent(
+              transactionId: _currentTransaction.id,
+              amount: amount,
+              paymentMethod: method,
+              notes: notes,
+              isPersonal: widget.isPersonal,
+            ),
+          );
         },
       ),
     );
@@ -243,30 +266,33 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         transactionType: _currentTransaction.transactionType,
         onEdit: (updated) {
           context.read<TransactionDetailsBloc>().add(
-                UpdateHistoryItemEvent(
-                  historyItem: updated,
-                  isPersonal: widget.isPersonal,
-                ),
-              );
+            UpdateHistoryItemEvent(
+              historyItem: updated,
+              isPersonal: widget.isPersonal,
+            ),
+          );
         },
         onDelete: () {
           context.read<TransactionDetailsBloc>().add(
-                DeleteHistoryItemEvent(
-                  historyId: item.id,
-                  transactionId: _currentTransaction.id,
-                  isPersonal: widget.isPersonal,
-                ),
-              );
+            DeleteHistoryItemEvent(
+              historyId: item.id,
+              transactionId: _currentTransaction.id,
+              isPersonal: widget.isPersonal,
+            ),
+          );
         },
       ),
     );
   }
 
   Map<String, List<MoneyTransactionHistoryEntity>> _groupHistoryByDate(
-      List<MoneyTransactionHistoryEntity> items) {
+    List<MoneyTransactionHistoryEntity> items,
+  ) {
     final Map<String, List<MoneyTransactionHistoryEntity>> grouped = {};
     for (final item in items) {
-      final dateKey = DateFormat('dd MMMM yyyy').format(item.createdAt.toLocal());
+      final dateKey = DateFormat(
+        'dd MMMM yyyy',
+      ).format(item.createdAt.toLocal());
       grouped.putIfAbsent(dateKey, () => []).add(item);
     }
     return grouped;
@@ -276,6 +302,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   Widget build(BuildContext context) {
     final isPay = _currentTransaction.transactionType == 'pay';
     final typeTitle = isPay ? 'Money to Pay' : 'Money to Receive';
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = screenWidth < 360 ? 10.0 : 16.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -283,7 +311,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit Customer/Debt',
+            tooltip: isPay ? 'Edit Customer/Debt' : 'Edit Customer/Receivable',
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -309,7 +337,9 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           BlocListener<PersonalMoneyManagementBloc, MoneyManagementState>(
             listener: (context, state) {
               if (widget.isPersonal && state is TransactionsLoaded) {
-                final match = state.transactions.where((t) => t.id == _currentTransaction.id).firstOrNull;
+                final match = state.transactions
+                    .where((t) => t.id == _currentTransaction.id)
+                    .firstOrNull;
                 if (match != null) {
                   setState(() => _currentTransaction = match);
                 }
@@ -319,10 +349,28 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           BlocListener<BusinessMoneyManagementBloc, MoneyManagementState>(
             listener: (context, state) {
               if (!widget.isPersonal && state is TransactionsLoaded) {
-                final match = state.transactions.where((t) => t.id == _currentTransaction.id).firstOrNull;
+                final match = state.transactions
+                    .where((t) => t.id == _currentTransaction.id)
+                    .firstOrNull;
                 if (match != null) {
                   setState(() => _currentTransaction = match);
                 }
+              }
+            },
+          ),
+          BlocListener<TransactionDetailsBloc, TransactionDetailsState>(
+            listener: (context, state) {
+              if (state is TransactionHistoryLoaded && state.parentTransaction != null) {
+                setState(() {
+                  _currentTransaction = state.parentTransaction!;
+                });
+              } else if (state is TransactionDetailsError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppTheme.error,
+                  ),
+                );
               }
             },
           ),
@@ -331,7 +379,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           onRefresh: () async => _loadHistory(isRefresh: true),
           child: ResponsiveCenterBody(
             maxWidth: 1100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth >= 800;
@@ -350,7 +398,6 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                             children: [
                               _buildCustomerHeaderCard(context),
                               const SizedBox(height: 16),
-                              _buildActionStrip(context),
                             ],
                           ),
                         ),
@@ -384,8 +431,6 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     children: [
                       _buildCustomerHeaderCard(context),
                       const SizedBox(height: 16),
-                      _buildActionStrip(context),
-                      const SizedBox(height: 20),
                       _buildTimelineHeaderAndFilters(context),
                       const SizedBox(height: 16),
                       _buildTimelineContent(context),
@@ -406,181 +451,236 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     final isPay = _currentTransaction.transactionType == 'pay';
 
     return GlassCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppTheme.primaryColor.withOpacity(0.15),
-                child: Text(
-                  _currentTransaction.personName.isNotEmpty
-                      ? _currentTransaction.personName[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Row: Avatar + Customer Name + Phone + Actions
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: isPay
+                      ? AppTheme.error.withOpacity(0.15)
+                      : AppTheme.success.withOpacity(0.15),
+                  child: Text(
+                    _currentTransaction.personName.isNotEmpty
+                        ? _currentTransaction.personName[0].toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isPay ? AppTheme.error : AppTheme.success,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _currentTransaction.personName,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (_currentTransaction.phone.isNotEmpty)
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        _currentTransaction.phone,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDark ? Colors.white60 : Colors.black54,
+                        _currentTransaction.personName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                  ],
+                      if (_currentTransaction.phone.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          _currentTransaction.phone,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _currentTransaction.status.toLowerCase() == 'completed'
-                      ? AppTheme.success.withOpacity(0.15)
-                      : AppTheme.error.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _currentTransaction.status,
-                  style: TextStyle(
+                const SizedBox(width: 8),
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
                     color: _currentTransaction.status.toLowerCase() == 'completed'
-                        ? AppTheme.success
-                        : AppTheme.error,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                        ? AppTheme.success.withOpacity(0.15)
+                        : AppTheme.warning.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _currentTransaction.status,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color:
+                          _currentTransaction.status.toLowerCase() == 'completed'
+                              ? AppTheme.success
+                              : AppTheme.warning,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Divider(),
-          const SizedBox(height: 12),
-          // Hero Outstanding Balance
-          Text(
-            'OUTSTANDING BALANCE',
-            style: theme.textTheme.labelMedium?.copyWith(
-              letterSpacing: 1.2,
-              color: isDark ? Colors.white54 : Colors.black45,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            CurrencyFormatter.format(_currentTransaction.balanceAmount),
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: 32,
-              color: _currentTransaction.balanceAmount > 0
-                  ? (isPay ? AppTheme.error : AppTheme.success)
-                  : Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Stat Cards Grid
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatTile(
-                  context,
-                  'Total Debt',
-                  CurrencyFormatter.format(_currentTransaction.amount),
-                  Icons.account_balance_wallet_outlined,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatTile(
-                  context,
-                  'Paid Amount',
-                  CurrencyFormatter.format(_currentTransaction.paidAmount),
-                  Icons.check_circle_outline,
-                  color: AppTheme.success,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatTile(
-                  context,
-                  'Due Date',
-                  _currentTransaction.dueDate != null
-                      ? DateFormat('dd MMM').format(_currentTransaction.dueDate!)
-                      : 'No Due',
-                  Icons.calendar_today_outlined,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          // Quick Action Buttons
-          Row(
-            children: [
-              if (_currentTransaction.phone.isNotEmpty) ...[
-                IconButton.filledTonal(
-                  onPressed: _makeCall,
-                  icon: const Icon(Icons.call),
-                  tooltip: 'Call Customer',
-                ),
-                const SizedBox(width: 8),
-                IconButton.filledTonal(
-                  onPressed: _sendWhatsApp,
-                  icon: const Icon(Icons.chat, color: Colors.green),
-                  tooltip: 'WhatsApp',
-                ),
-                const SizedBox(width: 8),
               ],
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _openAddPayment,
-                  icon: const Icon(Icons.add_card),
-                  label: const Text('Record Payment'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.success,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 12),
+            // Hero Outstanding Balance / Amount to Receive
+            Text(
+              TransactionEventMapper.getHeroBalanceLabel(
+                transactionType: _currentTransaction.transactionType,
+              ),
+              style: theme.textTheme.labelMedium?.copyWith(
+                letterSpacing: 1.2,
+                color: isDark ? Colors.white54 : Colors.black45,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                CurrencyFormatter.format(_currentTransaction.balanceAmount),
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 32,
+                  color: _currentTransaction.balanceAmount > 0
+                      ? (isPay ? AppTheme.error : AppTheme.success)
+                      : Colors.grey,
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+            const SizedBox(height: 16),
+            // Stat Cards Grid
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatTile(
+                    context,
+                    TransactionEventMapper.getTotalAmountLabel(
+                      transactionType: _currentTransaction.transactionType,
+                    ),
+                    CurrencyFormatter.format(_currentTransaction.amount),
+                    Icons.account_balance_wallet_outlined,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _buildStatTile(
+                    context,
+                    TransactionEventMapper.getPaidAmountLabel(
+                      transactionType: _currentTransaction.transactionType,
+                    ),
+                    CurrencyFormatter.format(_currentTransaction.paidAmount),
+                    Icons.check_circle_outline,
+                    color: AppTheme.success,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _buildStatTile(
+                    context,
+                    'Due Date',
+                    _currentTransaction.dueDate != null
+                        ? DateFormat('dd MMM yyyy').format(_currentTransaction.dueDate!)
+                        : 'No Due',
+                    Icons.calendar_today_outlined,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            // Quick Action Buttons
+            LayoutBuilder(
+              builder: (context, actionConstraints) {
+                final primaryLabel = TransactionEventMapper.getAddTransactionLabel(
+                  transactionType: _currentTransaction.transactionType,
+                );
+                final secondaryLabel = TransactionEventMapper.getPaymentActionLabel(
+                  transactionType: _currentTransaction.transactionType,
+                );
 
-  Widget _buildActionStrip(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _openAddAdjustment,
-            icon: const Icon(Icons.tune, size: 18),
-            label: const Text('Adjustment'),
-          ),
+                // Stack vertically if container width is too narrow (< 340px)
+                final shouldStack = actionConstraints.maxWidth < 340;
+
+                Widget buildActionButton({
+                  required VoidCallback onPressed,
+                  required IconData icon,
+                  required String label,
+                  required Color color,
+                }) {
+                  return SizedBox(
+                    height: 42,
+                    child: ElevatedButton.icon(
+                      onPressed: onPressed,
+                      icon: Icon(icon, size: 18),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          softWrap: false,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final btnPrimary = buildActionButton(
+                  onPressed: _openAddDebt,
+                  icon: Icons.receipt_long_outlined,
+                  label: primaryLabel,
+                  color: AppTheme.primaryColor,
+                );
+
+                final btnSecondary = buildActionButton(
+                  onPressed: _openAddPayment,
+                  icon: Icons.add_card,
+                  label: secondaryLabel,
+                  color: Colors.green,
+                );
+
+                if (shouldStack) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      btnPrimary,
+                      const SizedBox(height: 8),
+                      btnSecondary,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: btnPrimary),
+                    const SizedBox(width: 8),
+                    Expanded(child: btnSecondary),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _openAddReminder,
-            icon: const Icon(Icons.notifications_active_outlined, size: 18),
-            label: const Text('Log Reminder'),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -593,14 +693,20 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Transaction History Timeline',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                'Transaction History Timeline',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             IconButton(
-              icon: Icon(_ascending ? Icons.arrow_upward : Icons.arrow_downward),
+              icon: Icon(
+                _ascending ? Icons.arrow_upward : Icons.arrow_downward,
+              ),
               tooltip: _ascending ? 'Oldest First' : 'Newest First',
               onPressed: () {
                 setState(() => _ascending = !_ascending);
@@ -616,7 +722,10 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           decoration: InputDecoration(
             hintText: 'Search notes or payment details...',
             prefixIcon: const Icon(Icons.search, size: 20),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
@@ -630,6 +739,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         // Filter Chips
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
           child: Row(
             children: _filters.map((filter) {
               final isSelected = _selectedFilter == filter;
@@ -646,8 +756,12 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                   },
                   selectedColor: AppTheme.primaryColor.withOpacity(0.2),
                   labelStyle: TextStyle(
-                    color: isSelected ? AppTheme.primaryColor : theme.textTheme.bodyMedium?.color,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? AppTheme.primaryColor
+                        : theme.textTheme.bodyMedium?.color,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               );
@@ -687,7 +801,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
               child: EmptyState(
                 icon: Icons.history_toggle_off_outlined,
                 title: 'No History Events Found',
-                message: 'No timeline records match your search or filter selection.',
+                message:
+                    'No timeline records match your search or filter selection.',
               ),
             );
           }
@@ -713,7 +828,10 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 4,
+                    ),
                     child: Text(
                       dateKey,
                       style: theme.textTheme.labelMedium?.copyWith(
@@ -751,40 +869,48 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: color ?? Colors.grey),
+              Icon(icon, size: 13, color: color ?? Colors.grey),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   label,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: isDark ? Colors.white54 : Colors.black54,
+                    fontSize: 11,
                   ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              maxLines: 1,
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 }
+

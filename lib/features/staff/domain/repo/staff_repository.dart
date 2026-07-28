@@ -11,4 +11,5 @@ abstract class StaffRepository {
   Future<void> updateStaff(UserModel staff, List<String> selectedBusinessIds);
   Future<void> deleteStaff(String userId);
   Future<List<StaffBusinessModel>> getStaffBusinesses(String staffId);
+  Future<List<UserModel>> getStaffByBusiness(String businessId);
 }

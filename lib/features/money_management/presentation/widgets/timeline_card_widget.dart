@@ -2,6 +2,7 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
+import 'package:bizos/features/money_management/presentation/utils/transaction_event_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -21,6 +22,8 @@ class TimelineCardWidget extends StatelessWidget {
     switch (historyItem.eventType) {
       case 'debt_created':
         return Icons.note_add_outlined;
+      case 'debt_added':
+        return Icons.add_shopping_cart_outlined;
       case 'payment':
       case 'payment_updated':
         return Icons.payments_outlined;
@@ -36,34 +39,23 @@ class TimelineCardWidget extends StatelessWidget {
   }
 
   String _getEventTitle() {
-    switch (historyItem.eventType) {
-      case 'debt_created':
-        return 'Debt Created';
-      case 'payment':
-        return transactionType == 'pay' ? 'Payment Made' : 'Payment Received';
-      case 'payment_updated':
-        return 'Payment Updated';
-      case 'payment_deleted':
-        return 'Payment Removed';
-      case 'adjustment':
-        return 'Balance Adjustment';
-      case 'reminder_sent':
-        return 'Payment Reminder Sent';
-      case 'status_changed':
-        return 'Status Changed';
-      default:
-        return historyItem.eventType.replaceAll('_', ' ').toUpperCase();
-    }
+    return TransactionEventMapper.formatEventTitle(
+      historyItem.eventType,
+      transactionType: transactionType,
+    );
   }
 
   Color _getEventColor(BuildContext context) {
+    final isReceive = transactionType == 'receive';
     switch (historyItem.eventType) {
       case 'payment':
       case 'payment_updated':
         return AppTheme.success;
       case 'debt_created':
+      case 'debt_added':
+        return isReceive ? AppTheme.primaryColor : AppTheme.error;
       case 'adjustment':
-        return AppTheme.error;
+        return isReceive ? Colors.purple : AppTheme.error;
       case 'reminder_sent':
         return Colors.orange;
       case 'status_changed':
@@ -107,7 +99,7 @@ class TimelineCardWidget extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Flexible(
+                      Expanded(
                         child: Text(
                           _getEventTitle(),
                           style: theme.textTheme.titleMedium?.copyWith(
@@ -115,15 +107,20 @@ class TimelineCardWidget extends StatelessWidget {
                             fontSize: 15,
                           ),
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       if (historyItem.amount > 0 || isPayment)
-                        Text(
-                          '${isPayment ? '+' : ''}${CurrencyFormatter.format(historyItem.amount)}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: isPayment ? AppTheme.success : AppTheme.error,
-                            fontSize: 15,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '${isPayment ? '+' : ''}${CurrencyFormatter.format(historyItem.amount)}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: isPayment ? AppTheme.success : AppTheme.error,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                     ],
@@ -157,15 +154,25 @@ class TimelineCardWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (historyItem.notes.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      historyItem.notes,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : Colors.black87,
-                      ),
-                    ),
-                  ],
+                  Builder(
+                    builder: (context) {
+                      final eventDescription = TransactionEventMapper.formatEventDescription(
+                        historyItem.eventType,
+                        transactionType: transactionType,
+                        notes: historyItem.notes,
+                      );
+                      if (eventDescription.isEmpty) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          eventDescription,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   if (historyItem.createdBy != null && historyItem.createdBy!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(

@@ -22,6 +22,10 @@ class NotificationsRemoteDatasourceImpl
         sound: true,
         provisional: false,
       );
+      print("Permission: ${settings.authorizationStatus}");
+      print("Sound ${settings.sound}");
+      print("Alert ${settings.alert}");
+      print("Badge ${settings.badge}");
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         String? token;
         try {

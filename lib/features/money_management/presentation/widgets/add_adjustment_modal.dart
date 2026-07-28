@@ -1,16 +1,19 @@
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
+import 'package:bizos/features/money_management/presentation/utils/transaction_event_mapper.dart';
 import 'package:flutter/material.dart';
 
 class AddAdjustmentModal extends StatefulWidget {
   final String transactionId;
   final bool isPersonal;
+  final String transactionType;
   final Function(double amount, String notes) onSave;
 
   const AddAdjustmentModal({
     super.key,
     required this.transactionId,
     required this.isPersonal,
+    this.transactionType = 'receive',
     required this.onSave,
   });
 
@@ -82,7 +85,13 @@ class _AddAdjustmentModalState extends State<AddAdjustmentModal> {
                 children: [
                   Expanded(
                     child: ChoiceChip(
-                      label: const Center(child: Text('Increase Debt (+)')),
+                      label: Center(
+                        child: Text(
+                          TransactionEventMapper.getIncreaseAdjustmentLabel(
+                            transactionType: widget.transactionType,
+                          ),
+                        ),
+                      ),
                       selected: !_isDiscountOrReduction,
                       onSelected: (val) {
                         if (val) setState(() => _isDiscountOrReduction = false);

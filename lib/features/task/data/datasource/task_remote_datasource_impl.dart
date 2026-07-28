@@ -95,7 +95,7 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
       'description': task.description,
       'priority': task.priority,
       'due_date': task.dueDate.toUtc().toIso8601String(), // 👈 UTC timezone fix
-      'status': task.isCompleted ? 'Completed' : 'Pending',
+      'status': task.status,
       'assigned_to': task.assignedto,
       'created_by': task.createdBy,
       'is_notified': false, // 👈 New tasks default false
@@ -113,11 +113,12 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           'due_date': task.dueDate
               .toUtc()
               .toIso8601String(), // 👈 UTC timezone fix
-          'status': task.isCompleted ? 'Completed' : 'Pending',
+          'status': task.status,
           'assigned_to': task.assignedto,
           'created_by': task.createdBy,
-          'is_notified':
-              task.isNotified, // 👈 Model update aakkumbol passes current state
+          'is_notified': task.isNotified,
+          if (task.completedAt != null)
+            'completed_at': task.completedAt!.toUtc().toIso8601String(),
         })
         .eq('id', task.id);
   }
@@ -197,6 +198,9 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
 
   // Row mapper logic with Local Time conversion
   TaskModel _fromRow(Map<String, dynamic> row) {
+    final statusStr = row['status'] as String? ?? '';
+    final isComp = statusStr.toLowerCase() == 'completed' ||
+        statusStr.toLowerCase() == 'completed late';
     return TaskModel(
       id: row['id'] as String,
       businessId: row['business_id'] as String,
@@ -204,8 +208,12 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
       description: row['description'] ?? '',
       priority: row['priority'] ?? 'Medium',
       dueDate: TaskModel.parseDueDate(row['due_date']),
-      isCompleted: (row['status'] as String).toLowerCase() == 'completed',
-      isNotified: row['is_notified'] ?? false, // 👈 Added missing parameter
+      isCompleted: isComp,
+      status: statusStr.isNotEmpty ? statusStr : null,
+      completedAt: row['completed_at'] != null
+          ? TaskModel.parseDueDate(row['completed_at'])
+          : null,
+      isNotified: row['is_notified'] ?? false,
       createdBy: row['created_by']?.toString() ?? '',
       assignedto: row['assigned_to']?.toString() ?? '',
       createdAt: row['created_at'] != null

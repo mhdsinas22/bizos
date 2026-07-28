@@ -6,6 +6,7 @@ class AddPaymentModal extends StatefulWidget {
   final String transactionId;
   final bool isPersonal;
   final double currentBalance;
+  final String transactionType;
   final Function(double amount, String paymentMethod, String notes) onSave;
 
   const AddPaymentModal({
@@ -13,6 +14,7 @@ class AddPaymentModal extends StatefulWidget {
     required this.transactionId,
     required this.isPersonal,
     required this.currentBalance,
+    this.transactionType = 'receive',
     required this.onSave,
   });
 
@@ -55,6 +57,12 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isReceive = widget.transactionType == 'receive';
+
+    final titleText = isReceive ? 'Record Collection' : 'Record Payment';
+    final amountLabelText = isReceive ? 'Collection Amount (₹)' : 'Payment Amount (₹)';
+    final notesLabelText = isReceive ? 'Collection Notes (Optional)' : 'Payment Notes (Optional)';
+    final buttonText = isReceive ? 'Record Collection' : 'Record Payment';
 
     return Padding(
       padding: EdgeInsets.only(
@@ -74,7 +82,7 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Record Payment',
+                    titleText,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -89,24 +97,39 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
               // Amount Input
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
                 decoration: InputDecoration(
-                  labelText: 'Payment Amount (₹)',
+                  labelText: amountLabelText,
                   hintText: 'Enter amount (e.g. 2000)',
-                  prefixIcon: const Icon(Icons.currency_rupee, color: AppTheme.success),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(
+                    Icons.currency_rupee,
+                    color: AppTheme.success,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   suffixIcon: TextButton(
                     onPressed: () {
-                      _amountController.text = widget.currentBalance.toStringAsFixed(2);
+                      _amountController.text = widget.currentBalance
+                          .toStringAsFixed(2);
                     },
                     child: const Text('Full Amount'),
                   ),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Enter payment amount';
+                  if (val == null || val.trim().isEmpty) {
+                    return isReceive ? 'Enter collection amount' : 'Enter payment amount';
+                  }
                   final parsed = double.tryParse(val);
-                  if (parsed == null || parsed <= 0) return 'Enter a valid amount > 0';
+                  if (parsed == null || parsed <= 0) {
+                    return 'Enter a valid amount > 0';
+                  }
                   return null;
                 },
               ),
@@ -114,7 +137,9 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
               // Payment Method Chips
               Text(
                 'Payment Method',
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -130,8 +155,12 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
                     },
                     selectedColor: AppTheme.primaryColor.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: isSelected ? AppTheme.primaryColor : theme.textTheme.bodyMedium?.color,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? AppTheme.primaryColor
+                          : theme.textTheme.bodyMedium?.color,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   );
                 }).toList(),
@@ -142,16 +171,15 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
                 controller: _notesController,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  labelText: 'Payment Notes (Optional)',
+                  labelText: notesLabelText,
                   hintText: 'e.g. Received via GPay for July invoice',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
-              CustomButton(
-                text: 'Record Payment',
-                onPressed: _submit,
-              ),
+              CustomButton(text: buttonText, onPressed: _submit),
               const SizedBox(height: 24),
             ],
           ),

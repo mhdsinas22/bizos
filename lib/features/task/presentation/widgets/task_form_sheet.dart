@@ -58,11 +58,18 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
         ? (widget.user.userId.isNotEmpty ? widget.user.userId : widget.user.id)
         : (widget.user.ownerId.isNotEmpty ? widget.user.ownerId : widget.user.id);
     
-    // Fetch businesses and staff lists if needed
+    // Fetch businesses list if needed
     context.read<BusinessBloc>().add(FetchBusinessesEvent(ownerId));
-    context.read<StaffBloc>().add(FetchStaffEvent(ownerId));
 
     _selectedBusinessId = widget.task?.businessId ?? widget.businessId;
+
+    if (_selectedBusinessId == null && widget.businessList != null && widget.businessList!.isNotEmpty) {
+      _selectedBusinessId = widget.businessList!.first.id;
+    }
+
+    if (_selectedBusinessId != null) {
+      context.read<StaffBloc>().add(FetchStaffByBusinessEvent(_selectedBusinessId!));
+    }
 
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
@@ -247,6 +254,13 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
 
                   if (_selectedBusinessId == null && list.isNotEmpty) {
                     _selectedBusinessId = list.first.id;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && _selectedBusinessId != null) {
+                        context.read<StaffBloc>().add(
+                          FetchStaffByBusinessEvent(_selectedBusinessId!),
+                        );
+                      }
+                    });
                   }
 
                   return DropdownButtonFormField<String>(
@@ -262,9 +276,15 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                       );
                     }).toList(),
                     onChanged: (val) {
-                      setState(() {
-                        _selectedBusinessId = val;
-                      });
+                      if (val != null && val != _selectedBusinessId) {
+                        setState(() {
+                          _selectedBusinessId = val;
+                          _selectedAssigneeId = ownerId;
+                        });
+                        context.read<StaffBloc>().add(
+                          FetchStaffByBusinessEvent(val),
+                        );
+                      }
                     },
                   );
                 },
@@ -282,15 +302,42 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                       ),
                     ];
 
-                    if (state is StaffLoaded) {
-                      assigneeItems.addAll(
-                        state.staffList.map((staff) {
-                          return DropdownMenuItem<String>(
-                            value: staff.id,
-                            child: Text(staff.name),
-                          );
-                        }),
+                    if (state is StaffLoading) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Assign To',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              SizedBox(width: 8),
+                              Text('Loading staff...'),
+                            ],
+                          ),
+                        ),
                       );
+                    }
+
+                    if (state is StaffLoaded) {
+                      for (final staff in state.staffList) {
+                        // Exclude owner ID if present to prevent duplicate "Myself" entries
+                        final sId = staff.id.isNotEmpty ? staff.id : staff.userId;
+                        if (sId != ownerId) {
+                          assigneeItems.add(
+                            DropdownMenuItem<String>(
+                              value: sId,
+                              child: Text(staff.name),
+                            ),
+                          );
+                        }
+                      }
                     }
 
                     // Safety check if the current value is not in items list

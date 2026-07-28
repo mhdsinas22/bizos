@@ -105,29 +105,50 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
             }
 
             if (state is TaskLoaded) {
-              final allTasks = state.tasks;
+              final allTasks = [...state.tasks];
+              allTasks.sort((a, b) {
+                if (a.isCompleted != b.isCompleted) {
+                  return a.isCompleted ? 1 : -1;
+                }
+                return b.createdAt.compareTo(a.createdAt);
+              });
 
               // Compute statistics (safely isolated to this owner)
               final totalCount = allTasks.length;
-              final completedCount = allTasks.where((t) => t.isCompleted).length;
-              final pendingCount = totalCount - completedCount;
-              final assignedCount = allTasks.where((t) => t.assignedto != ownerId).length;
+              final pendingCount = allTasks
+                  .where((t) => t.isPending)
+                  .length;
+              final completedCount = allTasks
+                  .where((t) => t.isCompleted)
+                  .length;
+              final notCompletedCount = allTasks
+                  .where((t) => t.isNotCompleted)
+                  .length;
 
               // Filtered subsets for each tab
-              final myTasks = allTasks.where((t) => t.assignedto == ownerId).toList();
-              final staffTasks = allTasks.where((t) => t.assignedto != ownerId).toList();
+              final myTasks = allTasks
+                  .where((t) => t.assignedto == ownerId)
+                  .toList();
+              final staffTasks = allTasks
+                  .where((t) => t.assignedto != ownerId)
+                  .toList();
 
               return NestedScrollView(
                 headerSliverBuilder: (context, innerBoxIsScrolled) {
                   return [
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
+                        padding: const EdgeInsets.fromLTRB(
+                          20.0,
+                          20.0,
+                          20.0,
+                          12.0,
+                        ),
                         child: _buildStatsGrid(
                           total: totalCount,
                           pending: pendingCount,
                           completed: completedCount,
-                          assigned: assignedCount,
+                          notCompleted: notCompletedCount,
                         ),
                       ),
                     ),
@@ -154,9 +175,27 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
                 },
                 body: TabBarView(
                   children: [
-                    _buildTabContent(allTasks, user, state.userNames, state.businessNames, 'All'),
-                    _buildTabContent(myTasks, user, state.userNames, state.businessNames, 'My'),
-                    _buildTabContent(staffTasks, user, state.userNames, state.businessNames, 'Staff'),
+                    _buildTabContent(
+                      allTasks,
+                      user,
+                      state.userNames,
+                      state.businessNames,
+                      'All',
+                    ),
+                    _buildTabContent(
+                      myTasks,
+                      user,
+                      state.userNames,
+                      state.businessNames,
+                      'My',
+                    ),
+                    _buildTabContent(
+                      staffTasks,
+                      user,
+                      state.userNames,
+                      state.businessNames,
+                      'Staff',
+                    ),
                   ],
                 ),
               );
@@ -184,8 +223,8 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
             tabType == 'My'
                 ? 'No tasks assigned to you.'
                 : tabType == 'Staff'
-                    ? 'No tasks assigned to staff.'
-                    : 'No tasks found.',
+                ? 'No tasks assigned to staff.'
+                : 'No tasks found.',
             style: const TextStyle(color: Colors.grey, fontSize: 13),
           ),
         ),
@@ -208,13 +247,39 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
             userNames: userNames,
             businessNames: businessNames,
             isOwnerView: true,
-            onToggleCompleted: (val) {
-              context.read<TaskBloc>().add(
-                    ToggleTaskStatusEvent(t, isGlobal: true),
-                  );
-            },
+            onToggleCompleted: t.canMarkComplete
+                ? (val) {
+                    context.read<TaskBloc>().add(
+                      ToggleTaskStatusEvent(t, isGlobal: true),
+                    );
+                  }
+                : null,
             onEdit: () => _showTaskForm(user, task: t),
             onDelete: () => _confirmDelete(t),
+            onResolveCompletedLate: () {
+              context.read<TaskBloc>().add(
+                    ResolveMissedTaskEvent(t, outcomeStatus: 'Completed Late', isGlobal: true),
+                  );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Task marked as Completed Late.'),
+                  backgroundColor: Color(0xFF10B981),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            onResolveNotCompleted: () {
+              context.read<TaskBloc>().add(
+                    ResolveMissedTaskEvent(t, outcomeStatus: 'Not Completed', isGlobal: true),
+                  );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Task marked as Not Completed.'),
+                  backgroundColor: Color(0xFFEF4444),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
           );
         },
       ),
@@ -225,7 +290,7 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
     required int total,
     required int pending,
     required int completed,
-    required int assigned,
+    required int notCompleted,
   }) {
     final width = MediaQuery.of(context).size.width;
     final isTablet = width > 600;
@@ -247,20 +312,20 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
         _buildStatCard(
           title: 'Pending Tasks',
           value: '$pending',
-          icon: Icons.hourglass_empty_outlined,
-          color: AppTheme.warning,
+          icon: Icons.access_time_outlined,
+          color: const Color(0xFFF59E0B),
         ),
         _buildStatCard(
           title: 'Completed Tasks',
           value: '$completed',
           icon: Icons.task_alt_outlined,
-          color: AppTheme.success,
+          color: const Color(0xFF10B981),
         ),
         _buildStatCard(
-          title: 'Assigned Tasks',
-          value: '$assigned',
-          icon: Icons.assignment_ind_outlined,
-          color: AppTheme.primaryColor,
+          title: 'Not Completed Tasks',
+          value: '$notCompleted',
+          icon: Icons.cancel_outlined,
+          color: const Color(0xFFEF4444),
         ),
       ],
     );
@@ -338,10 +403,7 @@ class _SliverPersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final theme = Theme.of(context);
-    return Container(
-      color: theme.scaffoldBackgroundColor,
-      child: tabBar,
-    );
+    return Container(color: theme.scaffoldBackgroundColor, child: tabBar);
   }
 
   @override

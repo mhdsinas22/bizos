@@ -1,3 +1,4 @@
+import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -14,6 +15,7 @@ class TransactionHistoryLoading extends TransactionDetailsState {}
 
 class TransactionHistoryLoaded extends TransactionDetailsState {
   final List<MoneyTransactionHistoryEntity> history;
+  final MoneyTransactionEntity? parentTransaction;
   final bool hasMore;
   final bool isLoadingMore;
   final String filterEventType;
@@ -23,6 +25,7 @@ class TransactionHistoryLoaded extends TransactionDetailsState {
 
   const TransactionHistoryLoaded({
     required this.history,
+    this.parentTransaction,
     this.hasMore = false,
     this.isLoadingMore = false,
     this.filterEventType = 'All',
@@ -33,6 +36,7 @@ class TransactionHistoryLoaded extends TransactionDetailsState {
 
   TransactionHistoryLoaded copyWith({
     List<MoneyTransactionHistoryEntity>? history,
+    MoneyTransactionEntity? parentTransaction,
     bool? hasMore,
     bool? isLoadingMore,
     String? filterEventType,
@@ -42,6 +46,7 @@ class TransactionHistoryLoaded extends TransactionDetailsState {
   }) {
     return TransactionHistoryLoaded(
       history: history ?? this.history,
+      parentTransaction: parentTransaction ?? this.parentTransaction,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       filterEventType: filterEventType ?? this.filterEventType,
@@ -53,14 +58,15 @@ class TransactionHistoryLoaded extends TransactionDetailsState {
 
   @override
   List<Object?> get props => [
-        history,
-        hasMore,
-        isLoadingMore,
-        filterEventType,
-        searchQuery,
-        ascending,
-        successMessage,
-      ];
+    history,
+    parentTransaction,
+    hasMore,
+    isLoadingMore,
+    filterEventType,
+    searchQuery,
+    ascending,
+    successMessage,
+  ];
 }
 
 class TransactionDetailsActionSubmitting extends TransactionDetailsState {}
@@ -73,3 +79,13 @@ class TransactionDetailsError extends TransactionDetailsState {
   @override
   List<Object?> get props => [message];
 }
+
+class DebtAddedSuccess extends TransactionDetailsState {
+  final String message;
+
+  const DebtAddedSuccess({this.message = 'Debt added successfully.'});
+
+  @override
+  List<Object?> get props => [message];
+}
+

@@ -5,12 +5,13 @@ class TaskModel {
   final String description;
   final String priority; // 'Low', 'Medium', 'High'
   final DateTime dueDate;
-  final bool isCompleted;
   final String ownerId;
   final String createdBy;
   final String assignedto;
   final DateTime createdAt;
   final bool isNotified;
+  final DateTime? completedAt;
+  final String _status;
 
   TaskModel({
     required this.id,
@@ -19,13 +20,41 @@ class TaskModel {
     required this.description,
     required this.priority,
     required this.dueDate,
-    required this.isCompleted,
     required this.assignedto,
     required this.createdAt,
+    bool isCompleted = false,
+    String? status,
     this.ownerId = '',
     this.createdBy = '',
     this.isNotified = false,
-  });
+    this.completedAt,
+  }) : _status = status ?? (isCompleted ? 'Completed' : 'Pending');
+
+  String get status {
+    if (_status.isNotEmpty && _status != 'Pending') {
+      return _status;
+    }
+    final missedTime = dueDate.add(const Duration(minutes: 30));
+    if (DateTime.now().isAfter(missedTime)) {
+      return 'Missed';
+    }
+    return _status.isNotEmpty ? _status : 'Pending';
+  }
+
+  bool get isCompleted =>
+      status == 'Completed' || status == 'Completed Late';
+
+  bool get isCompletedLate => status == 'Completed Late';
+
+  bool get isNotCompleted => status == 'Not Completed';
+
+  bool get isPending => status == 'Pending';
+
+  bool get isMissed => status == 'Missed';
+
+  bool get canMarkComplete => status == 'Pending';
+
+  bool get showCompleteAction => canMarkComplete;
 
   static DateTime parseDueDate(dynamic value) {
     if (value == null) return DateTime.now();
@@ -58,16 +87,24 @@ class TaskModel {
       'description': description,
       'priority': priority,
       'due_date': dueDate.toUtc().toIso8601String(),
-      'isCompleted': isCompleted,
+      'status': status,
       'ownerId': ownerId,
       'created_by': createdBy,
       "assigned_to": assignedto,
       "created_at": createdAt.toUtc().toIso8601String(),
       "is_notified": isNotified,
+      if (completedAt != null)
+        'completed_at': completedAt!.toUtc().toIso8601String(),
     };
   }
 
   factory TaskModel.fromMap(Map<String, dynamic> map) {
+    final rawStatus = (map['status'] as String?)?.trim() ?? '';
+    final isComp = map['isCompleted'] == true ||
+        rawStatus.toLowerCase() == 'completed' ||
+        rawStatus.toLowerCase() == 'completed late' ||
+        rawStatus.toLowerCase() == 'completed_late';
+
     return TaskModel(
       id: map['id'] ?? '',
       businessId: map['businessId'] ?? '',
@@ -75,7 +112,8 @@ class TaskModel {
       description: map['description'] ?? '',
       priority: map['priority'] ?? 'Medium',
       dueDate: parseDueDate(map['due_date']),
-      isCompleted: map['isCompleted'] ?? false,
+      isCompleted: isComp,
+      status: rawStatus.isNotEmpty ? rawStatus : null,
       ownerId: map['ownerId'] ?? '',
       createdBy: map['created_by'] ?? '',
       assignedto: map["assigned_to"] ?? "",
@@ -83,6 +121,9 @@ class TaskModel {
           ? parseDueDate(map['created_at'])
           : DateTime.now(),
       isNotified: map["is_notified"] ?? false,
+      completedAt: map['completed_at'] != null
+          ? parseDueDate(map['completed_at'])
+          : null,
     );
   }
 
@@ -94,11 +135,13 @@ class TaskModel {
     String? priority,
     DateTime? dueDate,
     bool? isCompleted,
+    String? status,
     String? ownerId,
     String? createdBy,
     String? assignedto,
     DateTime? createdAt,
     bool? isNotified,
+    DateTime? completedAt,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -108,11 +151,13 @@ class TaskModel {
       priority: priority ?? this.priority,
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
+      status: status ?? _status,
       ownerId: ownerId ?? this.ownerId,
       createdBy: createdBy ?? this.createdBy,
       assignedto: assignedto ?? this.assignedto,
       createdAt: createdAt ?? this.createdAt,
       isNotified: isNotified ?? this.isNotified,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 }

@@ -15,6 +15,8 @@ class TaskCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onMarkComplete;
+  final VoidCallback? onResolveCompletedLate;
+  final VoidCallback? onResolveNotCompleted;
 
   const TaskCard({
     super.key,
@@ -27,6 +29,8 @@ class TaskCard extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onMarkComplete,
+    this.onResolveCompletedLate,
+    this.onResolveNotCompleted,
   });
 
   String _resolveName(String? id, {String fallback = 'Unassigned'}) {
@@ -58,19 +62,52 @@ class TaskCard extends StatelessWidget {
     if (task.priority == 'Medium') priorityColor = AppTheme.warning;
     if (task.priority == 'Low') priorityColor = AppTheme.info;
 
+    // Status configuration
+    const pendingColor = Color(0xFFF59E0B);
+    const completedColor = Color(0xFF10B981);
+    const missedColor = Color(0xFFEF4444);
+
+    Color statusColor;
+    IconData statusIcon;
+    String statusLabel;
+
+    if (task.isCompleted) {
+      if (task.isCompletedLate) {
+        statusColor = completedColor;
+        statusIcon = Icons.check_circle_outline;
+        statusLabel = 'Completed Late';
+      } else {
+        statusColor = completedColor;
+        statusIcon = Icons.check_circle_outline;
+        statusLabel = 'Completed';
+      }
+    } else if (task.isNotCompleted) {
+      statusColor = missedColor;
+      statusIcon = Icons.cancel_outlined;
+      statusLabel = 'Not Completed';
+    } else if (task.isMissed) {
+      statusColor = missedColor;
+      statusIcon = Icons.cancel_outlined;
+      statusLabel = 'Missed';
+    } else {
+      statusColor = pendingColor;
+      statusIcon = Icons.access_time_outlined;
+      statusLabel = 'Pending';
+    }
+
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left checkbox (only in owner view or if staff is editing their own tasks)
-          if (isOwnerView) ...[
+          // Left checkbox (only shown in owner view when task can be marked complete)
+          if (isOwnerView && task.canMarkComplete) ...[
             Padding(
               padding: const EdgeInsets.only(top: 2.0),
               child: Checkbox(
                 value: task.isCompleted,
                 onChanged: onToggleCompleted,
-                activeColor: AppTheme.success,
+                activeColor: completedColor,
               ),
             ),
             const SizedBox(width: 8),
@@ -233,12 +270,38 @@ class TaskCard extends StatelessWidget {
                 ],
                 const SizedBox(height: 12),
 
-                // 4. Priority + Due Date Row
+                // 4. Status + Priority + Due Date Row
                 Wrap(
                   spacing: 8,
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
+                    // Status Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(statusIcon, size: 12, color: statusColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            statusLabel,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     // Priority Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -265,13 +328,20 @@ class TaskCard extends StatelessWidget {
                         Icon(
                           Icons.access_time_outlined,
                           size: 12,
-                          color: theme.disabledColor,
+                          color: task.isMissed
+                              ? missedColor
+                              : theme.disabledColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'Due: ${DateFormat.yMMMd().add_jm().format(task.dueDate)}',
                           style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.disabledColor,
+                            color: task.isMissed
+                                ? missedColor
+                                : theme.disabledColor,
+                            fontWeight: task.isMissed
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             fontSize: 11,
                           ),
                         ),
@@ -279,6 +349,118 @@ class TaskCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (task.isMissed) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.red.withOpacity(0.12)
+                          : const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: missedColor.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 14,
+                              color: missedColor,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'This task missed its deadline. What was the final outcome?',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  color: theme.brightness == Brightness.dark
+                                      ? const Color(0xFFFCA5A5)
+                                      : const Color(0xFF991B1B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (onResolveCompletedLate != null ||
+                            onResolveNotCompleted != null) ...[
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              if (onResolveCompletedLate != null)
+                                ElevatedButton.icon(
+                                  onPressed: onResolveCompletedLate,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: completedColor,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.check_circle_outline,
+                                    size: 12,
+                                  ),
+                                  label: const Text(
+                                    'Completed Late',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              if (onResolveNotCompleted != null)
+                                OutlinedButton.icon(
+                                  onPressed: onResolveNotCompleted,
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor:
+                                        missedColor.withOpacity(0.08),
+                                    foregroundColor: missedColor,
+                                    side: const BorderSide(
+                                      color: missedColor,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.cancel_outlined,
+                                    size: 12,
+                                  ),
+                                  label: const Text(
+                                    'Not Completed',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -307,58 +489,33 @@ class TaskCard extends StatelessWidget {
               ],
             ),
           ] else ...[
-            // Staff complete button / badge
-            Center(
-              child: task.isCompleted
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.check, size: 12, color: AppTheme.success),
-                          SizedBox(width: 4),
-                          Text(
-                            'Completed',
-                            style: TextStyle(
-                              color: AppTheme.success,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ElevatedButton.icon(
-                      onPressed: onMarkComplete,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.success,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        minimumSize: Size.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon: const Icon(Icons.check_circle_outline, size: 12),
-                      label: const Text(
-                        'Mark Complete',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+            // Staff complete button (only shown when task can be marked complete)
+            if (task.canMarkComplete && onMarkComplete != null)
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: onMarkComplete,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: completedColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
                     ),
-            ),
+                    minimumSize: Size.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 12),
+                  label: const Text(
+                    'Mark Complete',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ],
       ),

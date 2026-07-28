@@ -218,7 +218,7 @@ class _ToDoTabState extends State<ToDoTab> {
                     'Status: ',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                   ),
-                  ...['All', 'Pending', 'Completed'].map(
+                  ...['All', 'Pending', 'Completed', 'Missed'].map(
                     (s) => Padding(
                       padding: const EdgeInsets.only(right: 6.0),
                       child: ChoiceChip(
@@ -275,12 +275,20 @@ class _ToDoTabState extends State<ToDoTab> {
                         .where((t) => t.priority == _filterPriority)
                         .toList();
                   }
+                  filtered.sort((a, b) {
+                    if (a.isCompleted != b.isCompleted) {
+                      return a.isCompleted ? 1 : -1;
+                    }
+                    return b.createdAt.compareTo(a.createdAt);
+                  });
 
                   // Status filter
                   if (_filterStatus == 'Pending') {
-                    filtered = filtered.where((t) => !t.isCompleted).toList();
+                    filtered = filtered.where((t) => t.isPending).toList();
                   } else if (_filterStatus == 'Completed') {
                     filtered = filtered.where((t) => t.isCompleted).toList();
+                  } else if (_filterStatus == 'Missed') {
+                    filtered = filtered.where((t) => t.isMissed).toList();
                   }
 
                   if (filtered.isEmpty) {
@@ -309,7 +317,8 @@ class _ToDoTabState extends State<ToDoTab> {
                           userNames: state.userNames,
                           businessNames: state.businessNames,
                           isOwnerView: isOwner,
-                          onToggleCompleted: isOwner && canToggle
+                          onToggleCompleted:
+                              isOwner && canToggle && t.canMarkComplete
                               ? (_) => context.read<TaskBloc>().add(
                                   ToggleTaskStatusEvent(t),
                                 )
@@ -320,10 +329,47 @@ class _ToDoTabState extends State<ToDoTab> {
                           onDelete: isOwner && canAdd
                               ? () => _confirmDelete(t)
                               : null,
-                          onMarkComplete: !isOwner && canToggle
+                          onMarkComplete:
+                              !isOwner && canToggle && t.canMarkComplete
                               ? () => context.read<TaskBloc>().add(
                                   ToggleTaskStatusEvent(t),
                                 )
+                              : null,
+                          onResolveCompletedLate: canToggle
+                              ? () {
+                                  context.read<TaskBloc>().add(
+                                        ResolveMissedTaskEvent(
+                                          t,
+                                          outcomeStatus: 'Completed Late',
+                                        ),
+                                      );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Task marked as Completed Late.'),
+                                      backgroundColor: Color(0xFF10B981),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              : null,
+                          onResolveNotCompleted: canToggle
+                              ? () {
+                                  context.read<TaskBloc>().add(
+                                        ResolveMissedTaskEvent(
+                                          t,
+                                          outcomeStatus: 'Not Completed',
+                                        ),
+                                      );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Task marked as Not Completed.'),
+                                      backgroundColor: Color(0xFFEF4444),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               : null,
                         ),
                       );

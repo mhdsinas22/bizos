@@ -34,3 +34,10 @@ class DeleteTaskEvent extends TaskEvent {
   DeleteTaskEvent(this.id, this.businessId, {this.isGlobal = false});
 }
 
+class ResolveMissedTaskEvent extends TaskEvent {
+  final TaskModel task;
+  final String outcomeStatus;
+  final bool isGlobal;
+  ResolveMissedTaskEvent(this.task, {required this.outcomeStatus, this.isGlobal = false});
+}
+

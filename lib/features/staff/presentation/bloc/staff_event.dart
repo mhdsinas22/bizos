@@ -31,3 +31,8 @@ class DeleteStaffEvent extends StaffEvent {
   final String ownerId;
   DeleteStaffEvent(this.userId, this.ownerId);
 }
+
+class FetchStaffByBusinessEvent extends StaffEvent {
+  final String businessId;
+  FetchStaffByBusinessEvent(this.businessId);
+}

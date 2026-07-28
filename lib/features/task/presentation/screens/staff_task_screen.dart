@@ -18,6 +18,8 @@ class StaffTaskScreen extends StatefulWidget {
 }
 
 class _StaffTaskScreenState extends State<StaffTaskScreen> {
+  String _selectedStatusFilter = 'All';
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +77,52 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
             ),
           ),
 
+          // Status Filter Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Row(
+              children: ['All', 'Pending', 'Completed', 'Missed'].map((status) {
+                final isSelected = _selectedStatusFilter == status;
+                Color chipColor;
+                if (status == 'Completed') {
+                  chipColor = const Color(0xFF10B981);
+                } else if (status == 'Missed') {
+                  chipColor = const Color(0xFFEF4444);
+                } else if (status == 'Pending') {
+                  chipColor = const Color(0xFFF59E0B);
+                } else {
+                  chipColor = AppTheme.primaryColor;
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(
+                      status,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelected ? Colors.white : null,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: chipColor,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedStatusFilter = status;
+                        });
+                      }
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+
           // Task List View
           Expanded(
             child: BlocBuilder<TaskBloc, TaskState>(
@@ -94,16 +142,30 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
 
                 if (state is TaskLoaded) {
                   // Filter defensively to only show tasks assigned to this staff member
-                  final assignedTasks = state.tasks
+                  var assignedTasks = state.tasks
                       .where((t) => t.assignedto == user.id)
                       .toList();
+
+                  if (_selectedStatusFilter == 'Pending') {
+                    assignedTasks = assignedTasks
+                        .where((t) => t.isPending)
+                        .toList();
+                  } else if (_selectedStatusFilter == 'Completed') {
+                    assignedTasks = assignedTasks
+                        .where((t) => t.isCompleted)
+                        .toList();
+                  } else if (_selectedStatusFilter == 'Missed') {
+                    assignedTasks = assignedTasks
+                        .where((t) => t.isMissed)
+                        .toList();
+                  }
 
                   if (assignedTasks.isEmpty) {
                     return const EmptyState(
                       icon: Icons.checklist,
-                      title: 'No Assigned Tasks',
+                      title: 'No Tasks Found',
                       message:
-                          'You currently do not have any tasks assigned to you.',
+                          'You currently do not have any tasks matching this status filter.',
                     );
                   }
 
@@ -149,8 +211,36 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
       userNames: userNames,
       businessNames: businessNames,
       isOwnerView: false,
-      onMarkComplete: () {
-        context.read<TaskBloc>().add(ToggleTaskStatusEvent(t, isGlobal: true));
+      onMarkComplete: t.canMarkComplete
+          ? () {
+              context.read<TaskBloc>().add(
+                ToggleTaskStatusEvent(t, isGlobal: true),
+              );
+            }
+          : null,
+      onResolveCompletedLate: () {
+        context.read<TaskBloc>().add(
+          ResolveMissedTaskEvent(t, outcomeStatus: 'Completed Late', isGlobal: true),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task marked as Completed Late.'),
+            backgroundColor: Color(0xFF10B981),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      onResolveNotCompleted: () {
+        context.read<TaskBloc>().add(
+          ResolveMissedTaskEvent(t, outcomeStatus: 'Not Completed', isGlobal: true),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task marked as Not Completed.'),
+            backgroundColor: Color(0xFFEF4444),
+            duration: Duration(seconds: 2),
+          ),
+        );
       },
     );
   }

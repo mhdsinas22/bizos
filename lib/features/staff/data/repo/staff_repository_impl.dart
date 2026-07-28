@@ -103,4 +103,14 @@ class StaffRepositoryImpl implements StaffRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<UserModel>> getStaffByBusiness(String businessId) async {
+    try {
+      return await staffRemoteDatasource.getStaffByBusiness(businessId);
+    } catch (e) {
+      print('staff repository getStaffByBusiness error:-$e');
+      rethrow;
+    }
+  }
 }

@@ -33,10 +33,33 @@ class MoneyTransactionHistoryModel extends MoneyTransactionHistoryEntity {
     );
   }
 
+  static String sanitizeEventType(String type) {
+    switch (type) {
+      case 'debt_created':
+      case 'receivable_created':
+        return 'debt_created';
+      case 'debt_added':
+      case 'receivable_added':
+        return 'debt_added';
+      case 'payment':
+      case 'payment_updated':
+      case 'collection_received':
+        return 'payment';
+      case 'adjustment':
+        return 'adjustment';
+      case 'reminder_sent':
+        return 'reminder_sent';
+      case 'status_changed':
+        return 'status_changed';
+      default:
+        return 'payment';
+    }
+  }
+
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{
       'transaction_id': transactionId,
-      'event_type': eventType,
+      'event_type': sanitizeEventType(eventType),
       'amount': amount,
       'balance_after': balanceAfter,
       'notes': notes,

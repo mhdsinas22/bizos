@@ -241,4 +241,33 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
         .map((row) => StaffBusinessModel.fromJson(row))
         .toList();
   }
+
+  @override
+  Future<List<UserModel>> getStaffByBusiness(String businessId) async {
+    final response = await supabaseClient
+        .from('staff_businesses')
+        .select('staff_id')
+        .eq('business_id', businessId);
+
+    final staffIds = (response as List)
+        .map((row) => row['staff_id'] as String)
+        .where((id) => id.isNotEmpty)
+        .toList();
+
+    if (staffIds.isEmpty) return [];
+
+    final usersResponse = await supabaseClient
+        .from('users')
+        .select()
+        .inFilter('id', staffIds);
+
+    final staffList = <UserModel>[];
+
+    for (var row in (usersResponse as List)) {
+      final userMap = Map<String, dynamic>.from(row);
+      staffList.add(UserModel.fromJson(userMap));
+    }
+
+    return staffList;
+  }
 }

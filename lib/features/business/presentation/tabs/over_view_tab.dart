@@ -59,11 +59,13 @@ class OverviewTab extends StatelessWidget {
           builder: (context, taskState) {
             int pending = 0;
             int completed = 0;
+            int missed = 0;
             double completionPercent = 0.0;
 
             if (taskState is TaskLoaded) {
               completed = taskState.tasks.where((t) => t.isCompleted).length;
-              pending = taskState.tasks.length - completed;
+              pending = taskState.tasks.where((t) => t.isPending).length;
+              missed = taskState.tasks.where((t) => t.isMissed).length;
               final total = taskState.tasks.length;
               if (total > 0) {
                 completionPercent = completed / total;
@@ -167,7 +169,7 @@ class OverviewTab extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                '$completed Completed | $pending Pending',
+                                '$completed Done | $pending Pending | $missed Missed',
                                 style: theme.textTheme.labelLarge?.copyWith(
                                   fontSize: 10,
                                 ),

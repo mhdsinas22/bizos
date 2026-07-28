@@ -122,7 +122,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 onPrimary: Colors.white,
                 surface: Theme.of(context).cardColor,
                 onSurface:
-                    Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+                    Theme.of(context).textTheme.bodyLarge?.color ??
+                    Colors.black,
               ),
             ),
             child: child!,
@@ -257,176 +258,178 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           child: Form(
             key: _formKey,
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Person Details',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Person Details',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              BlocConsumer<ContactBloc, ContactState>(
-                builder: (context, state) {
-                  return Column(
-                    children: [
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        readOnly: true,
-                        onTap: () {
-                          context.read<ContactBloc>().add(SelectContactEvent());
-                        },
-                        controller: _personNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Person Name *',
-                          prefixIcon: Icon(Icons.person_outline),
+                BlocConsumer<ContactBloc, ContactState>(
+                  builder: (context, state) {
+                    return Column(
+                      children: [
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          // readOnly: true,
+                          onTap: () {
+                            context.read<ContactBloc>().add(
+                              SelectContactEvent(),
+                            );
+                          },
+                          controller: _personNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Person Name *',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          validator: (val) => val == null || val.trim().isEmpty
+                              ? 'Person name is required'
+                              : null,
                         ),
-                        validator: (val) => val == null || val.trim().isEmpty
-                            ? 'Person name is required'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _phoneController,
-                        readOnly: true,
-                        onTap: () => context.read<ContactBloc>().add(
-                          SelectContactEvent(),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _phoneController,
+                          // readOnly: true,
+                          onTap: () => context.read<ContactBloc>().add(
+                            SelectContactEvent(),
+                          ),
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone Number *',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                          validator: (val) => val == null || val.trim().isEmpty
+                              ? 'Phone number is required'
+                              : null,
                         ),
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          labelText: 'Phone Number *',
-                          prefixIcon: Icon(Icons.phone_outlined),
-                        ),
-                        validator: (val) => val == null || val.trim().isEmpty
-                            ? 'Phone number is required'
-                            : null,
-                      ),
-                    ],
-                  );
-                },
-                listener: (context, state) {
-                  if (state.status == contactstatus.selected &&
-                      state.contact != null) {
-                    _personNameController.text = state.contact!.name;
-                    _phoneController.text = state.contact!.phoneNumber;
-                  }
-                },
-              ),
+                      ],
+                    );
+                  },
+                  listener: (context, state) {
+                    if (state.status == contactstatus.selected &&
+                        state.contact != null) {
+                      _personNameController.text = state.contact!.name;
+                      _phoneController.text = state.contact!.phoneNumber;
+                    }
+                  },
+                ),
 
-              const SizedBox(height: 24),
-              Text(
-                'Transaction Details',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 24),
+                Text(
+                  'Transaction Details',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'Total Amount *',
-                  prefixIcon: Icon(Icons.currency_rupee),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty)
-                    return 'Total amount is required';
-                  final numVal = double.tryParse(val);
-                  if (numVal == null) return 'Please enter a valid number';
-                  if (numVal <= 0) return 'Amount must be greater than 0';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _paidAmountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'Paid Amount *',
-                  prefixIcon: Icon(Icons.payments_outlined),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty)
-                    return 'Paid amount is required (enter 0 if unpaid)';
-                  final numVal = double.tryParse(val);
-                  if (numVal == null) return 'Please enter a valid number';
-                  if (numVal < 0) return 'Paid amount cannot be negative';
-                  final totalAmt =
-                      double.tryParse(_amountController.text) ?? 0.0;
-                  if (numVal > totalAmt)
-                    return 'Paid amount cannot exceed total amount';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _balanceController,
-                enabled: false,
-                decoration: const InputDecoration(
-                  labelText: 'Balance (Auto Calculated)',
-                  prefixIcon: Icon(Icons.account_balance_outlined),
-                  fillColor: Colors.transparent,
-                ),
-              ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () => _selectDateTime(context),
-                child: InputDecorator(
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _amountController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
-                    labelText: 'Due Date & Time *',
-                    prefixIcon: Icon(Icons.access_time_outlined),
+                    labelText: 'Total Amount *',
+                    prefixIcon: Icon(Icons.currency_rupee),
                   ),
-                  child: Text(
-                    DateFormat.yMMMd().add_jm().format(_selectedDate),
-                    style: theme.textTheme.bodyLarge,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty)
+                      return 'Total amount is required';
+                    final numVal = double.tryParse(val);
+                    if (numVal == null) return 'Please enter a valid number';
+                    if (numVal <= 0) return 'Amount must be greater than 0';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _paidAmountController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Paid Amount *',
+                    prefixIcon: Icon(Icons.payments_outlined),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty)
+                      return 'Paid amount is required (enter 0 if unpaid)';
+                    final numVal = double.tryParse(val);
+                    if (numVal == null) return 'Please enter a valid number';
+                    if (numVal < 0) return 'Paid amount cannot be negative';
+                    final totalAmt =
+                        double.tryParse(_amountController.text) ?? 0.0;
+                    if (numVal > totalAmt)
+                      return 'Paid amount cannot exceed total amount';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _balanceController,
+                  enabled: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Balance (Auto Calculated)',
+                    prefixIcon: Icon(Icons.account_balance_outlined),
+                    fillColor: Colors.transparent,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedStatus,
-                decoration: const InputDecoration(
-                  labelText: 'Status *',
-                  prefixIcon: Icon(Icons.rule),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'Pending', child: Text('Pending')),
-                  DropdownMenuItem(
-                    value: 'Completed',
-                    child: Text('Completed'),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () => _selectDateTime(context),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Due Date & Time *',
+                      prefixIcon: Icon(Icons.access_time_outlined),
+                    ),
+                    child: Text(
+                      DateFormat.yMMMd().add_jm().format(_selectedDate),
+                      style: theme.textTheme.bodyLarge,
+                    ),
                   ),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _selectedStatus = val;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _notesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Notes',
-                  prefixIcon: Icon(Icons.notes_outlined),
                 ),
-              ),
-              const SizedBox(height: 32),
-              CustomButton(
-                text: isEdit ? 'Save Changes' : 'Save Transaction',
-                isLoading: _isSaving,
-                onPressed: _submitForm,
-              ),
-            ],
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedStatus,
+                  decoration: const InputDecoration(
+                    labelText: 'Status *',
+                    prefixIcon: Icon(Icons.rule),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Pending', child: Text('Pending')),
+                    DropdownMenuItem(
+                      value: 'Completed',
+                      child: Text('Completed'),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _selectedStatus = val;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _notesController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Notes',
+                    prefixIcon: Icon(Icons.notes_outlined),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                CustomButton(
+                  text: isEdit ? 'Save Changes' : 'Save Transaction',
+                  isLoading: _isSaving,
+                  onPressed: _submitForm,
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

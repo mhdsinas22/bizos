@@ -1,3 +1,4 @@
+import 'package:bizos/features/money_management/domain/entities/debt_entity.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -27,13 +28,13 @@ class LoadTransactionHistoryEvent extends TransactionDetailsEvent {
 
   @override
   List<Object?> get props => [
-        transactionId,
-        isPersonal,
-        isRefresh,
-        filterEventType,
-        searchQuery,
-        ascending,
-      ];
+    transactionId,
+    isPersonal,
+    isRefresh,
+    filterEventType,
+    searchQuery,
+    ascending,
+  ];
 }
 
 class LoadMoreHistoryEvent extends TransactionDetailsEvent {
@@ -68,13 +69,13 @@ class AddPaymentEvent extends TransactionDetailsEvent {
 
   @override
   List<Object?> get props => [
-        transactionId,
-        amount,
-        paymentMethod,
-        notes,
-        isPersonal,
-        createdBy,
-      ];
+    transactionId,
+    amount,
+    paymentMethod,
+    notes,
+    isPersonal,
+    createdBy,
+  ];
 }
 
 class AddAdjustmentEvent extends TransactionDetailsEvent {
@@ -94,12 +95,12 @@ class AddAdjustmentEvent extends TransactionDetailsEvent {
 
   @override
   List<Object?> get props => [
-        transactionId,
-        amount,
-        notes,
-        isPersonal,
-        createdBy,
-      ];
+    transactionId,
+    amount,
+    notes,
+    isPersonal,
+    createdBy,
+  ];
 }
 
 class AddReminderEvent extends TransactionDetailsEvent {
@@ -146,3 +147,17 @@ class DeleteHistoryItemEvent extends TransactionDetailsEvent {
   @override
   List<Object?> get props => [historyId, transactionId, isPersonal];
 }
+
+class AddDebtEvent extends TransactionDetailsEvent {
+  final DebtEntity debt;
+  final bool isPersonal;
+
+  const AddDebtEvent({
+    required this.debt,
+    required this.isPersonal,
+  });
+
+  @override
+  List<Object?> get props => [debt, isPersonal];
+}
+

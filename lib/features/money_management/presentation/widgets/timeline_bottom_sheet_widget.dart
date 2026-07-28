@@ -1,6 +1,7 @@
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
+import 'package:bizos/features/money_management/presentation/utils/transaction_event_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -24,13 +25,25 @@ class TimelineBottomSheetWidget extends StatefulWidget {
 }
 
 class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
+  String _getEventTitle() {
+    return TransactionEventMapper.formatEventTitle(
+      widget.historyItem.eventType,
+      transactionType: widget.transactionType,
+    );
+  }
+
   void _shareEvent() {
-    final typeTitle = widget.historyItem.eventType.replaceAll('_', ' ').toUpperCase();
+    final typeTitle = _getEventTitle();
+    final eventDesc = TransactionEventMapper.formatEventDescription(
+      widget.historyItem.eventType,
+      transactionType: widget.transactionType,
+      notes: widget.historyItem.notes,
+    );
     final text = 'Event: $typeTitle\n'
         'Amount: ₹${widget.historyItem.amount.toStringAsFixed(2)}\n'
         'Method: ${widget.historyItem.paymentMethod ?? 'N/A'}\n'
         'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(widget.historyItem.createdAt.toLocal())}\n'
-        'Notes: ${widget.historyItem.notes}';
+        'Description: $eventDesc';
     Share.share(text);
   }
 
@@ -43,7 +56,7 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text('Edit ${widget.historyItem.eventType.replaceAll('_', ' ').toUpperCase()}'),
+          title: Text('Edit ${_getEventTitle()}'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -75,7 +88,7 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
                   amount: newAmount,
                   notes: notesController.text.trim(),
                   paymentMethod: method,
-                  eventType: widget.historyItem.eventType == 'payment' ? 'payment_updated' : widget.historyItem.eventType,
+                  eventType: widget.historyItem.eventType,
                 );
                 widget.onEdit(updated);
                 Navigator.pop(dialogContext);
@@ -96,7 +109,7 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
         return AlertDialog(
           title: const Text('Delete Event?'),
           content: const Text(
-            'Deleting this event will automatically recalculate the total debt, paid amount, and outstanding balance. Proceed?',
+            'Deleting this event will automatically recalculate the total amount, paid amount, and outstanding balance. Proceed?',
           ),
           actions: [
             TextButton(
@@ -109,7 +122,6 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
                 Navigator.pop(context);
                 widget.onDelete();
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
               child: const Text('Delete'),
             ),
           ],
@@ -146,7 +158,7 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                item.eventType.replaceAll('_', ' ').toUpperCase(),
+                _getEventTitle(),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -185,19 +197,29 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
               ),
             ],
           ),
-          if (item.notes.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.notes, size: 18, color: Colors.grey),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Notes: ${item.notes}', style: theme.textTheme.bodyMedium),
+          Builder(
+            builder: (context) {
+              final eventDesc = TransactionEventMapper.formatEventDescription(
+                item.eventType,
+                transactionType: widget.transactionType,
+                notes: item.notes,
+              );
+              if (eventDesc.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.notes, size: 18, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('Description: $eventDesc', style: theme.textTheme.bodyMedium),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              );
+            },
+          ),
           const SizedBox(height: 24),
           Row(
             children: [

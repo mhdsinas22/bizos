@@ -1,5 +1,6 @@
 import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
 import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
+import 'package:bizos/features/money_management/presentation/utils/transaction_event_mapper.dart';
 import 'package:intl/intl.dart';
 
 class ShareTransactionStatementUseCase {
@@ -32,7 +33,6 @@ class ShareTransactionStatementUseCase {
     final nowDateFormat = DateFormat('dd MMM yyyy');
     final nowTimeFormat = DateFormat('hh:mm a');
 
-    final isPay = transaction.transactionType == 'pay';
     final now = DateTime.now();
 
     final buffer = StringBuffer();
@@ -55,7 +55,11 @@ class ShareTransactionStatementUseCase {
     buffer.writeln();
     buffer.writeln('Financial Summary');
     buffer.writeln();
-    buffer.writeln(isPay ? 'Total Payable' : 'Total Debt');
+    buffer.writeln(
+      TransactionEventMapper.getTotalAmountLabel(
+        transactionType: transaction.transactionType,
+      ),
+    );
     buffer.writeln(currencyFormat.format(transaction.amount));
     buffer.writeln();
     buffer.writeln('Total Paid');
@@ -88,27 +92,8 @@ class ShareTransactionStatementUseCase {
         buffer.writeln(eventDate);
         buffer.writeln();
 
-        String eventTitle = '• ';
-        switch (item.eventType) {
-          case 'debt_created':
-            eventTitle += 'Debt Created';
-            break;
-          case 'payment':
-          case 'payment_updated':
-            eventTitle += isPay ? 'Payment Made' : 'Payment Received';
-            break;
-          case 'adjustment':
-            eventTitle += 'Adjustment';
-            break;
-          case 'reminder_sent':
-            eventTitle += 'Reminder Sent';
-            break;
-          case 'status_changed':
-            eventTitle += 'Status Changed';
-            break;
-          default:
-            eventTitle += item.eventType.replaceAll('_', ' ').toUpperCase();
-        }
+        final eventTitle =
+            '• ${TransactionEventMapper.formatEventTitle(item.eventType, transactionType: transaction.transactionType)}';
 
         buffer.writeln(eventTitle);
         buffer.writeln();
@@ -131,9 +116,14 @@ class ShareTransactionStatementUseCase {
         buffer.writeln(currencyFormat.format(item.balanceAfter));
         buffer.writeln();
 
-        if (item.notes.isNotEmpty) {
-          buffer.writeln('Notes');
-          buffer.writeln(item.notes);
+        final eventDesc = TransactionEventMapper.formatEventDescription(
+          item.eventType,
+          transactionType: transaction.transactionType,
+          notes: item.notes,
+        );
+        if (eventDesc.isNotEmpty) {
+          buffer.writeln('Description');
+          buffer.writeln(eventDesc);
           buffer.writeln();
         }
 

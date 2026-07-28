@@ -1,11 +1,32 @@
+import 'package:bizos/features/money_management/domain/entities/debt_entity.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
 
 abstract class MoneyManagementRepository {
   Stream<List<MoneyTransactionEntity>> watchPersonalTransactions(String userId);
-  Stream<List<MoneyTransactionEntity>> watchBusinessTransactions(String businessId);
-  Future<MoneyTransactionEntity> addTransaction(MoneyTransactionEntity transaction, bool isPersonal);
-  Future<void> updateTransaction(MoneyTransactionEntity transaction, bool isPersonal);
+  Stream<List<MoneyTransactionEntity>> watchBusinessTransactions(
+    String businessId,
+  );
+  Future<MoneyTransactionEntity> addTransaction(
+    MoneyTransactionEntity transaction,
+    bool isPersonal,
+  );
+  Future<MoneyTransactionEntity> addDebt({
+    required DebtEntity debt,
+    required bool isPersonal,
+  });
+  Future<MoneyTransactionEntity> createDebt({
+    required DebtEntity debt,
+    required bool isPersonal,
+  });
+  Future<void> updateTransaction(
+    MoneyTransactionEntity transaction,
+    bool isPersonal,
+  );
+  Future<MoneyTransactionEntity?> getTransactionById({
+    required String id,
+    required bool isPersonal,
+  });
   Future<MoneyTransactionEntity?> deleteTransaction(String id, bool isPersonal);
 
   // History Methods
@@ -54,4 +75,3 @@ abstract class MoneyManagementRepository {
     required bool isPersonal,
   });
 }
-
