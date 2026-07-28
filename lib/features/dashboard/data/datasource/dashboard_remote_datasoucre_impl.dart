@@ -12,7 +12,17 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
     String? businessId,
     String currentuserid,
   ) async {
-    print("current user id:-$currentuserid");
+    final emptyData = DashboardData(
+      totalBusinesses: 0,
+      totalIncome: 0.0,
+      totalExpense: 0.0,
+      totalProfit: 0.0,
+      pendingTasks: 0,
+      recentActivities: [],
+      monthlySummary: {},
+    );
+    if (currentuserid.trim().isEmpty) return emptyData;
+
     // 1. Fetch total businesses
     // Fetch user profile to determine role
     final userResponse = await supabaseClient
@@ -36,6 +46,7 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
           .eq('staff_id', currentuserid);
       final businessIds = assignedResponse
           .map((row) => row['business_id'] as String)
+          .where((id) => id.trim().isNotEmpty)
           .toList();
       if (businessIds.isNotEmpty) {
         bizResponse = await supabaseClient
@@ -45,9 +56,13 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
       }
     }
 
-    print("Business:-${bizResponse}");
     final totalBusinesses = bizResponse.length;
-    final businessIds = bizResponse.map((e) => e['id']).toList();
+    final businessIds = bizResponse
+        .map((e) => e['id']?.toString() ?? '')
+        .where((id) => id.trim().isNotEmpty)
+        .toList();
+
+    if (businessIds.isEmpty) return emptyData;
 
     // 2. Fetch pending tasks
     var taskQuery = supabaseClient

@@ -166,13 +166,13 @@ class ActivityRemoteDatasourceImpl implements ActivityRemoteDatasource {
 
       await supabaseClient.from('activities').insert({
         'id': uuid,
-        'business_id': businessId,
+        'business_id': (businessId != null && businessId.trim().isNotEmpty) ? businessId : null,
         'title': title,
         'description': description,
-        'created_by': resolvedCreatedBy,
+        'created_by': (resolvedCreatedBy != null && resolvedCreatedBy.trim().isNotEmpty) ? resolvedCreatedBy : null,
         'module': module,
         'action': action,
-        'reference_id': referenceId,
+        'reference_id': (referenceId != null && referenceId.trim().isNotEmpty) ? referenceId : null,
         'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {

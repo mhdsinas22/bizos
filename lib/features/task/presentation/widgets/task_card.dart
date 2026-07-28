@@ -38,7 +38,6 @@ class TaskCard extends StatelessWidget {
     if (userNames.containsKey(id)) {
       return userNames[id]!;
     }
-    // If it's the owner, fallback to "Owner" (useful for staff view under RLS)
     final ownerId = currentUser.isOwner ? currentUser.id : currentUser.ownerId;
     if (id == ownerId) {
       return 'Owner';
@@ -49,239 +48,149 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Resolve names
     final assigneeName = _resolveName(task.assignedto);
     final creatorName = _resolveName(task.createdBy, fallback: 'Owner');
     final businessName = businessNames[task.businessId] ?? 'Business';
-    print("Bussiname:-$businessName");
 
-    // Priority color mapping
-    Color priorityColor = Colors.grey;
+    Color priorityColor = isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary;
     if (task.priority == 'High') priorityColor = AppTheme.error;
     if (task.priority == 'Medium') priorityColor = AppTheme.warning;
     if (task.priority == 'Low') priorityColor = AppTheme.info;
 
-    // Status configuration
-    const pendingColor = Color(0xFFF59E0B);
-    const completedColor = Color(0xFF10B981);
-    const missedColor = Color(0xFFEF4444);
+    const pendingColor = AppTheme.warning;
+    const completedColor = AppTheme.success;
+    const missedColor = AppTheme.error;
 
     Color statusColor;
     IconData statusIcon;
     String statusLabel;
 
     if (task.isCompleted) {
-      if (task.isCompletedLate) {
-        statusColor = completedColor;
-        statusIcon = Icons.check_circle_outline;
-        statusLabel = 'Completed Late';
-      } else {
-        statusColor = completedColor;
-        statusIcon = Icons.check_circle_outline;
-        statusLabel = 'Completed';
-      }
+      statusColor = completedColor;
+      statusIcon = Icons.check_circle_rounded;
+      statusLabel = task.isCompletedLate ? 'Completed Late' : 'Completed';
     } else if (task.isNotCompleted) {
       statusColor = missedColor;
-      statusIcon = Icons.cancel_outlined;
+      statusIcon = Icons.cancel_rounded;
       statusLabel = 'Not Completed';
     } else if (task.isMissed) {
       statusColor = missedColor;
-      statusIcon = Icons.cancel_outlined;
+      statusIcon = Icons.error_outline_rounded;
       statusLabel = 'Missed';
     } else {
       statusColor = pendingColor;
-      statusIcon = Icons.access_time_outlined;
+      statusIcon = Icons.schedule_rounded;
       statusLabel = 'Pending';
     }
 
     return GlassCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      borderRadius: 14,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left checkbox (only shown in owner view when task can be marked complete)
           if (isOwnerView && task.canMarkComplete) ...[
             Padding(
               padding: const EdgeInsets.only(top: 2.0),
-              child: Checkbox(
-                value: task.isCompleted,
-                onChanged: onToggleCompleted,
-                activeColor: completedColor,
+              child: SizedBox(
+                height: 22,
+                width: 22,
+                child: Checkbox(
+                  value: task.isCompleted,
+                  onChanged: onToggleCompleted,
+                  activeColor: completedColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
           ],
-
-          // Task content details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Task Title (prominent)
-                Text(
-                  task.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    decoration: task.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
-                    color: task.isCompleted ? theme.disabledColor : null,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 4),
-
-                // Business Name Row
                 Row(
                   children: [
-                    Icon(
-                      Icons.storefront,
-                      size: 12,
-                      color: theme.colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      businessName,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.secondary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                    Expanded(
+                      child: Text(
+                        task.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14.5,
+                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                          color: task.isCompleted
+                              ? (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary)
+                              : null,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-
-                // 2. Assigned Staff & Creators (with icon/avatar)
-                if (isOwnerView) ...[
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: theme.colorScheme.primary,
-                        ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Assigned To: ',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.storefront_rounded,
+                            size: 11,
+                            color: AppTheme.primaryColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            businessName,
+                            style: const TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        assigneeName,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: assigneeName == 'Unassigned'
-                              ? theme.disabledColor
-                              : null,
-                          fontSize: 11,
-                        ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isOwnerView ? 'Assigned: $assigneeName' : 'By: $creatorName',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: 11,
+                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.create_outlined,
-                          size: 12,
-                          color: theme.disabledColor,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Created By: ',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                      Text(
-                        creatorName,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  // Staff should only see: Assigned By
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Assigned By: ',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                      Text(
-                        creatorName,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
-                // 3. Description
+                    ),
+                  ],
+                ),
                 if (task.description.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     task.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       height: 1.3,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
-                        0.8,
-                      ),
+                      color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
-
-                // 4. Status + Priority + Due Date Row
+                const SizedBox(height: 10),
                 Wrap(
-                  spacing: 8,
+                  spacing: 6,
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    // Status Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(6),
@@ -289,25 +198,21 @@ class TaskCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(statusIcon, size: 12, color: statusColor),
+                          Icon(statusIcon, size: 11, color: statusColor),
                           const SizedBox(width: 4),
                           Text(
                             statusLabel,
                             style: TextStyle(
                               color: statusColor,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                               fontSize: 10,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    // Priority Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: priorityColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -316,147 +221,92 @@ class TaskCard extends StatelessWidget {
                         '${task.priority} Priority',
                         style: TextStyle(
                           color: priorityColor,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           fontSize: 10,
                         ),
                       ),
                     ),
-                    // Due Date & Time
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.access_time_outlined,
-                          size: 12,
-                          color: task.isMissed
-                              ? missedColor
-                              : theme.disabledColor,
+                          Icons.schedule_rounded,
+                          size: 11,
+                          color: task.isMissed ? missedColor : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'Due: ${DateFormat.yMMMd().add_jm().format(task.dueDate)}',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: task.isMissed
-                                ? missedColor
-                                : theme.disabledColor,
-                            fontWeight: task.isMissed
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            fontSize: 11,
+                          style: TextStyle(
+                            color: task.isMissed ? missedColor : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                            fontWeight: task.isMissed ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 10.5,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                if (task.isMissed) ...[
+                if (task.isMissed && (onResolveCompletedLate != null || onResolveNotCompleted != null)) ...[
                   const SizedBox(height: 10),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: theme.brightness == Brightness.dark
-                          ? Colors.red.withOpacity(0.12)
-                          : const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: missedColor.withOpacity(0.3),
-                      ),
+                      color: missedColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: missedColor.withOpacity(0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          'Deadline passed. Select resolution outcome:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 14,
-                              color: missedColor,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'This task missed its deadline. What was the final outcome?',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                  color: theme.brightness == Brightness.dark
-                                      ? const Color(0xFFFCA5A5)
-                                      : const Color(0xFF991B1B),
+                            if (onResolveCompletedLate != null)
+                              InkWell(
+                                onTap: onResolveCompletedLate,
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: completedColor,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Completed Late',
+                                    style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
+                                  ),
                                 ),
                               ),
-                            ),
+                            const SizedBox(width: 8),
+                            if (onResolveNotCompleted != null)
+                              InkWell(
+                                onTap: onResolveNotCompleted,
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: missedColor.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: missedColor),
+                                  ),
+                                  child: const Text(
+                                    'Not Completed',
+                                    style: TextStyle(color: missedColor, fontSize: 10.5, fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                        if (onResolveCompletedLate != null ||
-                            onResolveNotCompleted != null) ...[
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              if (onResolveCompletedLate != null)
-                                ElevatedButton.icon(
-                                  onPressed: onResolveCompletedLate,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: completedColor,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.check_circle_outline,
-                                    size: 12,
-                                  ),
-                                  label: const Text(
-                                    'Completed Late',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              if (onResolveNotCompleted != null)
-                                OutlinedButton.icon(
-                                  onPressed: onResolveNotCompleted,
-                                  style: OutlinedButton.styleFrom(
-                                    backgroundColor:
-                                        missedColor.withOpacity(0.08),
-                                    foregroundColor: missedColor,
-                                    side: const BorderSide(
-                                      color: missedColor,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.cancel_outlined,
-                                    size: 12,
-                                  ),
-                                  label: const Text(
-                                    'Not Completed',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -464,61 +314,51 @@ class TaskCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-
-          // Right Actions Section
           if (isOwnerView) ...[
-            Column(
-              children: [
-                if (onEdit != null)
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    onPressed: onEdit,
-                    tooltip: 'Edit task',
-                  ),
-                if (onDelete != null)
-                  IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: AppTheme.error,
-                    ),
-                    onPressed: onDelete,
-                    tooltip: 'Delete task',
-                  ),
-              ],
-            ),
-          ] else ...[
-            // Staff complete button (only shown when task can be marked complete)
-            if (task.canMarkComplete && onMarkComplete != null)
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: onMarkComplete,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: completedColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    minimumSize: Size.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  icon: const Icon(Icons.check_circle_outline, size: 12),
-                  label: const Text(
-                    'Mark Complete',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
+            PopupMenuButton<String>(
+              icon: Icon(
+                Icons.more_vert_rounded,
+                size: 18,
+                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              onSelected: (val) {
+                if (val == 'edit' && onEdit != null) onEdit!();
+                if (val == 'delete' && onDelete != null) onDelete!();
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined, size: 16),
+                      SizedBox(width: 8),
+                      Text('Edit', style: TextStyle(fontSize: 13)),
+                    ],
                   ),
                 ),
-              ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.error),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: AppTheme.error, fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ] else if (task.canMarkComplete && onMarkComplete != null) ...[
+            IconButton(
+              icon: const Icon(Icons.check_circle_outline_rounded, color: completedColor, size: 22),
+              onPressed: onMarkComplete,
+              tooltip: 'Mark Complete',
+            ),
           ],
         ],
       ),
     );
   }
 }
+

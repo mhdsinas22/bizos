@@ -30,14 +30,34 @@ class ToggleTaskStatusEvent extends TaskEvent {
 class DeleteTaskEvent extends TaskEvent {
   final String id;
   final String businessId;
+  final String userId;
   final bool isGlobal;
-  DeleteTaskEvent(this.id, this.businessId, {this.isGlobal = false});
+  DeleteTaskEvent(
+    this.id,
+    this.businessId,
+    this.userId, {
+    this.isGlobal = false,
+  });
 }
 
 class ResolveMissedTaskEvent extends TaskEvent {
   final TaskModel task;
   final String outcomeStatus;
   final bool isGlobal;
-  ResolveMissedTaskEvent(this.task, {required this.outcomeStatus, this.isGlobal = false});
+  ResolveMissedTaskEvent(
+    this.task, {
+    required this.outcomeStatus,
+    this.isGlobal = false,
+  });
 }
 
+class FetchPersonalTasksEvent extends TaskEvent {
+  final String userId;
+  FetchPersonalTasksEvent(this.userId);
+}
+
+class DuplicateTaskEvent extends TaskEvent {
+  final TaskModel task;
+  final bool isPersonal;
+  DuplicateTaskEvent(this.task, {this.isPersonal = false});
+}

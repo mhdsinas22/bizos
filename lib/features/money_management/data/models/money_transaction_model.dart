@@ -45,7 +45,7 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool isPersonal = false}) {
     final data = <String, dynamic>{
       'transaction_type': transactionType,
       'person_name': personName,
@@ -58,14 +58,17 @@ class MoneyTransactionModel extends MoneyTransactionEntity {
       'is_notified': isNotified,
     };
 
-    if (id.isNotEmpty) {
+    if (id.trim().isNotEmpty) {
       data['id'] = id;
     }
-    if (userId != null) {
-      data['user_id'] = userId;
-    }
-    if (businessId != null) {
-      data['business_id'] = businessId;
+    if (isPersonal) {
+      if (userId != null && userId!.trim().isNotEmpty) {
+        data['user_id'] = userId;
+      }
+    } else {
+      if (businessId != null && businessId!.trim().isNotEmpty) {
+        data['business_id'] = businessId;
+      }
     }
     if (dueDate != null) {
       data['due_date'] = dueDate!.toUtc().toIso8601String();

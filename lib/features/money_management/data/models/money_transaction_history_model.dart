@@ -56,7 +56,7 @@ class MoneyTransactionHistoryModel extends MoneyTransactionHistoryEntity {
     }
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool isPersonal = false}) {
     final data = <String, dynamic>{
       'transaction_id': transactionId,
       'event_type': sanitizeEventType(eventType),
@@ -68,11 +68,14 @@ class MoneyTransactionHistoryModel extends MoneyTransactionHistoryEntity {
     if (id.isNotEmpty) {
       data['id'] = id;
     }
-    if (userId != null) {
-      data['user_id'] = userId;
-    }
-    if (businessId != null) {
-      data['business_id'] = businessId;
+    if (isPersonal) {
+      if (userId != null) {
+        data['user_id'] = userId;
+      }
+    } else {
+      if (businessId != null) {
+        data['business_id'] = businessId;
+      }
     }
     if (paymentMethod != null && paymentMethod!.isNotEmpty) {
       data['payment_method'] = paymentMethod;

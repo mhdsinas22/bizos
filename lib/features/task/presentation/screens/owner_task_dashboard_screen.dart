@@ -56,7 +56,12 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
           ElevatedButton(
             onPressed: () {
               context.read<TaskBloc>().add(
-                DeleteTaskEvent(task.id, task.businessId, isGlobal: true),
+                DeleteTaskEvent(
+                  task.id,
+                  task.businessId,
+                  task.ownerId,
+                  isGlobal: true,
+                ),
               );
               Navigator.pop(dialogContext);
             },
@@ -115,9 +120,7 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
 
               // Compute statistics (safely isolated to this owner)
               final totalCount = allTasks.length;
-              final pendingCount = allTasks
-                  .where((t) => t.isPending)
-                  .length;
+              final pendingCount = allTasks.where((t) => t.isPending).length;
               final completedCount = allTasks
                   .where((t) => t.isCompleted)
                   .length;
@@ -258,8 +261,12 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
             onDelete: () => _confirmDelete(t),
             onResolveCompletedLate: () {
               context.read<TaskBloc>().add(
-                    ResolveMissedTaskEvent(t, outcomeStatus: 'Completed Late', isGlobal: true),
-                  );
+                ResolveMissedTaskEvent(
+                  t,
+                  outcomeStatus: 'Completed Late',
+                  isGlobal: true,
+                ),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Task marked as Completed Late.'),
@@ -270,8 +277,12 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
             },
             onResolveNotCompleted: () {
               context.read<TaskBloc>().add(
-                    ResolveMissedTaskEvent(t, outcomeStatus: 'Not Completed', isGlobal: true),
-                  );
+                ResolveMissedTaskEvent(
+                  t,
+                  outcomeStatus: 'Not Completed',
+                  isGlobal: true,
+                ),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Task marked as Not Completed.'),

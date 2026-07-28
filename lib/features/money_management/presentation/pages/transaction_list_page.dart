@@ -706,9 +706,23 @@ class _TransactionListPageState extends State<TransactionListPage> {
       ),
       body: widget.businessId != null
           ? BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(
+              buildWhen: (previous, current) {
+                if (previous.runtimeType != current.runtimeType) return true;
+                if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+                  return previous.transactions != current.transactions;
+                }
+                return true;
+              },
               builder: (context, state) => _buildBody(context, state),
             )
           : BlocBuilder<PersonalMoneyManagementBloc, MoneyManagementState>(
+              buildWhen: (previous, current) {
+                if (previous.runtimeType != current.runtimeType) return true;
+                if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+                  return previous.transactions != current.transactions;
+                }
+                return true;
+              },
               builder: (context, state) => _buildBody(context, state),
             ),
     );

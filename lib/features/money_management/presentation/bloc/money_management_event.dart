@@ -56,3 +56,23 @@ class DeleteTransactionEvent extends MoneyManagementEvent {
   @override
   List<Object?> get props => [id, isPersonal];
 }
+
+class UpsertTransactionLocallyEvent extends MoneyManagementEvent {
+  final MoneyTransactionEntity transaction;
+  final bool isPersonal;
+
+  const UpsertTransactionLocallyEvent(this.transaction, {required this.isPersonal});
+
+  @override
+  List<Object?> get props => [transaction, isPersonal];
+}
+
+class RemoveTransactionLocallyEvent extends MoneyManagementEvent {
+  final String id;
+  final bool isPersonal;
+
+  const RemoveTransactionLocallyEvent(this.id, {required this.isPersonal});
+
+  @override
+  List<Object?> get props => [id, isPersonal];
+}

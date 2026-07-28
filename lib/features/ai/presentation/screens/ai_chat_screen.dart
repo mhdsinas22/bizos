@@ -1,4 +1,5 @@
 import 'package:bizos/core/theme/app_theme.dart';
+import 'package:bizos/core/widgets/error_state.dart';
 import 'package:bizos/features/ai/data/models/chat_message.dart';
 import 'package:bizos/features/ai/presentation/bloc/ai_bloc.dart';
 import 'package:bizos/features/ai/presentation/bloc/ai_event.dart';
@@ -172,10 +173,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
           } else if (state is AiError) {
             setState(() {
               _isAILoading = false;
+              final cleanError = ErrorStateWidget.sanitizeMessage(state.error ?? '');
               _messages.add(
                 ChatMessage(
                   id: const Uuid().v4(),
-                  text: 'Sorry, I encountered an error: ${state.error}. Please check your connection and try again.',
+                  text: 'Sorry, I ran into an issue: $cleanError',
                   sender: MessageSender.ai,
                   timestamp: DateTime.now(),
                 ),

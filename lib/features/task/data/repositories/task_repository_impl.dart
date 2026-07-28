@@ -40,6 +40,16 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<List<TaskModel>> getPersonalTasks(String userId) async {
+    try {
+      return await taskRemoteDatasource.getPersonalTasks(userId);
+    } catch (e) {
+      print("Error loading personal tasks: $e");
+      rethrow;
+    }
+  }
+
+  @override
   Future<TaskModel> getTaskById(String id) async {
     try {
       return await taskRemoteDatasource.getTaskById(id);
@@ -135,6 +145,26 @@ class TaskRepositoryImpl implements TaskRepository {
     } catch (e) {
       print("Error fetching business names in repository: $e");
       return {};
+    }
+  }
+
+  @override
+  Future<bool> checkOccurrenceExists({
+    required String title,
+    required String repeat,
+    required String userId,
+    required DateTime dueDate,
+  }) async {
+    try {
+      return await taskRemoteDatasource.checkOccurrenceExists(
+        title: title,
+        repeat: repeat,
+        userId: userId,
+        dueDate: dueDate,
+      );
+    } catch (e) {
+      print("Error checking occurrence in repository: $e");
+      return false;
     }
   }
 }

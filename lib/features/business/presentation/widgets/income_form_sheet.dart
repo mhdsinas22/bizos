@@ -1,3 +1,5 @@
+import 'package:bizos/core/utils/responsive_breakpoints.dart';
+import 'package:bizos/core/widgets/responsive_layout.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
@@ -104,27 +106,29 @@ class _IncomeFormSheetState extends State<IncomeFormSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isEditing ? 'Edit Income Record' : 'Record Inward Payment',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+        child: ResponsiveCenterBody(
+          maxWidth: ResponsiveBreakpoints.maxFormWidth,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? 'Edit Income Record' : 'Record Inward Payment',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
               const Divider(),
               const SizedBox(height: 16),
               CustomTextField(
@@ -201,6 +205,7 @@ class _IncomeFormSheetState extends State<IncomeFormSheet> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -63,7 +63,7 @@ class _ToDoTabState extends State<ToDoTab> {
           ElevatedButton(
             onPressed: () {
               context.read<TaskBloc>().add(
-                DeleteTaskEvent(task.id, widget.businessId),
+                DeleteTaskEvent(task.id, widget.businessId, widget.user.id),
               );
               Navigator.pop(dialogContext);
             },
@@ -338,15 +338,16 @@ class _ToDoTabState extends State<ToDoTab> {
                           onResolveCompletedLate: canToggle
                               ? () {
                                   context.read<TaskBloc>().add(
-                                        ResolveMissedTaskEvent(
-                                          t,
-                                          outcomeStatus: 'Completed Late',
-                                        ),
-                                      );
+                                    ResolveMissedTaskEvent(
+                                      t,
+                                      outcomeStatus: 'Completed Late',
+                                    ),
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content:
-                                          Text('Task marked as Completed Late.'),
+                                      content: Text(
+                                        'Task marked as Completed Late.',
+                                      ),
                                       backgroundColor: Color(0xFF10B981),
                                       duration: Duration(seconds: 2),
                                     ),
@@ -356,15 +357,16 @@ class _ToDoTabState extends State<ToDoTab> {
                           onResolveNotCompleted: canToggle
                               ? () {
                                   context.read<TaskBloc>().add(
-                                        ResolveMissedTaskEvent(
-                                          t,
-                                          outcomeStatus: 'Not Completed',
-                                        ),
-                                      );
+                                    ResolveMissedTaskEvent(
+                                      t,
+                                      outcomeStatus: 'Not Completed',
+                                    ),
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content:
-                                          Text('Task marked as Not Completed.'),
+                                      content: Text(
+                                        'Task marked as Not Completed.',
+                                      ),
                                       backgroundColor: Color(0xFFEF4444),
                                       duration: Duration(seconds: 2),
                                     ),

@@ -9,6 +9,7 @@ class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
 
   @override
   Future<List<ExpenseModel>> getExpenseList(String businessId) async {
+    if (businessId.trim().isEmpty) return [];
     final response = await supabaseClient
         .from('expenses')
         .select()
@@ -25,16 +26,19 @@ class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
 
   @override
   Future<void> addExpense(ExpenseModel expense) async {
-    await supabaseClient.from('expenses').insert({
-      'id': expense.id,
-      'business_id': expense.businessId,
+    final Map<String, dynamic> data = {
       'amount': expense.amount,
       'category': expense.category,
       'description': expense.description,
       'expense_date': expense.date.toIso8601String(),
-      'created_by_user_id': expense.createdByUserId,
+      'business_id': expense.businessId.trim().isNotEmpty ? expense.businessId : null,
+      'created_by_user_id': (expense.createdByUserId != null && expense.createdByUserId!.trim().isNotEmpty) ? expense.createdByUserId : null,
       'created_by_name': expense.createdByName,
-    });
+    };
+    if (expense.id.trim().isNotEmpty) {
+      data['id'] = expense.id;
+    }
+    await supabaseClient.from('expenses').insert(data);
   }
 
   @override

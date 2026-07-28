@@ -9,6 +9,7 @@ import 'package:bizos/features/money_management/domain/entities/money_transactio
 import 'package:bizos/features/money_management/domain/entities/money_transaction_history_entity.dart';
 import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
 import 'package:bizos/features/money_management/domain/usecases/share_transaction_statement_usecase.dart';
+import 'package:bizos/features/money_management/presentation/bloc/money_management_event.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_state.dart';
 import 'package:bizos/features/money_management/presentation/bloc/personal_money_management_bloc.dart';
 import 'package:bizos/features/money_management/presentation/bloc/business_money_management_bloc.dart';
@@ -361,9 +362,19 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           BlocListener<TransactionDetailsBloc, TransactionDetailsState>(
             listener: (context, state) {
               if (state is TransactionHistoryLoaded && state.parentTransaction != null) {
+                final updated = state.parentTransaction!;
                 setState(() {
-                  _currentTransaction = state.parentTransaction!;
+                  _currentTransaction = updated;
                 });
+                if (widget.isPersonal) {
+                  context.read<PersonalMoneyManagementBloc>().add(
+                    UpsertTransactionLocallyEvent(updated, isPersonal: true),
+                  );
+                } else {
+                  context.read<BusinessMoneyManagementBloc>().add(
+                    UpsertTransactionLocallyEvent(updated, isPersonal: false),
+                  );
+                }
               } else if (state is TransactionDetailsError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

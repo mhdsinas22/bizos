@@ -1,3 +1,5 @@
+import 'package:bizos/core/utils/responsive_breakpoints.dart';
+import 'package:bizos/core/widgets/responsive_layout.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
@@ -97,85 +99,88 @@ class _BusinessFormSheetState extends State<BusinessFormSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isEditing
-                        ? 'Edit Business Details'
-                        : 'Create Business Profile',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+        child: ResponsiveCenterBody(
+          maxWidth: ResponsiveBreakpoints.maxFormWidth,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing
+                          ? 'Edit Business Details'
+                          : 'Create Business Profile',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const Divider(),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _nameController,
-                label: 'Business Name',
-                hint: 'e.g. Acme Corp',
-                prefixIcon: Icons.storefront,
-                validator: (val) => val == null || val.trim().isEmpty
-                    ? 'Please enter a name'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _typeController,
-                label: 'Business Type / Industry',
-                hint: 'e.g. Retail, Consulting, Tech',
-                prefixIcon: Icons.category_outlined,
-                validator: (val) => val == null || val.trim().isEmpty
-                    ? 'Please enter industry type'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _phoneController,
-                label: 'Phone Number',
-                hint: '+1 555-0100',
-                prefixIcon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-                validator: (val) => val == null || val.trim().isEmpty
-                    ? 'Please enter a phone number'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _addressController,
-                label: 'Address',
-                hint: '123 Main St, New York',
-                prefixIcon: Icons.location_on_outlined,
-                validator: (val) => val == null || val.trim().isEmpty
-                    ? 'Please enter address'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _notesController,
-                label: 'Notes / Description',
-                hint: 'Optional notes...',
-                prefixIcon: Icons.description_outlined,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              CustomButton(
-                text: isEditing ? 'Save Changes' : 'Create Business',
-                onPressed: _save,
-              ),
-            ],
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _nameController,
+                  label: 'Business Name',
+                  hint: 'e.g. Acme Corp',
+                  prefixIcon: Icons.storefront,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Please enter a name'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _typeController,
+                  label: 'Business Type / Industry',
+                  hint: 'e.g. Retail, Consulting, Tech',
+                  prefixIcon: Icons.category_outlined,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Please enter industry type'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _phoneController,
+                  label: 'Phone Number',
+                  hint: '+1 555-0100',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Please enter a phone number'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _addressController,
+                  label: 'Address',
+                  hint: '123 Main St, New York',
+                  prefixIcon: Icons.location_on_outlined,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Please enter address'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _notesController,
+                  label: 'Notes / Description',
+                  hint: 'Optional notes...',
+                  prefixIcon: Icons.description_outlined,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 24),
+                CustomButton(
+                  text: isEditing ? 'Save Changes' : 'Create Business',
+                  onPressed: _save,
+                ),
+              ],
+            ),
           ),
         ),
       ),

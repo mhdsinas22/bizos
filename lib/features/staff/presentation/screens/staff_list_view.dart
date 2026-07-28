@@ -9,6 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/core/widgets/empty_state.dart';
+import 'package:bizos/core/widgets/error_state.dart';
+import 'package:bizos/core/widgets/skeleton_loader.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_bloc.dart';
 
 class StaffListView extends StatefulWidget {
@@ -48,21 +50,29 @@ class _StaffListViewState extends State<StaffListView> {
       body: BlocBuilder<StaffBloc, StaffState>(
         builder: (context, state) {
           if (state is StaffLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: SkeletonListLoader(itemCount: 4, itemHeight: 88),
+            );
           }
 
           if (state is StaffError) {
-            return Center(child: Text('Error: ${state.message}'));
+            return ErrorStateWidget(
+              title: 'Unable to Load Staff Members',
+              message: state.message,
+              onRetry: () {
+                context.read<StaffBloc>().add(FetchStaffEvent(_getOwnerId()));
+              },
+            );
           }
 
           if (state is StaffLoaded) {
             final staffList = state.staffList;
             if (staffList.isEmpty) {
               return EmptyState(
-                icon: Icons.people_outline,
-                title: 'No Staff Accounts',
-                message:
-                    'Create credentialed sub-accounts to delegate tasks and reports.',
+                icon: Icons.people_outline_rounded,
+                title: 'No Staff Accounts Registered',
+                message: 'Create credentialed sub-accounts to delegate tasks and operations.',
                 actionLabel: 'Add Staff Member',
                 onActionPressed: () => StaffSheetHelper.showStaffForm(
                   context: context,
@@ -81,18 +91,22 @@ class _StaffListViewState extends State<StaffListView> {
                   padding: const EdgeInsets.only(bottom: 12.0),
                   key: ValueKey(staff.id),
                   child: GlassCard(
+                    padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
                         CircleAvatar(
-                          backgroundColor: AppTheme.primaryColor.withOpacity(
-                            0.1,
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: AppTheme.primaryColor,
+                          radius: 20,
+                          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                          child: Text(
+                            staff.name.isNotEmpty ? staff.name[0].toUpperCase() : 'S',
+                            style: const TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,15 +114,18 @@ class _StaffListViewState extends State<StaffListView> {
                               Text(
                                 staff.name,
                                 style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
                                 ),
                               ),
+                              const SizedBox(height: 2),
                               Text(
-                                'User ID: ${staff.userId}',
-                                style: theme.textTheme.labelLarge,
+                                '@${staff.userId}',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontSize: 12,
+                                ),
                               ),
                               const SizedBox(height: 8),
-                              // Permissions indicators
                               Wrap(
                                 spacing: 6,
                                 runSpacing: 4,
@@ -126,31 +143,52 @@ class _StaffListViewState extends State<StaffListView> {
                                   _buildPermissionChip(
                                     context: context,
                                     label: 'View Accounts',
-                                    active: staff.hasPermission(
-                                      'view_accounts',
-                                    ),
+                                    active: staff.hasPermission('view_accounts'),
                                   ),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => StaffSheetHelper.showStaffForm(
-                            context: context,
-                            staff: staff,
-                            onSave: () {},
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert_rounded, size: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          tooltip: 'Edit Permissions / Details',
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: AppTheme.error,
-                          ),
-                          onPressed: () => _confirmDelete(staff),
-                          tooltip: 'Delete Account',
+                          onSelected: (val) {
+                            if (val == 'edit') {
+                              StaffSheetHelper.showStaffForm(
+                                context: context,
+                                staff: staff,
+                                onSave: () {},
+                              );
+                            }
+                            if (val == 'delete') {
+                              _confirmDelete(context, staff);
+                            }
+                          },
+                          itemBuilder: (_) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 16),
+                                  SizedBox(width: 8),
+                                  Text('Edit Permissions', style: TextStyle(fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.error),
+                                  SizedBox(width: 8),
+                                  Text('Delete Staff', style: TextStyle(color: AppTheme.error, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -195,7 +233,7 @@ class _StaffListViewState extends State<StaffListView> {
     );
   }
 
-  void _confirmDelete(UserModel staff) {
+  void _confirmDelete(BuildContext context, UserModel staff) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -223,3 +261,4 @@ class _StaffListViewState extends State<StaffListView> {
     );
   }
 }
+

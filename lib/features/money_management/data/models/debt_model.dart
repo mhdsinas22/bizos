@@ -47,7 +47,7 @@ class DebtModel extends DebtEntity {
     );
   }
 
-  Map<String, dynamic> toTransactionJson() {
+  Map<String, dynamic> toTransactionJson({bool isPersonal = false}) {
     final data = <String, dynamic>{
       'transaction_type': transactionType,
       'person_name': personName,
@@ -65,11 +65,14 @@ class DebtModel extends DebtEntity {
     if (id != null && id!.isNotEmpty) {
       data['id'] = id;
     }
-    if (userId != null && userId!.isNotEmpty) {
-      data['user_id'] = userId;
-    }
-    if (businessId != null && businessId!.isNotEmpty) {
-      data['business_id'] = businessId;
+    if (isPersonal) {
+      if (userId != null && userId!.isNotEmpty) {
+        data['user_id'] = userId;
+      }
+    } else {
+      if (businessId != null && businessId!.isNotEmpty) {
+        data['business_id'] = businessId;
+      }
     }
     return data;
   }
@@ -78,6 +81,7 @@ class DebtModel extends DebtEntity {
     required String parentTransactionId,
     required String eventType, // 'debt_added' or 'debt_created'
     required double balanceAfter,
+    bool isPersonal = false,
   }) {
     final data = <String, dynamic>{
       'transaction_id': parentTransactionId,
@@ -94,11 +98,14 @@ class DebtModel extends DebtEntity {
     if (createdBy != null && createdBy!.isNotEmpty) {
       data['created_by'] = createdBy;
     }
-    if (userId != null && userId!.isNotEmpty) {
-      data['user_id'] = userId;
-    }
-    if (businessId != null && businessId!.isNotEmpty) {
-      data['business_id'] = businessId;
+    if (isPersonal) {
+      if (userId != null && userId!.isNotEmpty) {
+        data['user_id'] = userId;
+      }
+    } else {
+      if (businessId != null && businessId!.isNotEmpty) {
+        data['business_id'] = businessId;
+      }
     }
     return data;
   }

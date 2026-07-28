@@ -31,15 +31,15 @@ class ActivityModel extends ActivityEntity {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'business_id': businessId,
+      if (id.trim().isNotEmpty) 'id': id,
+      'business_id': (businessId != null && businessId!.trim().isNotEmpty) ? businessId : null,
       'title': title,
       'description': description,
-      'created_by': createdBy,
+      'created_by': createdBy.trim().isNotEmpty ? createdBy : null,
       'created_at': createdAt.toIso8601String(),
       'module': module,
       'action': action,
-      'reference_id': referenceId,
+      'reference_id': (referenceId != null && referenceId!.trim().isNotEmpty) ? referenceId : null,
     };
   }
 }

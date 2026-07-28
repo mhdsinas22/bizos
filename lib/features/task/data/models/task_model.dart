@@ -1,3 +1,5 @@
+import 'package:bizos/core/utils/task_repeat_mapper.dart';
+
 class TaskModel {
   final String id;
   final String businessId;
@@ -12,6 +14,8 @@ class TaskModel {
   final bool isNotified;
   final DateTime? completedAt;
   final String _status;
+  final String taskType; // 'personal' or 'business'
+  final String repeat; // DB constraint values: 'none', 'daily', 'weekly', 'monthly', 'yearly'
 
   TaskModel({
     required this.id,
@@ -28,7 +32,17 @@ class TaskModel {
     this.createdBy = '',
     this.isNotified = false,
     this.completedAt,
-  }) : _status = status ?? (isCompleted ? 'Completed' : 'Pending');
+    String? taskType,
+    String repeat = 'none',
+  })  : repeat = TaskRepeatMapper.toDb(repeat),
+        _status = status ?? (isCompleted ? 'Completed' : 'Pending'),
+        taskType =
+            taskType ?? (businessId.isNotEmpty ? 'business' : 'personal');
+
+  bool get isPersonal => taskType == 'personal';
+  bool get isBusiness => taskType == 'business';
+
+  String get repeatDisplay => TaskRepeatMapper.toUi(repeat);
 
   String get status {
     if (_status.isNotEmpty && _status != 'Pending') {
@@ -80,21 +94,24 @@ class TaskModel {
   }
 
   Map<String, dynamic> toMap() {
+    final isPers = isPersonal || businessId.trim().isEmpty;
     return {
-      'id': id,
-      'businessId': businessId,
+      if (id.trim().isNotEmpty) 'id': id,
+      'business_id': isPers ? null : (businessId.trim().isNotEmpty ? businessId : null),
       'title': title,
       'description': description,
       'priority': priority,
       'due_date': dueDate.toUtc().toIso8601String(),
       'status': status,
-      'ownerId': ownerId,
-      'created_by': createdBy,
-      "assigned_to": assignedto,
-      "created_at": createdAt.toUtc().toIso8601String(),
-      "is_notified": isNotified,
+      'owner_id': ownerId.trim().isNotEmpty ? ownerId : null,
+      'created_by': createdBy.trim().isNotEmpty ? createdBy : null,
+      'assigned_to': assignedto.trim().isNotEmpty ? assignedto : null,
+      'created_at': createdAt.toUtc().toIso8601String(),
+      'is_notified': isNotified,
       if (completedAt != null)
         'completed_at': completedAt!.toUtc().toIso8601String(),
+      'task_type': isPers ? 'personal' : 'business',
+      'repeat': TaskRepeatMapper.toDb(repeat),
     };
   }
 
@@ -105,16 +122,20 @@ class TaskModel {
         rawStatus.toLowerCase() == 'completed late' ||
         rawStatus.toLowerCase() == 'completed_late';
 
+    final bizId = (map['businessId'] ?? map['business_id'] ?? '').toString();
+    final tType = (map['task_type'] as String?) ??
+        (bizId.isNotEmpty ? 'business' : 'personal');
+
     return TaskModel(
       id: map['id'] ?? '',
-      businessId: map['businessId'] ?? '',
+      businessId: bizId,
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       priority: map['priority'] ?? 'Medium',
       dueDate: parseDueDate(map['due_date']),
       isCompleted: isComp,
       status: rawStatus.isNotEmpty ? rawStatus : null,
-      ownerId: map['ownerId'] ?? '',
+      ownerId: map['ownerId'] ?? map['owner_id'] ?? '',
       createdBy: map['created_by'] ?? '',
       assignedto: map["assigned_to"] ?? "",
       createdAt: map['created_at'] != null
@@ -124,6 +145,8 @@ class TaskModel {
       completedAt: map['completed_at'] != null
           ? parseDueDate(map['completed_at'])
           : null,
+      taskType: tType,
+      repeat: TaskRepeatMapper.toDb(map['repeat']?.toString()),
     );
   }
 
@@ -142,6 +165,8 @@ class TaskModel {
     DateTime? createdAt,
     bool? isNotified,
     DateTime? completedAt,
+    String? taskType,
+    String? repeat,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -158,6 +183,8 @@ class TaskModel {
       createdAt: createdAt ?? this.createdAt,
       isNotified: isNotified ?? this.isNotified,
       completedAt: completedAt ?? this.completedAt,
+      taskType: taskType ?? this.taskType,
+      repeat: repeat ?? this.repeat,
     );
   }
 }

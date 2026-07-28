@@ -10,10 +10,17 @@ abstract class TaskRemoteDatasource {
     required String userId,
     required bool isOwner,
   });
+  Future<List<TaskModel>> getPersonalTasks(String userId);
   Future<TaskModel> getTaskById(String id);
   Future<void> createTask(TaskModel task);
   Future<void> updateTask(TaskModel task);
   Future<void> deleteTask(String id);
   Future<Map<String, String>> getUserNames(List<String> userIds);
   Future<Map<String, String>> getBusinessNames(List<String> businessIds);
+  Future<bool> checkOccurrenceExists({
+    required String title,
+    required String repeat,
+    required String userId,
+    required DateTime dueDate,
+  });
 }

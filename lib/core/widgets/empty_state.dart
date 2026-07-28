@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 
 class EmptyState extends StatelessWidget {
@@ -20,49 +21,57 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.08),
+                color: isDark
+                    ? AppTheme.primaryColor.withOpacity(0.12)
+                    : AppTheme.primaryColor.withOpacity(0.06),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                size: 48,
-                color: theme.colorScheme.primary,
+                size: 34,
+                color: isDark ? AppTheme.primaryLightColor : AppTheme.primaryColor,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
             Text(
               title,
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
+                fontSize: 16.5,
+                letterSpacing: -0.3,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               message,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                fontSize: 13,
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null && onActionPressed != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               CustomButton(
                 text: actionLabel!,
                 onPressed: onActionPressed,
-                width: 200,
+                width: 160,
+                height: 42,
               ),
             ],
           ],
@@ -71,3 +80,4 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
+

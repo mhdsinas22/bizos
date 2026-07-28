@@ -23,41 +23,54 @@ class GlassCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    Widget cardContent = Container(
+    final defaultColor = color ??
+        (isDark
+            ? theme.cardColor.withOpacity(0.7)
+            : theme.cardColor);
+
+    final defaultBorder = border != null
+        ? Border.fromBorderSide(border!)
+        : Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.06)
+                : Colors.black.withOpacity(0.04),
+            width: 1,
+          );
+
+    Widget content = Container(
       padding: padding ?? const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color ?? (isDark ? theme.cardColor.withOpacity(0.4) : theme.cardColor),
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: border != null ? Border.fromBorderSide(border!) : Border.all(
-          color: isDark 
-              ? Colors.white.withOpacity(0.08) 
-              : Colors.black.withOpacity(0.05),
-          width: 1,
-        ),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.01),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
       child: child,
     );
 
     if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
+      return Material(
+        color: defaultColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        child: cardContent,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: defaultBorder,
+            ),
+            padding: padding ?? const EdgeInsets.all(16),
+            child: child,
+          ),
+        ),
       );
     }
 
-    return cardContent;
+    return Container(
+      decoration: BoxDecoration(
+        color: defaultColor,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: defaultBorder,
+      ),
+      padding: padding ?? const EdgeInsets.all(16),
+      child: child,
+    );
   }
 }
+

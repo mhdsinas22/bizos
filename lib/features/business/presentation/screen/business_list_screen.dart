@@ -9,6 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/core/widgets/empty_state.dart';
+import 'package:bizos/core/widgets/error_state.dart';
+import 'package:bizos/core/widgets/skeleton_loader.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/business/presentation/screen/business_detail_screen.dart';
 
@@ -104,23 +106,36 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
       body: BlocBuilder<BusinessBloc, BusinessState>(
         builder: (context, state) {
           if (state is BusinessLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: SkeletonListLoader(itemCount: 4, itemHeight: 140),
+            );
           }
 
           if (state is BusinessError) {
-            return Center(child: Text('Error: ${state.message}'));
+            return ErrorStateWidget(
+              title: 'Unable to Load Businesses',
+              message: state.message,
+              onRetry: () {
+                if (user != null) {
+                  context.read<BusinessBloc>().add(
+                    FetchBusinessesEvent(user.userId),
+                  );
+                }
+              },
+            );
           }
 
           if (state is BusinessLoaded) {
             final list = state.businesses;
             if (list.isEmpty) {
               return EmptyState(
-                icon: Icons.storefront,
-                title: 'No Businesses Yet',
+                icon: Icons.storefront_rounded,
+                title: 'No Businesses Registered',
                 message: isOwner
-                    ? 'Start by creating your first business to manage operations.'
-                    : 'Contact your owner administrator to configure businesses.',
-                actionLabel: isOwner ? 'Create Business' : null,
+                    ? 'Create your first business to manage operations and finances.'
+                    : 'Your owner has not assigned any businesses yet.',
+                actionLabel: isOwner ? 'Add Business' : null,
                 onActionPressed: isOwner ? () => _showBusinessForm() : null,
               );
             }
@@ -132,7 +147,7 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
                 crossAxisCount: isTablet ? 3 : 1,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                mainAxisExtent: 180,
+                mainAxisExtent: 170,
               ),
               itemBuilder: (context, index) {
                 final biz = list[index];
@@ -153,7 +168,6 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
                               ),
                             )
                             .then((_) {
-                              // Trigger reload after coming back in case values changed
                               if (user != null) {
                                 context.read<BusinessBloc>().add(
                                   FetchBusinessesEvent(user.userId),
@@ -171,44 +185,56 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
                                 child: Text(
                                   biz.name,
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (isOwner)
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.edit_outlined,
-                                        size: 18,
+                                PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_vert_rounded,
+                                    size: 18,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  onSelected: (val) {
+                                    if (val == 'edit') _showBusinessForm(business: biz);
+                                    if (val == 'delete') _confirmDelete(biz);
+                                  },
+                                  itemBuilder: (_) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.edit_outlined, size: 16),
+                                          SizedBox(width: 8),
+                                          Text('Edit Business', style: TextStyle(fontSize: 13)),
+                                        ],
                                       ),
-                                      onPressed: () =>
-                                          _showBusinessForm(business: biz),
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(4),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete_outline,
-                                        size: 18,
-                                        color: AppTheme.error,
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.error),
+                                          SizedBox(width: 8),
+                                          Text('Delete', style: TextStyle(color: AppTheme.error, fontSize: 13)),
+                                        ],
                                       ),
-                                      onPressed: () => _confirmDelete(biz),
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(4),
                                     ),
                                   ],
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
-                              vertical: 2,
+                              vertical: 3,
                             ),
                             decoration: BoxDecoration(
                               color: AppTheme.primaryColor.withOpacity(0.08),
@@ -218,53 +244,52 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
                               biz.type,
                               style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           Expanded(
                             child: Text(
                               biz.notes.isNotEmpty
                                   ? biz.notes
-                                  : 'No extra notes provided.',
+                                  : 'No notes added for this business.',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                fontSize: 12,
+                                fontSize: 12.5,
+                                height: 1.3,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const Divider(),
+                          const Divider(height: 16),
                           Row(
                             children: [
                               const Icon(
                                 Icons.phone_outlined,
                                 size: 12,
-                                color: Colors.grey,
+                                color: AppTheme.primaryColor,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 4),
                               Text(
-                                biz.phone,
-                                style: const TextStyle(
+                                biz.phone.isNotEmpty ? biz.phone : 'N/A',
+                                style: theme.textTheme.bodyMedium?.copyWith(
                                   fontSize: 11,
-                                  color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 14),
                               const Icon(
                                 Icons.location_on_outlined,
                                 size: 12,
-                                color: Colors.grey,
+                                color: AppTheme.primaryColor,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  biz.address,
-                                  style: const TextStyle(
+                                  biz.address.isNotEmpty ? biz.address : 'N/A',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
                                     fontSize: 11,
-                                    color: Colors.grey,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

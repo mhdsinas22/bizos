@@ -2,6 +2,8 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/core/widgets/empty_state.dart';
+import 'package:bizos/core/widgets/skeleton_loader.dart';
+import 'package:bizos/core/widgets/error_state.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_state.dart';
 import 'package:bizos/features/money_management/presentation/bloc/personal_money_management_bloc.dart';
@@ -17,11 +19,20 @@ class MoneyManagementDashboard extends StatelessWidget {
 
   Widget _buildContent(BuildContext context, MoneyManagementState state) {
     if (state is TransactionsLoading || state is TransactionsInitial) {
-      return const Center(child: CircularProgressIndicator());
+      return const Padding(
+        padding: EdgeInsets.all(20.0),
+        child: SkeletonListLoader(itemCount: 2, itemHeight: 140),
+      );
     }
 
     if (state is TransactionsError) {
-      return Center(child: Text('Error loading dashboard: ${state.message}'));
+      return ErrorStateWidget(
+        title: 'Failed to Load Transactions',
+        message: state.message,
+        onRetry: () {
+          (context as Element).markNeedsBuild();
+        },
+      );
     }
 
     if (state is TransactionsLoaded) {
@@ -176,10 +187,30 @@ class MoneyManagementDashboard extends StatelessWidget {
 
     if (businessId != null) {
       return BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(
+        buildWhen: (previous, current) {
+          if (previous.runtimeType != current.runtimeType) return true;
+          if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+            return previous.totalPendingPay != current.totalPendingPay ||
+                previous.pendingPayCount != current.pendingPayCount ||
+                previous.totalPendingReceive != current.totalPendingReceive ||
+                previous.pendingReceiveCount != current.pendingReceiveCount;
+          }
+          return true;
+        },
         builder: (context, state) => _buildContent(context, state),
       );
     } else {
       return BlocBuilder<PersonalMoneyManagementBloc, MoneyManagementState>(
+        buildWhen: (previous, current) {
+          if (previous.runtimeType != current.runtimeType) return true;
+          if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+            return previous.totalPendingPay != current.totalPendingPay ||
+                previous.pendingPayCount != current.pendingPayCount ||
+                previous.totalPendingReceive != current.totalPendingReceive ||
+                previous.pendingReceiveCount != current.pendingReceiveCount;
+          }
+          return true;
+        },
         builder: (context, state) => _buildContent(context, state),
       );
     }

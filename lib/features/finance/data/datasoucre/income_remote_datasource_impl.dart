@@ -9,6 +9,7 @@ class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
 
   @override
   Future<List<IncomeModel>> getIncomeList(String businessId) async {
+    if (businessId.trim().isEmpty) return [];
     final response = await supabaseClient
         .from('incomes')
         .select()
@@ -25,16 +26,19 @@ class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
 
   @override
   Future<void> addIncome(IncomeModel income) async {
-    await supabaseClient.from('incomes').insert({
-      'id': income.id,
-      'business_id': income.businessId,
+    final Map<String, dynamic> data = {
       'amount': income.amount,
       'category': income.category,
       'description': income.description,
       'income_date': income.date.toIso8601String(),
-      'created_by_user_id': income.createdByUserId,
+      'business_id': income.businessId.trim().isNotEmpty ? income.businessId : null,
+      'created_by_user_id': (income.createdByUserId != null && income.createdByUserId!.trim().isNotEmpty) ? income.createdByUserId : null,
       'created_by_name': income.createdByName,
-    });
+    };
+    if (income.id.trim().isNotEmpty) {
+      data['id'] = income.id;
+    }
+    await supabaseClient.from('incomes').insert(data);
   }
 
   @override

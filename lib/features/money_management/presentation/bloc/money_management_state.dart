@@ -46,7 +46,10 @@ class TransactionsLoaded extends MoneyManagementState {
       .length;
 
   @override
-  List<Object?> get props => [transactions];
+  List<Object?> get props => [
+        transactions,
+        transactions.map((t) => '${t.id}_${t.amount}_${t.paidAmount}_${t.balanceAmount}_${t.status}').join(','),
+      ];
 }
 
 class TransactionsError extends MoneyManagementState {

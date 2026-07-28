@@ -299,7 +299,7 @@ class MoneyManagementRemoteDatasourceImpl
       }
 
       // If no existing parent transaction -> Create brand new parent & insert history 'debt_created'
-      final mapData = transaction.toJson();
+      final mapData = transaction.toJson(isPersonal: isPersonal);
       if (transaction.id.isEmpty) {
         mapData.remove('id');
       }
@@ -398,6 +398,7 @@ class MoneyManagementRemoteDatasourceImpl
           parentTransactionId: activeParent.id,
           eventType: 'debt_added',
           balanceAfter: newBalanceAmount,
+          isPersonal: isPersonal,
         );
 
         await supabaseClient.from(historyTable).insert(historyData);
@@ -416,7 +417,7 @@ class MoneyManagementRemoteDatasourceImpl
       }
 
       // STEP 3: IF NO ACTIVE TRANSACTION EXISTS -> Create brand new parent & insert history 'debt_created'
-      final mapData = debt.toTransactionJson();
+      final mapData = debt.toTransactionJson(isPersonal: isPersonal);
       String? insertedId;
       try {
         final response = await supabaseClient
@@ -431,6 +432,7 @@ class MoneyManagementRemoteDatasourceImpl
           parentTransactionId: createdTransaction.id,
           eventType: 'debt_created',
           balanceAfter: createdTransaction.amount,
+          isPersonal: isPersonal,
         );
 
         await supabaseClient.from(historyTable).insert(historyData);

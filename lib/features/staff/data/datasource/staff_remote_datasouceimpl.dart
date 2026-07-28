@@ -83,7 +83,7 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
         'role': 'Staff',
         'userid': staff.userId.trim().toLowerCase(),
         'password': staff.password,
-        "owner_id": ownerId,
+        "owner_id": ownerId.trim().isNotEmpty ? ownerId : null,
       });
     } on PostgrestException catch (e) {
       if (e.code == '23505') {

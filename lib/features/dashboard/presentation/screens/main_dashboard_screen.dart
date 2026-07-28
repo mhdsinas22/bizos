@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
+import 'package:bizos/core/widgets/skeleton_loader.dart';
+import 'package:bizos/core/widgets/error_state.dart';
+import 'package:bizos/core/widgets/voryn_bottom_nav_bar.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
 import 'package:bizos/features/dashboard/domain/repo/dashboard_repository.dart';
 import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
@@ -65,7 +68,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       const NavigationRailDestination(
         icon: Icon(Icons.storefront_outlined),
         selectedIcon: Icon(Icons.storefront),
-        label: Text('Businesses'),
+        label: Text('Business'),
       ),
       const NavigationRailDestination(
         icon: Icon(Icons.assignment_outlined),
@@ -91,27 +94,51 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         ),
     ];
 
-    Widget bodyContent = IndexedStack(index: _currentIndex, children: pages);
+    Widget bodyContent = IndexedStack(
+      index: _currentIndex,
+      children: pages,
+    );
 
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 16,
         title: Row(
           children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.grid_view_rounded,
+                size: 18,
+                color: AppTheme.primaryColor,
+              ),
+            ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Voryn ERP',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                    letterSpacing: -0.4,
+                  ),
                 ),
                 Text(
                   user.isOwner
                       ? 'Owner Console'
                       : '${user.name} (${user.role})',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelLarge?.copyWith(fontSize: 10),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontSize: 11,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white60
+                        : Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -119,7 +146,18 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.psychology, color: AppTheme.primaryColor),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.psychology_rounded,
+                color: AppTheme.primaryColor,
+                size: 18,
+              ),
+            ),
             onPressed: () {
               Navigator.of(
                 context,
@@ -127,7 +165,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             },
             tooltip: 'Voryn AI Assistant',
           ),
+          const SizedBox(width: 4),
           PopupMenuButton<String>(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             onSelected: (value) {
               if (value == 'password') {
                 Navigator.of(context).push(
@@ -139,7 +181,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                 context.read<AuthBloc>().add(LogoutEvent());
               }
             },
-            icon: const Icon(Icons.account_circle_outlined),
+            icon: const Icon(Icons.account_circle_outlined, size: 22),
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'password',
@@ -150,23 +192,30 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                       size: 18,
                       color: Theme.of(context).iconTheme.color,
                     ),
-                    const SizedBox(width: 8),
-                    const Text('Change Password'),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Change Password',
+                      style: TextStyle(fontSize: 13),
+                    ),
                   ],
                 ),
               ),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'logout',
                 child: Row(
-                  children: const [
-                    Icon(Icons.logout, size: 18, color: AppTheme.error),
-                    SizedBox(width: 8),
-                    Text('Logout', style: TextStyle(color: AppTheme.error)),
+                  children: [
+                    Icon(Icons.logout_rounded, size: 18, color: AppTheme.error),
+                    SizedBox(width: 10),
+                    Text(
+                      'Logout',
+                      style: TextStyle(color: AppTheme.error, fontSize: 13),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: isMobile
@@ -191,71 +240,47 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               ],
             ),
       bottomNavigationBar: isMobile
-          ? Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppTheme.darkBorder
-                        : AppTheme.lightBorder,
-                  ),
+          ? VorynBottomNavBar(
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              destinations: [
+                const VorynNavDestination(
+                  label: 'Dashboard',
+                  icon: Icons.grid_view_outlined,
+                  selectedIcon: Icons.grid_view_rounded,
                 ),
-              ),
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                type: BottomNavigationBarType.fixed,
-                selectedItemColor: AppTheme.primaryColor,
-                unselectedItemColor: Colors.grey,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                selectedFontSize: 11,
-                unselectedFontSize: 9.5,
-                selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
+                const VorynNavDestination(
+                  label: 'Business',
+                  icon: Icons.storefront_outlined,
+                  selectedIcon: Icons.storefront_rounded,
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
+                const VorynNavDestination(
+                  label: 'Tasks',
+                  icon: Icons.assignment_outlined,
+                  selectedIcon: Icons.assignment_rounded,
                 ),
-                elevation: 0,
-                items: [
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.dashboard_outlined),
-                    activeIcon: Icon(Icons.dashboard),
-                    label: 'Dashboard',
+                if (user.isOwner)
+                  const VorynNavDestination(
+                    label: 'Staff',
+                    icon: Icons.people_outline_rounded,
+                    selectedIcon: Icons.people_rounded,
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.storefront_outlined),
-                    activeIcon: Icon(Icons.storefront),
-                    label: 'Businesses',
+                const VorynNavDestination(
+                  label: 'Reports',
+                  icon: Icons.analytics_outlined,
+                  selectedIcon: Icons.analytics_rounded,
+                ),
+                if (user.isOwner)
+                  const VorynNavDestination(
+                    label: 'Personal',
+                    icon: Icons.account_balance_wallet_outlined,
+                    selectedIcon: Icons.account_balance_wallet_rounded,
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.assignment_outlined),
-                    activeIcon: Icon(Icons.assignment),
-                    label: 'Tasks',
-                  ),
-                  if (user.isOwner)
-                    const BottomNavigationBarItem(
-                      icon: Icon(Icons.people_outline),
-                      activeIcon: Icon(Icons.people),
-                      label: 'Staff',
-                    ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.analytics_outlined),
-                    activeIcon: Icon(Icons.analytics),
-                    label: 'Reports',
-                  ),
-                  if (user.isOwner)
-                    const BottomNavigationBarItem(
-                      icon: Icon(Icons.account_balance_wallet_outlined),
-                      activeIcon: Icon(Icons.account_balance_wallet),
-                      label: 'Personal',
-                    ),
-                ],
-              ),
+              ],
             )
           : null,
     );
@@ -281,11 +306,18 @@ class DashboardView extends StatelessWidget {
       future: Future.wait([dashboardFuture, businessesFuture]),
       builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Padding(
+            padding: EdgeInsets.all(20.0),
+            child: SkeletonListLoader(itemCount: 4, itemHeight: 90),
+          );
         }
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error loading dashboard: ${snapshot.error}'),
+          return ErrorStateWidget(
+            title: 'Failed to Load Dashboard',
+            message: '${snapshot.error}',
+            onRetry: () {
+              (context as Element).markNeedsBuild();
+            },
           );
         }
 
@@ -546,8 +578,11 @@ class DashboardView extends StatelessWidget {
     required Color color,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return GlassCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
+      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -555,11 +590,29 @@ class DashboardView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: theme.textTheme.labelLarge?.copyWith(fontSize: 11),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              Icon(icon, color: color, size: 20),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
             ],
           ),
           Text(
@@ -569,6 +622,8 @@ class DashboardView extends StatelessWidget {
               fontSize: 18,
               letterSpacing: -0.5,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
