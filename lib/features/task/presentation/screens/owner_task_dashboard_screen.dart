@@ -1,9 +1,9 @@
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
-import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
-import 'package:bizos/features/task/presentation/bloc/task_event.dart';
-import 'package:bizos/features/task/presentation/bloc/task_state.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_bloc.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_event.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_state.dart';
 import 'package:bizos/features/task/presentation/widgets/task_form_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,8 +22,7 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch all tasks globally when dashboard loads
-    context.read<TaskBloc>().add(FetchAllTasksEvent());
+    context.read<BusinessTaskBloc>().add(FetchAllTasksEvent());
   }
 
   void _showTaskForm(UserModel user, {TaskModel? task}) {
@@ -36,7 +35,7 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
         task: task,
         isGlobal: true,
         onSave: () {
-          context.read<TaskBloc>().add(FetchAllTasksEvent());
+          context.read<BusinessTaskBloc>().add(FetchAllTasksEvent());
         },
       ),
     );
@@ -55,8 +54,8 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              context.read<TaskBloc>().add(
-                DeleteTaskEvent(
+              context.read<BusinessTaskBloc>().add(
+                DeleteBusinessTaskEvent(
                   task.id,
                   task.businessId,
                   task.ownerId,
@@ -79,7 +78,9 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
     final user = authState.user;
 
     if (user == null) {
-      return const Center(child: Text('User not authenticated'));
+      return const Scaffold(
+        body: Center(child: Text('User not authenticated')),
+      );
     }
 
     final ownerId = user.id;
@@ -94,13 +95,13 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
           backgroundColor: AppTheme.primaryColor,
           foregroundColor: Colors.white,
         ),
-        body: BlocBuilder<TaskBloc, TaskState>(
+        body: BlocBuilder<BusinessTaskBloc, BusinessTaskState>(
           builder: (context, state) {
-            if (state is TaskLoading) {
+            if (state is BusinessTaskLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is TaskError) {
+            if (state is BusinessTaskError) {
               return Center(
                 child: Text(
                   'Error: ${state.message}',
@@ -109,7 +110,7 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
               );
             }
 
-            if (state is TaskLoaded) {
+            if (state is BusinessTaskLoaded) {
               final allTasks = [...state.tasks];
               allTasks.sort((a, b) {
                 if (a.isCompleted != b.isCompleted) {
@@ -236,12 +237,12 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        context.read<TaskBloc>().add(FetchAllTasksEvent());
+        context.read<BusinessTaskBloc>().add(FetchAllTasksEvent());
       },
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 80.0),
         itemCount: tasks.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, e) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final t = tasks[index];
           return TaskCard(
@@ -252,19 +253,18 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
             isOwnerView: true,
             onToggleCompleted: t.canMarkComplete
                 ? (val) {
-                    context.read<TaskBloc>().add(
-                      ToggleTaskStatusEvent(t, isGlobal: true),
+                    context.read<BusinessTaskBloc>().add(
+                      ToggleBusinessTaskStatusEvent(t),
                     );
                   }
                 : null,
             onEdit: () => _showTaskForm(user, task: t),
             onDelete: () => _confirmDelete(t),
             onResolveCompletedLate: () {
-              context.read<TaskBloc>().add(
-                ResolveMissedTaskEvent(
+              context.read<BusinessTaskBloc>().add(
+                ResolveMissedBusinessTaskEvent(
                   t,
                   outcomeStatus: 'Completed Late',
-                  isGlobal: true,
                 ),
               );
               ScaffoldMessenger.of(context).showSnackBar(
@@ -276,11 +276,10 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
               );
             },
             onResolveNotCompleted: () {
-              context.read<TaskBloc>().add(
-                ResolveMissedTaskEvent(
+              context.read<BusinessTaskBloc>().add(
+                ResolveMissedBusinessTaskEvent(
                   t,
                   outcomeStatus: 'Not Completed',
-                  isGlobal: true,
                 ),
               );
               ScaffoldMessenger.of(context).showSnackBar(
@@ -353,12 +352,14 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? theme.cardColor.withOpacity(0.4) : theme.cardColor,
+        color: isDark
+            ? theme.cardColor.withValues(alpha: 0.4)
+            : theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.08)
-              : Colors.black.withOpacity(0.05),
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       padding: const EdgeInsets.all(12),
@@ -374,7 +375,9 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
                   title,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontSize: 11,
-                    color: theme.textTheme.labelLarge?.color?.withOpacity(0.8),
+                    color: theme.textTheme.labelLarge?.color?.withValues(
+                      alpha: 0.8,
+                    ),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

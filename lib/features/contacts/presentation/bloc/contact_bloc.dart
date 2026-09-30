@@ -12,16 +12,16 @@ class ContactBloc extends Bloc<ContactEvent, ContactState> {
     SelectContactEvent event,
     Emitter<ContactState> emit,
   ) async {
-    emit(state.copyWith(status: contactstatus.loading));
+    emit(state.copyWith(status: ContactStatus.loading));
     try {
       final contact = await pickContact();
       if (contact != null) {
-        emit(state.copyWith(status: contactstatus.selected, contact: contact));
+        emit(state.copyWith(status: ContactStatus.selected, contact: contact));
       }
     } catch (e) {
       emit(
         state.copyWith(
-          status: contactstatus.failure,
+          status: ContactStatus.failure,
           errormessage: "${e.toString()} Failed to Pick Contact",
         ),
       );

@@ -8,6 +8,7 @@ import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:bizos/core/utils/app_logger.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,7 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _showContactOwnerDialog(BuildContext context) async {
+  Future<void> _showContactOwnerDialog() async {
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -59,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
               try {
                 await launchUrl(url, mode: LaunchMode.externalApplication);
               } catch (e) {
-                print('Error: $e');
+                AppLogger.error('Error: $e');
               }
             },
             icon: const Icon(Icons.call),
@@ -77,8 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          print('Current Status: ${state.status}');
-          print('Error Message: ${state.errorMessage}');
+          AppLogger.info('Current Status: ${state.status}');
+          if (state.errorMessage != null) {
+            AppLogger.error('Error Message: ${state.errorMessage}');
+          }
 
           if (state.status == AuthStatus.error) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -94,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             if (state is AuthError && state.isContactOwnerRequired) {
               Future.delayed(const Duration(milliseconds: 300), () {
-                if (mounted) _showContactOwnerDialog(context);
+                if (mounted) _showContactOwnerDialog();
               });
             }
           }
@@ -148,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Professional Enterprise Management Console',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.7),
+                                ?.withValues(alpha: 0.7),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -211,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           text: TextSpan(
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.7),
+                                  ?.withValues(alpha: 0.7),
                             ),
                             children: [
                               const TextSpan(
@@ -253,6 +257,6 @@ Future<void> makePhoneCall() async {
   try {
     await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
   } catch (e) {
-    print('Error: $e');
+    AppLogger.error('Error: $e');
   }
 }

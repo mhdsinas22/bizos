@@ -2,6 +2,7 @@ import 'package:bizos/features/business/data/datasources/business_remote_datasou
 import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
+import 'package:bizos/core/utils/app_logger.dart';
 
 class BusinessRepositoryImpl implements BusinessRepository {
   final BusinessRemoteDatasource businessRemoteDatasource;
@@ -17,7 +18,7 @@ class BusinessRepositoryImpl implements BusinessRepository {
     try {
       return await businessRemoteDatasource.getBusinesses(ownerId);
     } catch (e) {
-      print("Error fetching businesses: $e");
+      AppLogger.error("Error fetching businesses: $e");
       rethrow;
     }
   }
@@ -34,9 +35,10 @@ class BusinessRepositoryImpl implements BusinessRepository {
         module: "Business",
         action: "Create",
         referenceId: business.id,
+        createdBy: business.ownerId,
       );
     } catch (e) {
-      print("Error creating business: $e");
+      AppLogger.error("Error creating business: $e");
       rethrow;
     }
   }
@@ -55,7 +57,7 @@ class BusinessRepositoryImpl implements BusinessRepository {
         referenceId: business.id,
       );
     } catch (e) {
-      print("Error updating business: $e");
+      AppLogger.error("Error updating business: $e");
       rethrow;
     }
   }
@@ -76,7 +78,7 @@ class BusinessRepositoryImpl implements BusinessRepository {
         );
       }
     } catch (e) {
-      print("Error deleting business: $e");
+      AppLogger.error("Error deleting business: $e");
       rethrow;
     }
   }

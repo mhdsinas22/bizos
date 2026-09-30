@@ -3,9 +3,9 @@ import 'package:bizos/core/widgets/empty_state.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
-import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
-import 'package:bizos/features/task/presentation/bloc/task_event.dart';
-import 'package:bizos/features/task/presentation/bloc/task_state.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_bloc.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_event.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_state.dart';
 import 'package:bizos/features/task/presentation/widgets/task_card.dart';
 import 'package:bizos/features/task/presentation/widgets/task_form_sheet.dart';
 import 'package:flutter/material.dart';
@@ -15,12 +15,14 @@ class ToDoTab extends StatefulWidget {
   final BusinessModel business;
   final String businessId;
   final UserModel user;
+  final bool showAppBar;
 
   const ToDoTab({
     super.key,
     required this.businessId,
     required this.user,
     required this.business,
+    this.showAppBar = true,
   });
 
   @override
@@ -43,7 +45,7 @@ class _ToDoTabState extends State<ToDoTab> {
         user: widget.user,
         task: task,
         onSave: () {
-          context.read<TaskBloc>().add(FetchTasksEvent(widget.businessId));
+          context.read<BusinessTaskBloc>().add(FetchTasksEvent(widget.businessId));
         },
       ),
     );
@@ -62,8 +64,8 @@ class _ToDoTabState extends State<ToDoTab> {
           ),
           ElevatedButton(
             onPressed: () {
-              context.read<TaskBloc>().add(
-                DeleteTaskEvent(task.id, widget.businessId, widget.user.id),
+              context.read<BusinessTaskBloc>().add(
+                DeleteBusinessTaskEvent(task.id, widget.businessId, widget.user.id),
               );
               Navigator.pop(dialogContext);
             },
@@ -89,14 +91,14 @@ class _ToDoTabState extends State<ToDoTab> {
           decoration: BoxDecoration(
             color: isSelected
                 ? (theme.brightness == Brightness.dark
-                      ? Colors.white.withOpacity(0.12)
+                      ? Colors.white.withValues(alpha: 0.12)
                       : Colors.white)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             boxShadow: isSelected && theme.brightness != Brightness.dark
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -114,7 +116,7 @@ class _ToDoTabState extends State<ToDoTab> {
                           ? Colors.white
                           : AppTheme.primaryColor)
                     : (theme.brightness == Brightness.dark
-                          ? Colors.white.withOpacity(0.6)
+                          ? Colors.white.withValues(alpha: 0.6)
                           : Colors.grey[600]),
               ),
             ),
@@ -145,6 +147,11 @@ class _ToDoTabState extends State<ToDoTab> {
     }
 
     return Scaffold(
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text('ToDo Tasks'),
+            )
+          : null,
       floatingActionButton: canAdd
           ? FloatingActionButton.extended(
               onPressed: () => _showTaskForm(),
@@ -236,19 +243,19 @@ class _ToDoTabState extends State<ToDoTab> {
           ),
 
           Expanded(
-            child: BlocBuilder<TaskBloc, TaskState>(
+            child: BlocBuilder<BusinessTaskBloc, BusinessTaskState>(
               builder: (context, state) {
-                if (state is TaskLoading) {
+                if (state is BusinessTaskLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (state is TaskError) {
+                if (state is BusinessTaskError) {
                   return Center(
                     child: Text('Error loading tasks: ${state.message}'),
                   );
                 }
 
-                if (state is TaskLoaded) {
+                if (state is BusinessTaskLoaded) {
                   var filtered = state.tasks;
 
                   // 1. Owner-Staff Separation filtering
@@ -319,8 +326,8 @@ class _ToDoTabState extends State<ToDoTab> {
                           isOwnerView: isOwner,
                           onToggleCompleted:
                               isOwner && canToggle && t.canMarkComplete
-                              ? (_) => context.read<TaskBloc>().add(
-                                  ToggleTaskStatusEvent(t),
+                              ? (_) => context.read<BusinessTaskBloc>().add(
+                                  ToggleBusinessTaskStatusEvent(t),
                                 )
                               : null,
                           onEdit: isOwner && canAdd
@@ -331,14 +338,14 @@ class _ToDoTabState extends State<ToDoTab> {
                               : null,
                           onMarkComplete:
                               !isOwner && canToggle && t.canMarkComplete
-                              ? () => context.read<TaskBloc>().add(
-                                  ToggleTaskStatusEvent(t),
+                              ? () => context.read<BusinessTaskBloc>().add(
+                                  ToggleBusinessTaskStatusEvent(t),
                                 )
                               : null,
                           onResolveCompletedLate: canToggle
                               ? () {
-                                  context.read<TaskBloc>().add(
-                                    ResolveMissedTaskEvent(
+                                  context.read<BusinessTaskBloc>().add(
+                                    ResolveMissedBusinessTaskEvent(
                                       t,
                                       outcomeStatus: 'Completed Late',
                                     ),
@@ -356,8 +363,8 @@ class _ToDoTabState extends State<ToDoTab> {
                               : null,
                           onResolveNotCompleted: canToggle
                               ? () {
-                                  context.read<TaskBloc>().add(
-                                    ResolveMissedTaskEvent(
+                                  context.read<BusinessTaskBloc>().add(
+                                    ResolveMissedBusinessTaskEvent(
                                       t,
                                       outcomeStatus: 'Not Completed',
                                     ),

@@ -1,5 +1,7 @@
 import 'package:bizos/features/personal_expense/data/datasource/personal_expense_remote_datasource.dart';
+import 'package:bizos/features/personal_expense/data/models/personal_expense_category_model.dart';
 import 'package:bizos/features/personal_expense/data/models/personal_expense_model.dart';
+import 'package:bizos/features/personal_expense/domain/entities/personal_expense_category_entity.dart';
 import 'package:bizos/features/personal_expense/domain/entities/personal_expense_entity.dart';
 import 'package:bizos/features/personal_expense/domain/repository/personal_expense_repository.dart';
 
@@ -53,5 +55,39 @@ class PersonalExpenseRepositoryImpl implements PersonalExpenseRepository {
       analytics[expense.category] = (analytics[expense.category] ?? 0.0) + expense.amount;
     }
     return analytics;
+  }
+
+  // --------------------------------------------------------------------------
+  // CATEGORIES IMPLEMENTATION
+  // --------------------------------------------------------------------------
+
+  @override
+  Future<List<PersonalExpenseCategoryEntity>> getCategories(String userId) async {
+    final models = await remoteDataSource.getCategories(userId);
+    return models.cast<PersonalExpenseCategoryEntity>();
+  }
+
+  @override
+  Future<PersonalExpenseCategoryEntity> addCategory(
+      PersonalExpenseCategoryEntity category, String userId) async {
+    final model = PersonalExpenseCategoryModel.fromEntity(category);
+    return remoteDataSource.addCategory(model, userId);
+  }
+
+  @override
+  Future<void> updateCategory(
+      PersonalExpenseCategoryEntity category, String userId) async {
+    final model = PersonalExpenseCategoryModel.fromEntity(category);
+    return remoteDataSource.updateCategory(model, userId);
+  }
+
+  @override
+  Future<void> deleteCategory(String categoryId, String userId) async {
+    return remoteDataSource.deleteCategory(categoryId, userId);
+  }
+
+  @override
+  Future<bool> isCategoryUsed(String categoryName, String userId) async {
+    return remoteDataSource.isCategoryUsed(categoryName, userId);
   }
 }

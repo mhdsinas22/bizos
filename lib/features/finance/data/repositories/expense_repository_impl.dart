@@ -13,81 +13,70 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   });
 
   @override
-  Future<List<ExpenseModel>> getExpenseList(String businessId) async {
-    try {
-      return await expenseRemoteDatasource.getExpenseList(businessId);
-    } catch (e) {
-      print("Error fetching expense list: $e");
-      rethrow;
-    }
+  Future<List<ExpenseModel>> getExpenseList(
+    String businessId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    return await expenseRemoteDatasource.getExpenseList(
+      businessId,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 
   @override
   Future<List<ExpenseModel>> getAllExpenses() async {
-    try {
-      return await expenseRemoteDatasource.getAllExpenses();
-    } catch (e) {
-      print("Error fetching all expenses: $e");
-      rethrow;
-    }
+    return await expenseRemoteDatasource.getAllExpenses();
   }
 
   @override
   Future<void> addExpense(ExpenseModel expense) async {
-    try {
-      await expenseRemoteDatasource.addExpense(expense);
-      // Automatically log activity
-      await activityRepository.logActivity(
-        businessId: expense.businessId,
-        title: "Expense Added",
-        description: "Category: ${expense.category} | Amount: ${expense.amount} | Description: ${expense.description}",
-        module: "Expense",
-        action: "Add",
-        referenceId: expense.id,
-      );
-    } catch (e) {
-      print("Error adding expense: $e");
-      rethrow;
-    }
+    await expenseRemoteDatasource.addExpense(expense);
+    // Automatically log activity
+    await activityRepository.logActivity(
+      businessId: expense.businessId,
+      title: "Expense Added",
+      description:
+          "Category: ${expense.category} | Method: ${expense.paymentMethod} | Amount: ${expense.amount} | Description: ${expense.description}",
+      module: "Expense",
+      action: "Add",
+      referenceId: expense.id,
+      createdBy: expense.createdByUserId,
+    );
   }
 
   @override
   Future<void> updateExpense(ExpenseModel expense) async {
-    try {
-      await expenseRemoteDatasource.updateExpense(expense);
-      // Automatically log activity
-      await activityRepository.logActivity(
-        businessId: expense.businessId,
-        title: "Expense Updated",
-        description: "Category: ${expense.category} | Amount: ${expense.amount} | Description: ${expense.description}",
-        module: "Expense",
-        action: "Update",
-        referenceId: expense.id,
-      );
-    } catch (e) {
-      print("Error updating expense: $e");
-      rethrow;
-    }
+    await expenseRemoteDatasource.updateExpense(expense);
+    // Automatically log activity
+    await activityRepository.logActivity(
+      businessId: expense.businessId,
+      title: "Expense Updated",
+      description:
+          "Category: ${expense.category} | Method: ${expense.paymentMethod} | Amount: ${expense.amount} | Description: ${expense.description}",
+      module: "Expense",
+      action: "Update",
+      referenceId: expense.id,
+      createdBy: expense.createdByUserId,
+    );
   }
 
   @override
   Future<void> deleteExpense(String id) async {
-    try {
-      final deleted = await expenseRemoteDatasource.deleteExpense(id);
-      if (deleted != null) {
-        // Automatically log activity
-        await activityRepository.logActivity(
-          businessId: deleted.businessId,
-          title: "Expense Deleted",
-          description: "Category: ${deleted.category} | Amount: ${deleted.amount} | Description: ${deleted.description}",
-          module: "Expense",
-          action: "Delete",
-          referenceId: deleted.id,
-        );
-      }
-    } catch (e) {
-      print("Error deleting expense: $e");
-      rethrow;
+    final deleted = await expenseRemoteDatasource.deleteExpense(id);
+    if (deleted != null) {
+      // Automatically log activity
+      await activityRepository.logActivity(
+        businessId: deleted.businessId,
+        title: "Expense Deleted",
+        description:
+            "Category: ${deleted.category} | Method: ${deleted.paymentMethod} | Amount: ${deleted.amount} | Description: ${deleted.description}",
+        module: "Expense",
+        action: "Delete",
+        referenceId: deleted.id,
+        createdBy: deleted.createdByUserId,
+      );
     }
   }
 }

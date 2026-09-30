@@ -1,5 +1,6 @@
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/business/data/datasources/business_remote_datasource.dart';
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,7 +11,7 @@ class BusinessRemoteDatasourceImpl implements BusinessRemoteDatasource {
 
   @override
   Future<List<BusinessModel>> getBusinesses(String userStringId) async {
-    print("Repository Owner Id: $userStringId");
+    AppLogger.info("Repository Owner Id: $userStringId");
     if (userStringId.trim().isEmpty) return [];
 
     final uuidRegex = RegExp(

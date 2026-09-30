@@ -13,12 +13,10 @@ class SkeletonLoader extends StatefulWidget {
     this.borderRadius = 12.0,
   });
 
-  const SkeletonLoader.circular({
-    super.key,
-    required double size,
-  })  : width = size,
-        height = size,
-        borderRadius = size / 2;
+  const SkeletonLoader.circular({super.key, required double size})
+    : width = size,
+      height = size,
+      borderRadius = size / 2;
 
   @override
   State<SkeletonLoader> createState() => _SkeletonLoaderState();
@@ -37,9 +35,10 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
-    _animation = Tween<double>(begin: 0.3, end: 0.8).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.3,
+      end: 0.8,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -51,7 +50,9 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    final baseColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFFE2E8F0);
 
     return AnimatedBuilder(
       animation: _animation,
@@ -60,7 +61,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            color: baseColor.withOpacity(_animation.value),
+            color: baseColor.withValues(alpha: _animation.value),
             borderRadius: BorderRadius.circular(widget.borderRadius),
           ),
         );
@@ -87,7 +88,7 @@ class SkeletonListLoader extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemCount: itemCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, e) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         return SkeletonLoader(
           width: double.infinity,

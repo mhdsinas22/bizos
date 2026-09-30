@@ -1,5 +1,6 @@
 import 'package:bizos/features/finance/data/models/income_model.dart';
 import 'package:bizos/features/finance/data/datasoucre/income_remote_datasource.dart';
+import 'package:bizos/features/finance/presentation/widgets/payment_method_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
@@ -8,20 +9,37 @@ class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
   IncomeRemoteDatasourceImpl({required this.supabaseClient});
 
   @override
-  Future<List<IncomeModel>> getIncomeList(String businessId) async {
+  Future<List<IncomeModel>> getIncomeList(
+    String businessId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     if (businessId.trim().isEmpty) return [];
-    final response = await supabaseClient
+    var query = supabaseClient
         .from('incomes')
         .select()
         .eq('business_id', businessId);
 
-    return response.map((row) => _fromRow(row)).toList();
+    if (startDate != null) {
+      query = query.gte('income_date', startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      query = query.lte('income_date', endDate.toIso8601String());
+    }
+
+    final response = await query.order('income_date', ascending: false);
+
+    return (response as List<dynamic>)
+        .map((row) => _fromRow(row as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<List<IncomeModel>> getAllIncome() async {
     final response = await supabaseClient.from('incomes').select();
-    return response.map((row) => _fromRow(row)).toList();
+    return (response as List<dynamic>)
+        .map((row) => _fromRow(row as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -29,6 +47,7 @@ class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
     final Map<String, dynamic> data = {
       'amount': income.amount,
       'category': income.category,
+      'payment_method': PaymentMethodHelper.sanitize(income.paymentMethod),
       'description': income.description,
       'income_date': income.date.toIso8601String(),
       'business_id': income.businessId.trim().isNotEmpty ? income.businessId : null,
@@ -48,6 +67,7 @@ class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
         .update({
           'amount': income.amount,
           'category': income.category,
+          'payment_method': PaymentMethodHelper.sanitize(income.paymentMethod),
           'description': income.description,
           'income_date': income.date.toIso8601String(),
         })
@@ -66,15 +86,6 @@ class IncomeRemoteDatasourceImpl implements IncomeRemoteDatasource {
   }
 
   IncomeModel _fromRow(Map<String, dynamic> row) {
-    return IncomeModel(
-      id: row['id'] as String,
-      businessId: row['business_id'] as String,
-      amount: (row['amount'] as num).toDouble(),
-      category: row['category'] as String,
-      description: row['description'] ?? '',
-      date: DateTime.parse(row['income_date'] as String),
-      createdByUserId: row['created_by_user_id'] as String?,
-      createdByName: row['created_by_name'] as String?,
-    );
+    return IncomeModel.fromMap(row);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
+import 'package:bizos/features/finance/presentation/widgets/payment_method_helper.dart';
 import 'package:bizos/features/personal_expense/domain/entities/personal_expense_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -85,7 +86,9 @@ class ExpenseCard extends StatelessWidget {
     final theme = Theme.of(context);
     final categoryColor = _getCategoryColor(expense.category);
     final formattedAmount = CurrencyFormatter.format(expense.amount);
-    final formattedDate = DateFormat.yMMMd().format(expense.expenseDate);
+    final formattedDate = DateFormat.MMMd().format(expense.expenseDate);
+    final method = PaymentMethodHelper.sanitize(expense.paymentMethod);
+    final methodIcon = PaymentMethodHelper.getIcon(method);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
@@ -96,7 +99,7 @@ class ExpenseCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: categoryColor.withOpacity(0.1),
+                color: categoryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -113,12 +116,16 @@ class ExpenseCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        expense.category,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      Flexible(
+                        child: Text(
+                          expense.category,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         formattedAmount,
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -132,29 +139,39 @@ class ExpenseCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Text(
-                          expense.description.isNotEmpty
-                              ? expense.description
-                              : 'No description provided',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: expense.description.isNotEmpty
-                                ? theme.textTheme.bodyMedium?.color
-                                : theme.disabledColor,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            methodIcon,
+                            size: 13,
+                            color: theme.colorScheme.primary,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        formattedDate,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontSize: 11,
-                        ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$method • $formattedDate',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
+                  if (expense.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      expense.description,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.disabledColor,
+                        fontSize: 12,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),

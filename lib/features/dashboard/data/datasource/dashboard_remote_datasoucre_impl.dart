@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -60,62 +61,110 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
     final businessIds = bizResponse
         .map((e) => e['id']?.toString() ?? '')
         .where((id) => id.trim().isNotEmpty)
+        .toSet()
         .toList();
 
     if (businessIds.isEmpty) return emptyData;
 
     // 2. Fetch pending tasks
-    var taskQuery = supabaseClient
+    final taskResponse = await supabaseClient
         .from('tasks')
         .select()
         .inFilter("business_id", businessIds)
         .eq('status', 'Pending');
-    // if (businessId != null) {
-    //   taskQuery = taskQuery.eq('business_id', businessId);
-    // }
-    final taskResponse = await taskQuery;
     final pendingTasks = taskResponse.length;
 
-    // 3. Fetch financial stats using business_profit_loss view
-    double totalIncome = 0.0;
-    double totalExpense = 0.0;
-    double totalProfit = 0.0;
+    // 3. Fetch financial stats directly from incomes and expenses tables
+    final incomesResponse = await supabaseClient
+        .from('incomes')
+        .select('business_id, amount')
+        .inFilter('business_id', businessIds);
 
-    var profitLossQuery = supabaseClient
-        .from('business_profit_loss')
-        .select()
-        .inFilter("business_id", businessIds);
-    // if (businessId != null) {
-    //   profitLossQuery = profitLossQuery.eq('business_id', businessId);
-    // }
-    final profitLossResponse = await profitLossQuery;
+    final expensesResponse = await supabaseClient
+        .from('expenses')
+        .select('business_id, amount')
+        .inFilter('business_id', businessIds);
 
-    for (var row in profitLossResponse) {
-      totalIncome += (row['total_income'] as num?)?.toDouble() ?? 0.0;
-      totalExpense += (row['total_expense'] as num?)?.toDouble() ?? 0.0;
-      totalProfit += (row['net_profit'] as num?)?.toDouble() ?? 0.0;
+    final Map<String, double> incomePerBusiness = {};
+    final Map<String, double> expensePerBusiness = {};
+
+    for (var row in (incomesResponse as List<dynamic>)) {
+      final bId = row['business_id'] as String;
+      final amt = (row['amount'] as num?)?.toDouble() ?? 0.0;
+      incomePerBusiness[bId] = (incomePerBusiness[bId] ?? 0.0) + amt;
     }
 
+    for (var row in (expensesResponse as List<dynamic>)) {
+      final bId = row['business_id'] as String;
+      final amt = (row['amount'] as num?)?.toDouble() ?? 0.0;
+      expensePerBusiness[bId] = (expensePerBusiness[bId] ?? 0.0) + amt;
+    }
+
+    double totalIncome = 0.0;
+    double totalExpense = 0.0;
+
+    for (final bId in businessIds) {
+      final inc = incomePerBusiness[bId] ?? 0.0;
+      final exp = expensePerBusiness[bId] ?? 0.0;
+      totalIncome += inc;
+      totalExpense += exp;
+      AppLogger.info(
+        '[DEBUG DASHBOARD] business id: $bId | income total per business: $inc | expense total per business: $exp',
+      );
+    }
+
+    final double totalProfit = totalIncome - totalExpense;
+    AppLogger.info(
+      '[DEBUG DASHBOARD] final aggregated total -> totalIncome: $totalIncome | totalExpense: $totalExpense | totalProfit: $totalProfit',
+    );
+
     // 4. Fetch recent activities from activities table
-    var activitiesQuery = supabaseClient
-        .from('activities')
-        .select()
-        .inFilter("business_id", businessIds);
+    List<dynamic> activitiesResponse = [];
+    try {
+      activitiesResponse = await supabaseClient
+          .from('activities')
+          .select('*, users:created_by(name)')
+          .inFilter("business_id", businessIds)
+          .order('created_at', ascending: false)
+          .limit(15);
+    } catch (_) {
+      activitiesResponse = await supabaseClient
+          .from('activities')
+          .select()
+          .inFilter("business_id", businessIds)
+          .order('created_at', ascending: false)
+          .limit(15);
+    }
 
-    // if (businessId != null) {
-    //   activitiesQuery = activitiesQuery.eq('business_id', businessId);
-    // }
+    final missingUserIds = (activitiesResponse)
+        .map((row) => (row as Map)['created_by'] as String?)
+        .where((id) => id != null && id.trim().isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
 
-    final activitiesResponse = await activitiesQuery
-        .order('created_at', ascending: false)
-        .limit(15);
+    Map<String, String> userNamesMap = {};
+    if (missingUserIds.isNotEmpty) {
+      try {
+        final usersResp = await supabaseClient
+            .from('users')
+            .select('id, name')
+            .inFilter('id', missingUserIds);
+        for (var u in (usersResp as List)) {
+          final uid = u['id'] as String;
+          final uname = (u['name'] as String?)?.trim() ?? 'Unknown User';
+          userNamesMap[uid] = uname.isNotEmpty ? uname : 'Unknown User';
+        }
+      } catch (_) {}
+    }
 
     final recentActivities = activitiesResponse.map((row) {
-      final title = row['title'] as String? ?? '';
+      final map = row as Map<String, dynamic>;
+      final title = map['title'] as String? ?? '';
       final createdAt =
-          DateTime.tryParse(row['created_at'] as String? ?? '') ??
+          DateTime.tryParse(map['created_at'] as String? ?? '') ??
           DateTime.now();
-      final rawDesc = row['description'] as String? ?? '';
+      final rawDesc = map['description'] as String? ?? '';
 
       final parts = rawDesc.split('|');
       final desc = parts.isNotEmpty ? parts[0] : '';
@@ -130,18 +179,33 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
                 ? 'expense'
                 : 'other');
 
+      String actorName = 'Unknown User';
+      if (map['users'] != null) {
+        if (map['users'] is Map) {
+          actorName =
+              (map['users']['name'] as String?)?.trim() ?? 'Unknown User';
+        } else if (map['users'] is List && (map['users'] as List).isNotEmpty) {
+          actorName =
+              ((map['users'] as List).first['name'] as String?)?.trim() ??
+              'Unknown User';
+        }
+      } else if (map['created_by'] != null) {
+        actorName = userNamesMap[map['created_by']] ?? 'Unknown User';
+      }
+
       return {
-        'id': row['id'] as String? ?? '',
-        'business_id': row['business_id'] as String?,
+        'id': map['id'] as String? ?? '',
+        'business_id': map['business_id'] as String?,
         'type': type,
         'title': title,
         'subtitle': desc,
         'amount': amount,
         'date': createdAt,
         'tag': type == 'income' ? 'INFLOW' : 'OUTFLOW',
-        'created_by': row['created_by'] as String? ?? 'system',
-        'module': row['module'] as String? ?? type,
-        'action': row['action'] as String? ?? '',
+        'created_by': map['created_by'] as String? ?? '',
+        'created_by_name': actorName,
+        'module': map['module'] as String? ?? type,
+        'action': map['action'] as String? ?? '',
         'description': rawDesc,
       };
     }).toList();
@@ -199,15 +263,17 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
     try {
       final uuid = const Uuid().v4();
       final fullDesc = '$description|$amount';
+      final userId = supabaseClient.auth.currentUser?.id;
 
       await supabaseClient.from('activities').insert({
         'id': uuid,
         'business_id': businessId,
         'title': title,
         'description': fullDesc,
+        'created_by': userId,
       });
     } catch (e) {
-      print("Warning: failed to log activity: $e");
+      AppLogger.error("Warning: failed to log activity: $e");
     }
   }
 
@@ -234,12 +300,44 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
           .eq('status', 'Pending');
 
       // Activities
-      final activities = await supabaseClient
-          .from('activities')
-          .select()
-          .eq('business_id', businessId)
-          .order('created_at', ascending: false)
-          .limit(15);
+      List<dynamic> activities = [];
+      try {
+        activities = await supabaseClient
+            .from('activities')
+            .select('*, users:created_by(name)')
+            .eq('business_id', businessId)
+            .order('created_at', ascending: false)
+            .limit(15);
+      } catch (_) {
+        activities = await supabaseClient
+            .from('activities')
+            .select()
+            .eq('business_id', businessId)
+            .order('created_at', ascending: false)
+            .limit(15);
+      }
+
+      final missingUserIds = (activities)
+          .map((row) => (row as Map)['created_by'] as String?)
+          .where((id) => id != null && id.trim().isNotEmpty)
+          .cast<String>()
+          .toSet()
+          .toList();
+
+      Map<String, String> userNamesMap = {};
+      if (missingUserIds.isNotEmpty) {
+        try {
+          final usersResp = await supabaseClient
+              .from('users')
+              .select('id, name')
+              .inFilter('id', missingUserIds);
+          for (var u in (usersResp as List)) {
+            final uid = u['id'] as String;
+            final uname = (u['name'] as String?)?.trim() ?? 'Unknown User';
+            userNamesMap[uid] = uname.isNotEmpty ? uname : 'Unknown User';
+          }
+        } catch (_) {}
+      }
 
       double totalIncome = 0;
       double totalExpense = 0;
@@ -255,11 +353,12 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
       final totalProfit = totalIncome - totalExpense;
 
       final recentActivities = activities.map((row) {
-        final title = row['title'] as String? ?? '';
+        final map = row as Map<String, dynamic>;
+        final title = map['title'] as String? ?? '';
         final createdAt =
-            DateTime.tryParse(row['created_at'] as String? ?? '') ??
+            DateTime.tryParse(map['created_at'] as String? ?? '') ??
             DateTime.now();
-        final rawDesc = row['description'] as String? ?? '';
+        final rawDesc = map['description'] as String? ?? '';
 
         final parts = rawDesc.split('|');
         final desc = parts.isNotEmpty ? parts[0] : '';
@@ -276,18 +375,34 @@ class DashboardRemoteDatasourceImpl implements DashboardRemoteDatasource {
                   ? 'expense'
                   : 'other');
 
+        String actorName = 'Unknown User';
+        if (map['users'] != null) {
+          if (map['users'] is Map) {
+            actorName =
+                (map['users']['name'] as String?)?.trim() ?? 'Unknown User';
+          } else if (map['users'] is List &&
+              (map['users'] as List).isNotEmpty) {
+            actorName =
+                ((map['users'] as List).first['name'] as String?)?.trim() ??
+                'Unknown User';
+          }
+        } else if (map['created_by'] != null) {
+          actorName = userNamesMap[map['created_by']] ?? 'Unknown User';
+        }
+
         return {
-          'id': row['id'] as String? ?? '',
-          'business_id': row['business_id'] as String?,
+          'id': map['id'] as String? ?? '',
+          'business_id': map['business_id'] as String?,
           'type': type,
           'title': title,
           'subtitle': desc,
           'amount': amount,
           'date': createdAt,
           'tag': type == 'income' ? 'INFLOW' : 'OUTFLOW',
-          'created_by': row['created_by'] as String? ?? 'system',
-          'module': row['module'] as String? ?? type,
-          'action': row['action'] as String? ?? '',
+          'created_by': map['created_by'] as String? ?? '',
+          'created_by_name': actorName,
+          'module': map['module'] as String? ?? type,
+          'action': map['action'] as String? ?? '',
           'description': rawDesc,
         };
       }).toList();

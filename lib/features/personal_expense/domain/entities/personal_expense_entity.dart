@@ -5,6 +5,7 @@ class PersonalExpenseEntity extends Equatable {
   final String ownerId;
   final double amount;
   final String category;
+  final String paymentMethod;
   final String description;
   final DateTime expenseDate;
   final DateTime createdAt;
@@ -14,6 +15,7 @@ class PersonalExpenseEntity extends Equatable {
     required this.ownerId,
     required this.amount,
     required this.category,
+    this.paymentMethod = 'Cash',
     required this.description,
     required this.expenseDate,
     required this.createdAt,
@@ -25,6 +27,7 @@ class PersonalExpenseEntity extends Equatable {
         ownerId,
         amount,
         category,
+        paymentMethod,
         description,
         expenseDate,
         createdAt,

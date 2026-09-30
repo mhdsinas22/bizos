@@ -43,9 +43,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final fieldBg = isDark
-        ? AppTheme.darkSurface
-        : const Color(0xFFF1F5F9);
+    final fieldBg = isDark ? AppTheme.darkSurface : const Color(0xFFF1F5F9);
 
     final borderSide = BorderSide(
       color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
@@ -62,7 +60,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+              color: isDark
+                  ? AppTheme.darkTextSecondary
+                  : AppTheme.lightTextSecondary,
               letterSpacing: -0.1,
             ),
           ),
@@ -80,15 +80,17 @@ class _CustomTextFieldState extends State<CustomTextField> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+            color: isDark
+                ? AppTheme.darkTextPrimary
+                : AppTheme.lightTextPrimary,
           ),
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: TextStyle(
               fontSize: 14,
               color: isDark
-                  ? AppTheme.darkTextSecondary.withOpacity(0.5)
-                  : AppTheme.lightTextSecondary.withOpacity(0.6),
+                  ? AppTheme.darkTextSecondary.withValues(alpha: 0.5)
+                  : AppTheme.lightTextSecondary.withValues(alpha: 0.6),
             ),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
@@ -134,23 +136,19 @@ class _CustomTextFieldState extends State<CustomTextField> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark ? AppTheme.primaryLightColor : AppTheme.primaryColor,
+                color: isDark
+                    ? AppTheme.primaryLightColor
+                    : AppTheme.primaryColor,
                 width: 1.5,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppTheme.error,
-                width: 1,
-              ),
+              borderSide: const BorderSide(color: AppTheme.error, width: 1),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppTheme.error,
-                width: 1.5,
-              ),
+              borderSide: const BorderSide(color: AppTheme.error, width: 1.5),
             ),
           ),
         ),
@@ -158,4 +156,3 @@ class _CustomTextFieldState extends State<CustomTextField> {
     );
   }
 }
-

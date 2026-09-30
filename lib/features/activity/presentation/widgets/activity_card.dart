@@ -1,20 +1,14 @@
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
 import 'package:bizos/features/activity/domain/entities/activity_entity.dart';
-import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 class ActivityCard extends StatelessWidget {
   final ActivityEntity activity;
   final String? businessName;
 
-  const ActivityCard({
-    super.key,
-    required this.activity,
-    this.businessName,
-  });
+  const ActivityCard({super.key, required this.activity, this.businessName});
 
   bool get _isEdit =>
       activity.action.toLowerCase().contains('update') ||
@@ -138,26 +132,9 @@ class ActivityCard extends StatelessWidget {
     final isIncome = activity.module.toLowerCase() == 'income';
     final isExpense = activity.module.toLowerCase() == 'expense';
 
-    final authState = context.watch<AuthBloc>().state;
-    final currentUser = authState.user;
-
-    String displayUserName = activity.createdBy;
-    final uuidRegex = RegExp(
-      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-    );
-
-    if (currentUser != null) {
-      if (activity.createdBy == currentUser.id ||
-          activity.createdBy == currentUser.userId ||
-          activity.createdBy.isEmpty ||
-          uuidRegex.hasMatch(activity.createdBy)) {
-        displayUserName = currentUser.name.isNotEmpty
-            ? currentUser.name
-            : (currentUser.userid.isNotEmpty ? currentUser.userid : 'You');
-      }
-    } else if (uuidRegex.hasMatch(displayUserName)) {
-      displayUserName = 'User';
-    }
+    final displayUserName = activity.createdByName.trim().isNotEmpty
+        ? activity.createdByName.trim()
+        : 'Unknown User';
 
     return Container(
       decoration: BoxDecoration(
@@ -176,12 +153,7 @@ class ActivityCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(
-                color: actionColor,
-                width: 4.5,
-              ),
-            ),
+            border: Border(left: BorderSide(color: actionColor, width: 4.5)),
           ),
           child: GlassCard(
             borderRadius: 0,
@@ -199,18 +171,16 @@ class ActivityCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(11),
                       decoration: BoxDecoration(
-                        color: actionColor.withValues(alpha: isDark ? 0.16 : 0.10),
+                        color: actionColor.withValues(
+                          alpha: isDark ? 0.16 : 0.10,
+                        ),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: actionColor.withValues(alpha: 0.22),
                           width: 1.2,
                         ),
                       ),
-                      child: Icon(
-                        moduleIcon,
-                        color: actionColor,
-                        size: 22,
-                      ),
+                      child: Icon(moduleIcon, color: actionColor, size: 22),
                     ),
                     Positioned(
                       right: -3,
@@ -218,15 +188,13 @@ class ActivityCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(2.5),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(color: actionColor, width: 1.2),
                         ),
-                        child: Icon(
-                          actionIcon,
-                          color: actionColor,
-                          size: 10,
-                        ),
+                        child: Icon(actionIcon, color: actionColor, size: 10),
                       ),
                     ),
                   ],
@@ -328,7 +296,7 @@ class ActivityCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              displayUserName,
+                              'Recorded By: $displayUserName',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey,
@@ -353,17 +321,21 @@ class ActivityCard extends StatelessWidget {
                   children: [
                     if (showAmount)
                       Text(
-                        '${isIncome ? '+' : isExpense ? '-' : ''}${CurrencyFormatter.format(amount)}',
+                        '${isIncome
+                            ? '+'
+                            : isExpense
+                            ? '-'
+                            : ''}${CurrencyFormatter.format(amount)}',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
                           color: _isDelete
                               ? actionColor
                               : isIncome
-                                  ? const Color(0xFF22C55E)
-                                  : isExpense
-                                      ? const Color(0xFFEF4444)
-                                      : actionColor,
+                              ? const Color(0xFF22C55E)
+                              : isExpense
+                              ? const Color(0xFFEF4444)
+                              : actionColor,
                           decoration: _isDelete
                               ? TextDecoration.lineThrough
                               : null,

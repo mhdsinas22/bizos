@@ -11,7 +11,8 @@ class AddDebtModal extends StatefulWidget {
   final bool isPersonal;
   final String? userId;
   final String? businessId;
-  final Future<void> Function(double amount, DateTime dueDate, String notes) onSave;
+  final Future<void> Function(double amount, DateTime dueDate, String notes)
+  onSave;
 
   const AddDebtModal({
     super.key,
@@ -79,8 +80,7 @@ class _AddDebtModalState extends State<AddDebtModal> {
     }
   }
 
-  Future<void> _selectDueDateTime(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
+  Future<void> _selectDueDateTime() async {
     final now = DateTime.now();
     final firstAllowedDate = DateTime(now.year, now.month, now.day);
     final initialDate = _selectedDueDateTime.isBefore(firstAllowedDate)
@@ -151,12 +151,12 @@ class _AddDebtModalState extends State<AddDebtModal> {
     );
 
     if (combinedDateTime.isBefore(now)) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Due date and time cannot be in the past.'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      // messenger.showSnackBar(
+      //   const SnackBar(
+      //     content: Text('Due date and time cannot be in the past.'),
+      //     backgroundColor: AppTheme.error,
+      //   ),
+      // );
       return;
     }
 
@@ -230,7 +230,9 @@ class _AddDebtModalState extends State<AddDebtModal> {
     final isReceive = widget.transactionType == 'receive';
 
     final titleText = isReceive ? 'Add Receivable' : 'Add Debt';
-    final amountLabelText = isReceive ? 'Receivable Amount (₹) *' : 'Debt Amount (₹) *';
+    final amountLabelText = isReceive
+        ? 'Receivable Amount (₹) *'
+        : 'Debt Amount (₹) *';
     final buttonText = isReceive ? 'Create Receivable' : 'Add Debt';
 
     return Padding(
@@ -259,7 +261,9 @@ class _AddDebtModalState extends State<AddDebtModal> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => Navigator.pop(context),
                   ),
                 ],
               ),
@@ -304,7 +308,7 @@ class _AddDebtModalState extends State<AddDebtModal> {
 
               // 2. Due Date & Time Field (Required)
               InkWell(
-                onTap: _isSubmitting ? null : () => _selectDueDateTime(context),
+                onTap: _isSubmitting ? null : () => _selectDueDateTime(),
                 borderRadius: BorderRadius.circular(12),
                 child: InputDecorator(
                   decoration: InputDecoration(
@@ -318,7 +322,9 @@ class _AddDebtModalState extends State<AddDebtModal> {
                     ),
                   ),
                   child: Text(
-                    DateFormat('dd MMM yyyy • h:mm a').format(_selectedDueDateTime),
+                    DateFormat(
+                      'dd MMM yyyy • h:mm a',
+                    ).format(_selectedDueDateTime),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -335,7 +341,8 @@ class _AddDebtModalState extends State<AddDebtModal> {
                 maxLength: 500,
                 decoration: InputDecoration(
                   labelText: 'Notes (Optional)',
-                  hintText: 'Example:\nLaptop Purchase\nOffice Rent\nBuilding Materials\nMedical Expense',
+                  hintText:
+                      'Example:\nLaptop Purchase\nOffice Rent\nBuilding Materials\nMedical Expense',
                   hintStyle: TextStyle(
                     color: isDark ? Colors.white38 : Colors.black38,
                     fontSize: 13,
@@ -361,7 +368,9 @@ class _AddDebtModalState extends State<AddDebtModal> {
                     child: CustomButton(
                       text: 'Cancel',
                       isSecondary: true,
-                      onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.pop(context),
                     ),
                   ),
                   const SizedBox(width: 12),

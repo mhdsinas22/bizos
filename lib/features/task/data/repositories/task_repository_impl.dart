@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/task/data/datasource/task_remote_datasource.dart';
 import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
@@ -21,7 +22,7 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       return await taskRemoteDatasource.getTasks(businessId, userId, isOwner);
     } catch (e) {
-      print("Error loading tasks: $e");
+      AppLogger.error("Error loading tasks: $e");
       rethrow;
     }
   }
@@ -34,7 +35,7 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       return await taskRemoteDatasource.getAllTasks(userId: userId, isOwner: isOwner);
     } catch (e) {
-      print("Error loading all tasks: $e");
+      AppLogger.error("Error loading all tasks: $e");
       rethrow;
     }
   }
@@ -44,7 +45,7 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       return await taskRemoteDatasource.getPersonalTasks(userId);
     } catch (e) {
-      print("Error loading personal tasks: $e");
+      AppLogger.error("Error loading personal tasks: $e");
       rethrow;
     }
   }
@@ -54,7 +55,7 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       return await taskRemoteDatasource.getTaskById(id);
     } catch (e) {
-      print("Error loading task by id: $e");
+      AppLogger.error("Error loading task by id: $e");
       rethrow;
     }
   }
@@ -71,9 +72,10 @@ class TaskRepositoryImpl implements TaskRepository {
         module: "Task",
         action: "Add",
         referenceId: task.id,
+        createdBy: task.createdBy,
       );
     } catch (e) {
-      print("Error creating task: $e");
+      AppLogger.error("Error creating task: $e");
       rethrow;
     }
   }
@@ -93,10 +95,11 @@ class TaskRepositoryImpl implements TaskRepository {
           module: "Task",
           action: "Complete",
           referenceId: task.id,
+          createdBy: task.createdBy,
         );
       }
     } catch (e) {
-      print("Error updating task: $e");
+      AppLogger.error("Error updating task: $e");
       rethrow;
     }
   }
@@ -117,9 +120,10 @@ class TaskRepositoryImpl implements TaskRepository {
         module: "Task",
         action: "Delete",
         referenceId: task.id,
+        createdBy: task.createdBy,
       );
     } catch (e) {
-      print("Error deleting task: $e");
+      AppLogger.error("Error deleting task: $e");
       // Fallback: delete directly if finding fails
       try {
         await taskRemoteDatasource.deleteTask(id);
@@ -133,7 +137,7 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       return await taskRemoteDatasource.getUserNames(userIds);
     } catch (e) {
-      print("Error fetching user names in repository: $e");
+      AppLogger.error("Error fetching user names in repository: $e");
       return {};
     }
   }
@@ -143,7 +147,7 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       return await taskRemoteDatasource.getBusinessNames(businessIds);
     } catch (e) {
-      print("Error fetching business names in repository: $e");
+      AppLogger.error("Error fetching business names in repository: $e");
       return {};
     }
   }
@@ -163,7 +167,7 @@ class TaskRepositoryImpl implements TaskRepository {
         dueDate: dueDate,
       );
     } catch (e) {
-      print("Error checking occurrence in repository: $e");
+      AppLogger.error("Error checking occurrence in repository: $e");
       return false;
     }
   }

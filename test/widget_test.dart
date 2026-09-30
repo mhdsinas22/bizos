@@ -21,7 +21,8 @@ void main() {
     await Hive.openBox('session_box');
     await Supabase.initialize(
       url: 'https://placeholder.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZmxtY2hsaW9sYXFreW91YXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Nzg3NDAsImV4cCI6MjA5NjU1NDc0MH0.ygdLWiKeFfj7l_8MHLiW5_m0I6wczUNoO11RlVLrXAQ',
+      publishableKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZmxtY2hsaW9sYXFreW91YXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Nzg3NDAsImV4cCI6MjA5NjU1NDc0MH0.ygdLWiKeFfj7l_8MHLiW5_m0I6wczUNoO11RlVLrXAQ',
       authOptions: const FlutterAuthClientOptions(
         localStorage: EmptyLocalStorage(),
         pkceAsyncStorage: MyGotrueAsyncStorage(),

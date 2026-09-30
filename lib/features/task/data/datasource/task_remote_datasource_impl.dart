@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/core/utils/task_repeat_mapper.dart';
 import 'package:bizos/features/task/data/datasource/task_remote_datasource.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
@@ -197,7 +198,7 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
       }
       return namesMap;
     } catch (e) {
-      print("Error fetching user names: $e");
+      AppLogger.error("Error fetching user names: $e");
       return {};
     }
   }
@@ -226,7 +227,7 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
       }
       return businessMap;
     } catch (e) {
-      print("Error fetching business names: $e");
+      AppLogger.error("Error fetching business names: $e");
       return {};
     }
   }
@@ -256,7 +257,7 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
 
       return (response as List).isNotEmpty;
     } catch (e) {
-      print("Error checking occurrence exists: $e");
+      AppLogger.error("Error checking occurrence exists: $e");
       return false;
     }
   }

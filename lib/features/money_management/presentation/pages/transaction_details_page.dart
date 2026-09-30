@@ -23,6 +23,7 @@ import 'package:bizos/features/money_management/presentation/widgets/add_payment
 import 'package:bizos/features/money_management/presentation/widgets/history_skeleton_loader.dart';
 import 'package:bizos/features/money_management/presentation/widgets/timeline_bottom_sheet_widget.dart';
 import 'package:bizos/features/money_management/presentation/widgets/timeline_card_widget.dart';
+import 'package:bizos/core/utils/transaction_statement_pdf_generator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -129,7 +130,125 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   //   if (await canLaunchUrl(uri)) {
   //     await launchUrl(uri, mode: LaunchMode.externalApplication);
   //   }
-  // }
+  Future<void> _sharePdfStatement() async {
+    try {
+      final repository = context.read<MoneyManagementRepository>();
+      final useCase = ShareTransactionStatementUseCase(repository);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Generating Voryn PDF Statement...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      final pdfBytes = await useCase.generateStatementPdf(
+        transaction: _currentTransaction,
+        isPersonal: widget.isPersonal,
+      );
+
+      final filename =
+          'Voryn_Statement_${_currentTransaction.personName.replaceAll(' ', '_')}.pdf';
+
+      await TransactionStatementPdfGenerator.sharePdf(pdfBytes, filename);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating PDF statement: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _printPdfStatement() async {
+    try {
+      final repository = context.read<MoneyManagementRepository>();
+      final useCase = ShareTransactionStatementUseCase(repository);
+
+      final pdfBytes = await useCase.generateStatementPdf(
+        transaction: _currentTransaction,
+        isPersonal: widget.isPersonal,
+      );
+
+      final filename =
+          'Voryn_Statement_${_currentTransaction.personName.replaceAll(' ', '_')}.pdf';
+
+      await TransactionStatementPdfGenerator.printPdf(pdfBytes, filename);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error printing statement: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showShareOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Share Transaction Statement',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf, color: Color(0xFF75B809)),
+              title: const Text('Share Voryn PDF Statement'),
+              subtitle: const Text('Export professional PDF for WhatsApp & Email'),
+              onTap: () {
+                Navigator.pop(bottomSheetContext);
+                _sharePdfStatement();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.print_outlined, color: AppTheme.primaryColor),
+              title: const Text('Print A4 PDF Statement'),
+              subtitle: const Text('Send directly to wireless printer'),
+              onTap: () {
+                Navigator.pop(bottomSheetContext);
+                _printPdfStatement();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.description_outlined, color: Colors.grey),
+              title: const Text('Share Text Summary'),
+              subtitle: const Text('Plain text overview for SMS / WhatsApp'),
+              onTap: () {
+                Navigator.pop(bottomSheetContext);
+                _shareSummary();
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _shareSummary() async {
     try {
@@ -149,7 +268,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         appName: 'VORYN',
       );
 
-      await Share.share(statementText);
+      await SharePlus.instance.share(ShareParams(text: statementText));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -328,8 +447,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           ),
           IconButton(
             icon: const Icon(Icons.share_outlined),
-            tooltip: 'Share Overview',
-            onPressed: _shareSummary,
+            tooltip: 'Share Statement',
+            onPressed: _showShareOptions,
           ),
         ],
       ),
@@ -473,8 +592,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: isPay
-                      ? AppTheme.error.withOpacity(0.15)
-                      : AppTheme.success.withOpacity(0.15),
+                      ? AppTheme.error.withValues(alpha: 0.15)
+                      : AppTheme.success.withValues(alpha: 0.15),
                   child: Text(
                     _currentTransaction.personName.isNotEmpty
                         ? _currentTransaction.personName[0].toUpperCase()
@@ -522,8 +641,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                   ),
                   decoration: BoxDecoration(
                     color: _currentTransaction.status.toLowerCase() == 'completed'
-                        ? AppTheme.success.withOpacity(0.15)
-                        : AppTheme.warning.withOpacity(0.15),
+                        ? AppTheme.success.withValues(alpha: 0.15)
+                        : AppTheme.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -765,7 +884,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                       _loadHistory(isRefresh: true);
                     }
                   },
-                  selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                  selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                   labelStyle: TextStyle(
                     color: isSelected
                         ? AppTheme.primaryColor
@@ -882,7 +1001,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade100,
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(

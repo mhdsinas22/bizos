@@ -1,9 +1,9 @@
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
-import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
-import 'package:bizos/features/task/presentation/bloc/task_event.dart';
-import 'package:bizos/features/task/presentation/bloc/task_state.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_bloc.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_event.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/theme/app_theme.dart';
@@ -24,7 +24,7 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
   void initState() {
     super.initState();
     // Fetch staff tasks globally on load
-    context.read<TaskBloc>().add(FetchAllTasksEvent());
+    context.read<BusinessTaskBloc>().add(FetchAllTasksEvent());
   }
 
   @override
@@ -70,7 +70,9 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
                 Text(
                   'Keep track of your assigned checklist items',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(
+                      alpha: 0.6,
+                    ),
                   ),
                 ),
               ],
@@ -125,13 +127,13 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
 
           // Task List View
           Expanded(
-            child: BlocBuilder<TaskBloc, TaskState>(
+            child: BlocBuilder<BusinessTaskBloc, BusinessTaskState>(
               builder: (context, state) {
-                if (state is TaskLoading) {
+                if (state is BusinessTaskLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (state is TaskError) {
+                if (state is BusinessTaskError) {
                   return Center(
                     child: Text(
                       'Error: ${state.message}',
@@ -140,7 +142,7 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
                   );
                 }
 
-                if (state is TaskLoaded) {
+                if (state is BusinessTaskLoaded) {
                   // Filter defensively to only show tasks assigned to this staff member
                   var assignedTasks = state.tasks
                       .where((t) => t.assignedto == user.id)
@@ -171,12 +173,14 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      context.read<TaskBloc>().add(FetchAllTasksEvent());
+                      context.read<BusinessTaskBloc>().add(
+                        FetchAllTasksEvent(),
+                      );
                     },
                     child: ListView.separated(
                       padding: const EdgeInsets.all(20.0),
                       itemCount: assignedTasks.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, e) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final t = assignedTasks[index];
                         return _buildStaffTaskCard(
@@ -213,14 +217,14 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
       isOwnerView: false,
       onMarkComplete: t.canMarkComplete
           ? () {
-              context.read<TaskBloc>().add(
-                ToggleTaskStatusEvent(t, isGlobal: true),
+              context.read<BusinessTaskBloc>().add(
+                ToggleBusinessTaskStatusEvent(t),
               );
             }
           : null,
       onResolveCompletedLate: () {
-        context.read<TaskBloc>().add(
-          ResolveMissedTaskEvent(t, outcomeStatus: 'Completed Late', isGlobal: true),
+        context.read<BusinessTaskBloc>().add(
+          ResolveMissedBusinessTaskEvent(t, outcomeStatus: 'Completed Late'),
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -231,8 +235,8 @@ class _StaffTaskScreenState extends State<StaffTaskScreen> {
         );
       },
       onResolveNotCompleted: () {
-        context.read<TaskBloc>().add(
-          ResolveMissedTaskEvent(t, outcomeStatus: 'Not Completed', isGlobal: true),
+        context.read<BusinessTaskBloc>().add(
+          ResolveMissedBusinessTaskEvent(t, outcomeStatus: 'Not Completed'),
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

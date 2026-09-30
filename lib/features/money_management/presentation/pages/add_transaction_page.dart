@@ -307,7 +307,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     );
                   },
                   listener: (context, state) {
-                    if (state.status == contactstatus.selected &&
+                    if (state.status == ContactStatus.selected &&
                         state.contact != null) {
                       _personNameController.text = state.contact!.name;
                       _phoneController.text = state.contact!.phoneNumber;
@@ -333,11 +333,16 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     prefixIcon: Icon(Icons.currency_rupee),
                   ),
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty)
+                    if (val == null || val.trim().isEmpty) {
                       return 'Total amount is required';
+                    }
                     final numVal = double.tryParse(val);
-                    if (numVal == null) return 'Please enter a valid number';
-                    if (numVal <= 0) return 'Amount must be greater than 0';
+                    if (numVal == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (numVal <= 0) {
+                      return 'Amount must be greater than 0';
+                    }
                     return null;
                   },
                 ),
@@ -352,15 +357,21 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     prefixIcon: Icon(Icons.payments_outlined),
                   ),
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty)
+                    if (val == null || val.trim().isEmpty) {
                       return 'Paid amount is required (enter 0 if unpaid)';
+                    }
                     final numVal = double.tryParse(val);
-                    if (numVal == null) return 'Please enter a valid number';
-                    if (numVal < 0) return 'Paid amount cannot be negative';
+                    if (numVal == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (numVal < 0) {
+                      return 'Paid amount cannot be negative';
+                    }
                     final totalAmt =
                         double.tryParse(_amountController.text) ?? 0.0;
-                    if (numVal > totalAmt)
+                    if (numVal > totalAmt) {
                       return 'Paid amount cannot exceed total amount';
+                    }
                     return null;
                   },
                 ),
@@ -390,7 +401,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedStatus,
+                  initialValue: _selectedStatus,
                   decoration: const InputDecoration(
                     labelText: 'Status *',
                     prefixIcon: Icon(Icons.rule),

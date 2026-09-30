@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/reports/data/datasource/report_remote_datasource.dart';
 import 'package:bizos/features/finance/data/models/income_model.dart';
 import 'package:bizos/features/finance/data/models/expense_model.dart';
@@ -10,21 +11,37 @@ class ReportRepositoryImpl implements ReportRepository {
   ReportRepositoryImpl({required this.reportRemoteDatasource});
 
   @override
-  Future<List<IncomeModel>> getIncomeReportData(String businessId) async {
+  Future<List<IncomeModel>> getIncomeReportData(
+    String businessId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     try {
-      return await reportRemoteDatasource.getIncomeReportData(businessId);
+      return await reportRemoteDatasource.getIncomeReportData(
+        businessId,
+        startDate: startDate,
+        endDate: endDate,
+      );
     } catch (e) {
-      print("Error fetching income report data: $e");
+      AppLogger.error("Error fetching income report data: $e");
       rethrow;
     }
   }
 
   @override
-  Future<List<ExpenseModel>> getExpenseReportData(String businessId) async {
+  Future<List<ExpenseModel>> getExpenseReportData(
+    String businessId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     try {
-      return await reportRemoteDatasource.getExpenseReportData(businessId);
+      return await reportRemoteDatasource.getExpenseReportData(
+        businessId,
+        startDate: startDate,
+        endDate: endDate,
+      );
     } catch (e) {
-      print("Error fetching expense report data: $e");
+      AppLogger.error("Error fetching expense report data: $e");
       rethrow;
     }
   }
@@ -34,7 +51,7 @@ class ReportRepositoryImpl implements ReportRepository {
     try {
       return await reportRemoteDatasource.getTaskReportData(businessId);
     } catch (e) {
-      print("Error fetching task report data: $e");
+      AppLogger.error("Error fetching task report data: $e");
       rethrow;
     }
   }

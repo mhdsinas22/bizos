@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
@@ -39,16 +40,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(user));
       _saveFcmToken(user.id);
     } on AppAuthException catch (e) {
-      print("BLOC AUTH EXCEPTION: ${e.message}");
+      AppLogger.error("BLOC AUTH EXCEPTION: ${e.message}");
       final requireContact =
           e is UserNotFoundException ||
           e is AccountInactiveException ||
           e is UserNotAuthorizedException;
       emit(AuthError(e.message, isContactOwnerRequired: requireContact));
     } catch (e) {
-      print("BLOC CATCH: $e");
+      AppLogger.error("BLOC CATCH: $e");
       emit(AuthError(e.toString().replaceAll('Exception:', '').trim()));
-      print("ERROR STATE EMITTED");
+      AppLogger.error("ERROR STATE EMITTED");
     }
   }
 
@@ -116,9 +117,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _saveFcmToken(String userid) async {
     try {
       await saveFcmTokenUsecase(userid);
-      print("✅ FCM Token saved successfully via AuthBloc");
+      AppLogger.info("✅ FCM Token saved successfully via AuthBloc");
     } catch (e) {
-      print("❌ Failed to save FCM Token in AuthBloc: $e");
+      AppLogger.error("❌ Failed to save FCM Token in AuthBloc: $e");
     }
   }
 }

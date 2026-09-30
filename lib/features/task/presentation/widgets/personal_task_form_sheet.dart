@@ -200,8 +200,8 @@ class _PersonalTaskFormSheetState extends State<PersonalTaskFormSheet> {
                   ),
                   filled: true,
                   fillColor: isDark
-                      ? Colors.white.withOpacity(0.06)
-                      : Colors.grey.withOpacity(0.08),
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.grey.withValues(alpha: 0.08),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -230,8 +230,8 @@ class _PersonalTaskFormSheetState extends State<PersonalTaskFormSheet> {
                             horizontal: 12, vertical: 12),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withOpacity(0.06)
-                              : Colors.grey.withOpacity(0.08),
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : Colors.grey.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
@@ -275,8 +275,8 @@ class _PersonalTaskFormSheetState extends State<PersonalTaskFormSheet> {
                             horizontal: 12, vertical: 12),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withOpacity(0.06)
-                              : Colors.grey.withOpacity(0.08),
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : Colors.grey.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
@@ -347,7 +347,7 @@ class _PersonalTaskFormSheetState extends State<PersonalTaskFormSheet> {
                           ),
                         ),
                         selected: isSel,
-                        selectedColor: color.withOpacity(0.18),
+                        selectedColor: color.withValues(alpha: 0.18),
                         onSelected: (val) {
                           if (val) setState(() => _priority = p);
                         },
@@ -372,8 +372,8 @@ class _PersonalTaskFormSheetState extends State<PersonalTaskFormSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.06)
-                      : Colors.grey.withOpacity(0.08),
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.grey.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -419,8 +419,8 @@ class _PersonalTaskFormSheetState extends State<PersonalTaskFormSheet> {
                   ),
                   filled: true,
                   fillColor: isDark
-                      ? Colors.white.withOpacity(0.06)
-                      : Colors.grey.withOpacity(0.08),
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.grey.withValues(alpha: 0.08),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,

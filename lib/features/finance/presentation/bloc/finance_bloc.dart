@@ -18,9 +18,15 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
     on<FetchFinanceDataEvent>((event, emit) async {
       emit(FinanceLoading());
       try {
-        final incomes = await incomeRepository.getIncomeList(event.businessId);
+        final incomes = await incomeRepository.getIncomeList(
+          event.businessId,
+          startDate: event.startDate,
+          endDate: event.endDate,
+        );
         final expenses = await expenseRepository.getExpenseList(
           event.businessId,
+          startDate: event.startDate,
+          endDate: event.endDate,
         );
         // Sort by date descending
         incomes.sort((a, b) => b.date.compareTo(a.date));

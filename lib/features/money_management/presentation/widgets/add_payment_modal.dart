@@ -153,7 +153,7 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
                     onSelected: (selected) {
                       if (selected) setState(() => _selectedMethod = method);
                     },
-                    selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                    selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                     labelStyle: TextStyle(
                       color: isSelected
                           ? AppTheme.primaryColor

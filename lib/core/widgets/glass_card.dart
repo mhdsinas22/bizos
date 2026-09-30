@@ -23,24 +23,18 @@ class GlassCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final defaultColor = color ??
-        (isDark
-            ? theme.cardColor.withOpacity(0.7)
-            : theme.cardColor);
+    final defaultColor =
+        color ??
+        (isDark ? theme.cardColor.withValues(alpha: 0.7) : theme.cardColor);
 
     final defaultBorder = border != null
         ? Border.fromBorderSide(border!)
         : Border.all(
             color: isDark
-                ? Colors.white.withOpacity(0.06)
-                : Colors.black.withOpacity(0.04),
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.black.withValues(alpha: 0.04),
             width: 1,
           );
-
-    Widget content = Container(
-      padding: padding ?? const EdgeInsets.all(16),
-      child: child,
-    );
 
     if (onTap != null) {
       return Material(
@@ -73,4 +67,3 @@ class GlassCard extends StatelessWidget {
     );
   }
 }
-

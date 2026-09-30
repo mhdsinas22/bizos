@@ -360,7 +360,9 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
       final query = searchQuery.toLowerCase();
       result = result.where((e) =>
           e.category.toLowerCase().contains(query) ||
-          e.description.toLowerCase().contains(query)).toList();
+          e.paymentMethod.toLowerCase().contains(query) ||
+          e.description.toLowerCase().contains(query) ||
+          e.amount.toString().contains(query)).toList();
     }
 
     // 2. Sorting

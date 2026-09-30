@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/business/bloc/business_bloc.dart';
@@ -15,8 +16,13 @@ import 'package:bizos/features/staff/presentation/bloc/staff_bloc.dart';
 
 class StaffListView extends StatefulWidget {
   final String? businessId;
+  final bool showAppBar;
 
-  const StaffListView({super.key, this.businessId});
+  const StaffListView({
+    super.key,
+    this.businessId,
+    this.showAppBar = true,
+  });
 
   @override
   State<StaffListView> createState() => _StaffListViewState();
@@ -30,7 +36,7 @@ class _StaffListViewState extends State<StaffListView> {
   @override
   void initState() {
     super.initState();
-    print(context.read<BusinessBloc>().hashCode);
+    AppLogger.debug(context.read<BusinessBloc>().hashCode.toString());
     context.read<StaffBloc>().add(FetchStaffEvent(_getOwnerId()));
   }
 
@@ -39,6 +45,11 @@ class _StaffListViewState extends State<StaffListView> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text('Staff Management'),
+            )
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () =>
             StaffSheetHelper.showStaffForm(context: context, onSave: () {}),
@@ -96,7 +107,7 @@ class _StaffListViewState extends State<StaffListView> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                           child: Text(
                             staff.name.isNotEmpty ? staff.name[0].toUpperCase() : 'S',
                             style: const TextStyle(
@@ -213,13 +224,13 @@ class _StaffListViewState extends State<StaffListView> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: active
-            ? AppTheme.success.withOpacity(0.08)
-            : Theme.of(context).disabledColor.withOpacity(0.08),
+            ? AppTheme.success.withValues(alpha: 0.08)
+            : Theme.of(context).disabledColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: active
-              ? AppTheme.success.withOpacity(0.2)
-              : Theme.of(context).disabledColor.withOpacity(0.2),
+              ? AppTheme.success.withValues(alpha: 0.2)
+              : Theme.of(context).disabledColor.withValues(alpha: 0.2),
         ),
       ),
       child: Text(

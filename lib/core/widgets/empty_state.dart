@@ -35,14 +35,16 @@ class EmptyState extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: isDark
-                    ? AppTheme.primaryColor.withOpacity(0.12)
-                    : AppTheme.primaryColor.withOpacity(0.06),
+                    ? AppTheme.primaryColor.withValues(alpha: 0.12)
+                    : AppTheme.primaryColor.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 34,
-                color: isDark ? AppTheme.primaryLightColor : AppTheme.primaryColor,
+                color: isDark
+                    ? AppTheme.primaryLightColor
+                    : AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 18),
@@ -59,7 +61,9 @@ class EmptyState extends StatelessWidget {
             Text(
               message,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                color: isDark
+                    ? AppTheme.darkTextSecondary
+                    : AppTheme.lightTextSecondary,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -80,4 +84,3 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
-

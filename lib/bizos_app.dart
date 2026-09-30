@@ -1,8 +1,36 @@
+import 'package:bizos/features/attachments/data/datasources/attachment_remote_datasource_impl.dart';
+import 'package:bizos/features/attachments/data/repositories/attachment_repository_impl.dart';
+import 'package:bizos/features/attachments/domain/repositories/attachment_repository.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/theme/theme_bloc.dart';
 import 'package:bizos/features/auth/data/datasources/auth_remote_datasource_impl.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/data/repositories/auth_repository_impl.dart';
+
+import 'package:bizos/features/customers/data/datasources/customer_remote_datasource.dart';
+import 'package:bizos/features/customers/data/repositories/customer_repository_impl.dart';
+import 'package:bizos/features/customers/domain/repositories/customer_repository.dart';
+import 'package:bizos/features/customers/presentation/bloc/customer_bloc.dart';
+
+import 'package:bizos/features/products_services/data/datasources/product_service_remote_datasource.dart';
+import 'package:bizos/features/products_services/data/repositories/product_service_repository_impl.dart';
+import 'package:bizos/features/products_services/domain/repositories/product_service_repository.dart';
+import 'package:bizos/features/products_services/presentation/bloc/product_service_bloc.dart';
+
+import 'package:bizos/features/invoice_settings/data/datasources/invoice_settings_remote_datasource.dart';
+import 'package:bizos/features/invoice_settings/data/repositories/invoice_settings_repository_impl.dart';
+import 'package:bizos/features/invoice_settings/domain/repositories/invoice_settings_repository.dart';
+import 'package:bizos/features/invoice_settings/presentation/bloc/invoice_settings_bloc.dart';
+
+import 'package:bizos/features/invoices/data/datasources/invoice_remote_datasource.dart';
+import 'package:bizos/features/invoices/data/repositories/invoice_repository_impl.dart';
+import 'package:bizos/features/invoices/domain/repositories/invoice_repository.dart';
+import 'package:bizos/features/invoices/presentation/bloc/invoice_bloc.dart';
+
+import 'package:bizos/features/invoice_payments/data/datasources/invoice_payment_remote_datasource.dart';
+import 'package:bizos/features/invoice_payments/data/repositories/invoice_payment_repository_impl.dart';
+import 'package:bizos/features/invoice_payments/domain/repositories/invoice_payment_repository.dart';
+import 'package:bizos/features/invoice_payments/presentation/bloc/invoice_payment_bloc.dart';
 import 'package:bizos/features/business/data/datasources/business_remote_datasource_impl.dart';
 import 'package:bizos/features/contacts/data/datasoucres/contact_local_datasource_impl.dart';
 import 'package:bizos/features/contacts/data/repositories/contact_repositories_impl.dart';
@@ -20,12 +48,17 @@ import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_dataso
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
 import 'package:bizos/features/business/data/repositories/business_repository_impl.dart';
 import 'package:bizos/features/task/data/datasource/task_remote_datasource_impl.dart';
+import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
 import 'package:bizos/features/task/domain/repositories/task_repository.dart';
 import 'package:bizos/features/task/data/repositories/task_repository_impl.dart';
 import 'package:bizos/features/finance/domain/repositories/income_repository.dart';
 import 'package:bizos/features/finance/data/repositories/income_repository_impl.dart';
 import 'package:bizos/features/finance/domain/repositories/expense_repository.dart';
 import 'package:bizos/features/finance/data/repositories/expense_repository_impl.dart';
+import 'package:bizos/features/finance/data/datasoucre/category_remote_datasource_impl.dart';
+import 'package:bizos/features/finance/data/repositories/category_repository_impl.dart';
+import 'package:bizos/features/finance/domain/repositories/category_repository.dart';
+import 'package:bizos/features/finance/presentation/bloc/category_bloc.dart';
 import 'package:bizos/features/staff/domain/repo/staff_repository.dart';
 import 'package:bizos/features/staff/data/repo/staff_repository_impl.dart';
 import 'package:bizos/features/dashboard/domain/repo/dashboard_repository.dart';
@@ -40,7 +73,6 @@ import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/business/bloc/business_bloc.dart';
 import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_bloc.dart';
-import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
 import 'package:bizos/features/personal_expense/data/datasource/personal_expense_remote_datasource.dart';
 import 'package:bizos/features/personal_expense/domain/repository/personal_expense_repository.dart';
 import 'package:bizos/features/personal_expense/data/repository/personal_expense_repository_impl.dart';
@@ -51,6 +83,7 @@ import 'package:bizos/features/personal_expense/domain/usecases/get_personal_exp
 import 'package:bizos/features/personal_expense/domain/usecases/get_filtered_expenses_usecase.dart';
 import 'package:bizos/features/personal_expense/domain/usecases/get_category_analytics_usecase.dart';
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_bloc.dart';
+import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_category_bloc.dart';
 import 'package:bizos/features/ai/data/datasource/ai_remote_datasouce_impl.dart';
 import 'package:bizos/features/ai/data/repositories/ai_repository_impl.dart';
 import 'package:bizos/features/ai/domain/repositories/ai_repository.dart';
@@ -119,6 +152,27 @@ class BizosApp extends StatelessWidget {
     final activityDatasource = ActivityRemoteDatasourceImpl(
       supabaseClient: supabaseClient,
     );
+    final categoryDatasource = CategoryRemoteDatasourceImpl(
+      supabaseClient: supabaseClient,
+    );
+    final attachmentDatasource = AttachmentRemoteDataSourceImpl(
+      supabaseClient: supabaseClient,
+    );
+    final customerDatasource = CustomerRemoteDatasourceImpl(
+      supabaseClient: supabaseClient,
+    );
+    final productServiceDatasource = ProductServiceRemoteDatasourceImpl(
+      supabaseClient: supabaseClient,
+    );
+    final invoiceSettingsDatasource = InvoiceSettingsRemoteDatasourceImpl(
+      supabaseClient: supabaseClient,
+    );
+    final invoiceDatasource = InvoiceRemoteDatasourceImpl(
+      supabaseClient: supabaseClient,
+    );
+    final invoicePaymentDatasource = InvoicePaymentRemoteDatasourceImpl(
+      supabaseClient: supabaseClient,
+    );
 
     final geminiModel = GenerativeModel(
       model: 'gemini-2.0-flash',
@@ -127,8 +181,31 @@ class BizosApp extends StatelessWidget {
     final aiDatasource = AiRemoteDatasouceImpl(geminiModel);
 
     // Repositories
+    final customerRepo = CustomerRepositoryImpl(
+      remoteDatasource: customerDatasource,
+    );
+    final productServiceRepo = ProductServiceRepositoryImpl(
+      remoteDatasource: productServiceDatasource,
+    );
+    final invoiceSettingsRepo = InvoiceSettingsRepositoryImpl(
+      remoteDatasource: invoiceSettingsDatasource,
+    );
+    final invoiceRepo = InvoiceRepositoryImpl(
+      remoteDatasource: invoiceDatasource,
+    );
+    final invoicePaymentRepo = InvoicePaymentRepositoryImpl(
+      remoteDatasource: invoicePaymentDatasource,
+    );
+
+    final attachmentRepo = AttachmentRepositoryImpl(
+      remoteDataSource: attachmentDatasource,
+    );
     final activityRepo = ActivityRepositoryImpl(
       activityRemoteDatasource: activityDatasource,
+    );
+    final categoryRepo = CategoryRepositoryImpl(
+      remoteDatasource: categoryDatasource,
+      activityRepository: activityRepo,
     );
     final authRepo = AuthRepositoryImpl(authRemoteDataSource: authDatasource);
     final businessRepo = BusinessRepositoryImpl(
@@ -180,6 +257,18 @@ class BizosApp extends StatelessWidget {
 
     return MultiRepositoryProvider(
       providers: [
+        RepositoryProvider<CustomerRepository>(create: (_) => customerRepo),
+        RepositoryProvider<ProductServiceRepository>(
+          create: (_) => productServiceRepo,
+        ),
+        RepositoryProvider<InvoiceSettingsRepository>(
+          create: (_) => invoiceSettingsRepo,
+        ),
+        RepositoryProvider<InvoiceRepository>(create: (_) => invoiceRepo),
+        RepositoryProvider<InvoicePaymentRepository>(
+          create: (_) => invoicePaymentRepo,
+        ),
+        RepositoryProvider<AttachmentRepository>(create: (_) => attachmentRepo),
         RepositoryProvider<ActivityRepository>(create: (_) => activityRepo),
         RepositoryProvider<AuthRepository>(create: (_) => authRepo),
         RepositoryProvider<AiRepository>(create: (_) => aiRepo),
@@ -196,9 +285,37 @@ class BizosApp extends StatelessWidget {
         RepositoryProvider<MoneyManagementRepository>(
           create: (_) => moneyManagementRepo,
         ),
+        RepositoryProvider<CategoryRepository>(create: (_) => categoryRepo),
       ],
       child: MultiBlocProvider(
         providers: [
+          BlocProvider<CustomerBloc>(
+            create: (context) =>
+                CustomerBloc(repository: context.read<CustomerRepository>()),
+          ),
+          BlocProvider<ProductServiceBloc>(
+            create: (context) => ProductServiceBloc(
+              repository: context.read<ProductServiceRepository>(),
+            ),
+          ),
+          BlocProvider<InvoiceSettingsBloc>(
+            create: (context) => InvoiceSettingsBloc(
+              repository: context.read<InvoiceSettingsRepository>(),
+            ),
+          ),
+          BlocProvider<InvoiceBloc>(
+            create: (context) =>
+                InvoiceBloc(repository: context.read<InvoiceRepository>()),
+          ),
+          BlocProvider<InvoicePaymentBloc>(
+            create: (context) => InvoicePaymentBloc(
+              repository: context.read<InvoicePaymentRepository>(),
+            ),
+          ),
+          BlocProvider<CategoryBloc>(
+            create: (context) =>
+                CategoryBloc(repository: context.read<CategoryRepository>()),
+          ),
           BlocProvider<ThemeBloc>(
             create: (_) => ThemeBloc()..add(LoadThemeEvent()),
           ),
@@ -212,8 +329,14 @@ class BizosApp extends StatelessWidget {
             create: (context) =>
                 BusinessBloc(context.read<BusinessRepository>()),
           ),
-          BlocProvider<TaskBloc>(
-            create: (context) => TaskBloc(
+          BlocProvider<BusinessTaskBloc>(
+            create: (context) => BusinessTaskBloc(
+              context.read<TaskRepository>(),
+              context.read<AuthBloc>(),
+            ),
+          ),
+          BlocProvider<PersonalTaskBloc>(
+            create: (context) => PersonalTaskBloc(
               context.read<TaskRepository>(),
               context.read<AuthBloc>(),
             ),
@@ -247,6 +370,11 @@ class BizosApp extends StatelessWidget {
               getAnalyticsUseCase: GetCategoryAnalyticsUseCase(
                 repository: context.read<PersonalExpenseRepository>(),
               ),
+            ),
+          ),
+          BlocProvider<PersonalExpenseCategoryBloc>(
+            create: (context) => PersonalExpenseCategoryBloc(
+              repository: context.read<PersonalExpenseRepository>(),
             ),
           ),
           BlocProvider<PersonalMoneyManagementBloc>(
@@ -297,7 +425,7 @@ class BizosApp extends StatelessWidget {
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, themeState) {
             return MaterialApp(
-              title: 'Bizos ERP',
+              title: 'Voryn ERP',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
@@ -316,7 +444,6 @@ class AppStartupFlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(dotenv.env['GEMINI_API_KEY']);
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state.user != null) {

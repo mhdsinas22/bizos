@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'package:bizos/core/utils/transaction_statement_pdf_generator.dart';
+import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/money_management/domain/entities/money_transaction_entity.dart';
 import 'package:bizos/features/money_management/domain/repositories/money_management_repository.dart';
 import 'package:bizos/features/money_management/presentation/utils/transaction_event_mapper.dart';
@@ -7,6 +10,29 @@ class ShareTransactionStatementUseCase {
   final MoneyManagementRepository repository;
 
   ShareTransactionStatementUseCase(this.repository);
+
+  Future<Uint8List> generateStatementPdf({
+    required MoneyTransactionEntity transaction,
+    required bool isPersonal,
+    BusinessModel? business,
+  }) async {
+    final history = await repository.getTransactionHistory(
+      transactionId: transaction.id,
+      isPersonal: isPersonal,
+      limit: 500,
+      offset: 0,
+      filterEventType: 'All',
+      searchQuery: null,
+      ascending: true,
+    );
+
+    return TransactionStatementPdfGenerator.generateStatement(
+      transaction: transaction,
+      history: history,
+      isPersonal: isPersonal,
+      business: business,
+    );
+  }
 
   Future<String> generateStatementText({
     required MoneyTransactionEntity transaction,

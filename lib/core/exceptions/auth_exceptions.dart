@@ -15,17 +15,20 @@ class InvalidPasswordException extends AppAuthException {
 }
 
 class AccountInactiveException extends AppAuthException {
-  AccountInactiveException() : super('Your account has been disabled. Please contact administrator.');
+  AccountInactiveException()
+    : super('Your account has been disabled. Please contact administrator.');
 }
 
 class UserNotAuthorizedException extends AppAuthException {
-  UserNotAuthorizedException() : super('You are not authorized to access this application.');
+  UserNotAuthorizedException()
+    : super('You are not authorized to access this application.');
 }
 
 class NetworkException extends AppAuthException {
-  NetworkException() : super('No internet connection. Please check your network.');
+  NetworkException()
+    : super('No internet connection. Please check your network.');
 }
 
 class ServerException extends AppAuthException {
-  ServerException([String message = 'Something went wrong. Please try again.']) : super(message);
+  ServerException([super.message = 'Something went wrong. Please try again.']);
 }

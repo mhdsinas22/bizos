@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:bizos/core/utils/task_repeat_mapper.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
 import 'package:bizos/core/theme/app_theme.dart';
+import 'package:bizos/features/task/presentation/utils/task_interaction_handler.dart';
 
 class PersonalTaskItem extends StatelessWidget {
   final TaskModel task;
@@ -23,201 +24,6 @@ class PersonalTaskItem extends StatelessWidget {
     required this.onResolveCompletedLate,
     required this.onResolveNotCompleted,
   });
-
-  void _showMissedOutcomeSheet(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Color(0xFFEF4444),
-                    size: 22,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Task Deadline Missed',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Select the final outcome for "${task.title}":',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: isDark ? Colors.white60 : Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle_outline,
-                    color: Color(0xFF10B981),
-                    size: 20,
-                  ),
-                ),
-                title: const Text(
-                  'Completed Late',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Mark this task as finished after deadline',
-                  style: TextStyle(fontSize: 12),
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await Future.delayed(const Duration(milliseconds: 350));
-                  onResolveCompletedLate();
-
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        backgroundColor: const Color(0xFF10B981),
-                        content: Row(
-                          children: const [
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Task marked as Completed Late.',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                },
-              ),
-              const Divider(height: 1),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.cancel_outlined,
-                    color: Color(0xFFEF4444),
-                    size: 20,
-                  ),
-                ),
-                title: const Text(
-                  'Not Completed',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Mark this task as unfulfilled',
-                  style: TextStyle(fontSize: 12),
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await Future.delayed(const Duration(milliseconds: 350));
-                  onResolveNotCompleted();
-
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        backgroundColor: const Color(0xFFEF4444),
-                        content: Row(
-                          children: const [
-                            Icon(
-                              Icons.cancel_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                '❌ Task marked as Not Completed.',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,36 +65,69 @@ class PersonalTaskItem extends StatelessWidget {
       ),
       secondaryBackground: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2C2C2E) : Colors.grey.shade200,
+          color: const Color(0xFFEF4444),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.edit_outlined,
-                color: AppTheme.primaryColor,
+          children: const [
+            Text(
+              'Not Completed',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
-              onPressed: onEdit,
-              tooltip: 'Edit',
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
-              onPressed: onDelete,
-              tooltip: 'Delete',
-            ),
+            SizedBox(width: 8),
+            Icon(Icons.cancel_rounded, color: Colors.white, size: 22),
           ],
         ),
       ),
       confirmDismiss: (direction) async {
-        if (isFinalized) return false;
         if (direction == DismissDirection.startToEnd) {
           onToggleComplete(!task.isCompleted);
           return false;
         } else if (direction == DismissDirection.endToStart) {
+          onResolveNotCompleted();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                backgroundColor: const Color(0xFFEF4444),
+                content: Row(
+                  children: const [
+                    Icon(
+                      Icons.cancel_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '❌ Task marked as Not Completed.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
           return false;
         }
         return false;
@@ -297,7 +136,15 @@ class PersonalTaskItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onLongPress: onLongPress,
-          onTap: isMissed ? () => _showMissedOutcomeSheet(context) : null,
+          onTap: () => TaskInteractionHandler.handleTaskTap(
+            context,
+            task: task,
+            onMarkComplete: () => onToggleComplete(true),
+            onResolveCompletedLate: onResolveCompletedLate,
+            onResolveNotCompleted: onResolveNotCompleted,
+            onEdit: onEdit,
+            onDelete: onDelete,
+          ),
           borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
@@ -514,7 +361,7 @@ class PersonalTaskItem extends StatelessWidget {
                   ),
                   margin: const EdgeInsets.only(right: 4),
                   decoration: BoxDecoration(
-                    color: priorityColor.withOpacity(0.12),
+                    color: priorityColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(

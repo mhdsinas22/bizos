@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasource.dart';
 import 'package:bizos/features/activity/domain/repositories/activity_repository.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
@@ -16,10 +17,10 @@ class StaffRepositoryImpl implements StaffRepository {
   @override
   Future<List<UserModel>> getStaffList(String ownerId) async {
     try {
-      print("staff reposr owenid:-${ownerId}");
+      AppLogger.info("staff reposr owenid:-$ownerId");
       return await staffRemoteDatasource.getStaffList(ownerId);
     } catch (e) {
-      print("Error fetching staff List: $e");
+      AppLogger.error("Error fetching staff List: $e");
       rethrow;
     }
   }
@@ -44,9 +45,10 @@ class StaffRepositoryImpl implements StaffRepository {
         module: "Staff",
         action: "Add",
         referenceId: staff.id,
+        createdBy: ownerId,
       );
     } catch (e) {
-      print("Error creating staff: $e");
+      AppLogger.error("Error creating staff: $e");
       rethrow;
     }
   }
@@ -68,7 +70,7 @@ class StaffRepositoryImpl implements StaffRepository {
         referenceId: staff.id,
       );
     } catch (e) {
-      print("Error updating staff: $e");
+      AppLogger.error("Error updating staff: $e");
       rethrow;
     }
   }
@@ -88,7 +90,7 @@ class StaffRepositoryImpl implements StaffRepository {
         );
       }
     } catch (e) {
-      print("Error deleting staff: $e");
+      AppLogger.error("Error deleting staff: $e");
       rethrow;
     }
   }
@@ -96,10 +98,10 @@ class StaffRepositoryImpl implements StaffRepository {
   @override
   Future<List<StaffBusinessModel>> getStaffBusinesses(String staffId) async {
     try {
-      print('staff repository getStaffBusinesses id:-$staffId');
+      AppLogger.info('staff repository getStaffBusinesses id:-$staffId');
       return await staffRemoteDatasource.getStaffBusinesses(staffId);
     } catch (e) {
-      print('staff repository getStaffBusinesses error:-$e');
+      AppLogger.error('staff repository getStaffBusinesses error:-$e');
       rethrow;
     }
   }
@@ -109,7 +111,7 @@ class StaffRepositoryImpl implements StaffRepository {
     try {
       return await staffRemoteDatasource.getStaffByBusiness(businessId);
     } catch (e) {
-      print('staff repository getStaffByBusiness error:-$e');
+      AppLogger.error('staff repository getStaffByBusiness error:-$e');
       rethrow;
     }
   }

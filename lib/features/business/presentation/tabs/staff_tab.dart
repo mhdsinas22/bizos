@@ -7,18 +7,24 @@ import 'package:flutter/material.dart';
 class StaffTab extends StatelessWidget {
   final UserModel user;
   final String? businessId;
+  final bool showAppBar;
 
-  const StaffTab({super.key, required this.user, this.businessId});
+  const StaffTab({
+    super.key,
+    required this.user,
+    this.businessId,
+    this.showAppBar = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (user.isOwner) {
       // Owner gets the full staff panel directly within the business view
-      return const StaffListView();
+      return StaffListView(businessId: businessId, showAppBar: showAppBar);
     }
 
     // Staff gets a nice card telling them what roles they have
-    return SingleChildScrollView(
+    final content = SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         children: [
@@ -75,6 +81,13 @@ class StaffTab extends StatelessWidget {
         ],
       ),
     );
+
+    return showAppBar
+        ? Scaffold(
+            appBar: AppBar(title: const Text('Staff Overview')),
+            body: content,
+          )
+        : content;
   }
 
   Widget _buildPermissionRow(BuildContext context, String title, bool active) {

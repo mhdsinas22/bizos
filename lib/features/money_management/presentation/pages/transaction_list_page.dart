@@ -133,6 +133,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
         appName: 'VORYN',
       );
 
+      // ignore: deprecated_member_use
       await Share.share(statementText);
     } catch (e) {
       if (context.mounted) {
@@ -347,7 +348,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                   : ListView.separated(
                       padding: const EdgeInsets.all(16.0),
                       itemCount: filteredList.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, e) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final tx = filteredList[index];
                         final isPending = tx.status.toLowerCase() == 'pending';
@@ -383,8 +384,12 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isPending
-                                          ? AppTheme.warning.withOpacity(0.12)
-                                          : AppTheme.success.withOpacity(0.12),
+                                          ? AppTheme.warning.withValues(
+                                              alpha: 0.12,
+                                            )
+                                          : AppTheme.success.withValues(
+                                              alpha: 0.12,
+                                            ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -546,8 +551,9 @@ class _TransactionListPageState extends State<TransactionListPage> {
                               LayoutBuilder(
                                 builder: (context, constraints) {
                                   final dueDateText = tx.dueDate != null
-                                      ? DateFormat('dd MMM yyyy • h:mm a')
-                                          .format(tx.dueDate!)
+                                      ? DateFormat(
+                                          'dd MMM yyyy • h:mm a',
+                                        ).format(tx.dueDate!)
                                       : 'N/A';
 
                                   final dueDateWidget = Row(
@@ -590,8 +596,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                                                 .textTheme
                                                 .labelSmall
                                                 ?.copyWith(
-                                                  color:
-                                                      AppTheme.primaryColor,
+                                                  color: AppTheme.primaryColor,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                           ),
@@ -708,7 +713,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
           ? BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(
               buildWhen: (previous, current) {
                 if (previous.runtimeType != current.runtimeType) return true;
-                if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+                if (previous is TransactionsLoaded &&
+                    current is TransactionsLoaded) {
                   return previous.transactions != current.transactions;
                 }
                 return true;
@@ -718,7 +724,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
           : BlocBuilder<PersonalMoneyManagementBloc, MoneyManagementState>(
               buildWhen: (previous, current) {
                 if (previous.runtimeType != current.runtimeType) return true;
-                if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+                if (previous is TransactionsLoaded &&
+                    current is TransactionsLoaded) {
                   return previous.transactions != current.transactions;
                 }
                 return true;

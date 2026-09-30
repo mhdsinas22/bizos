@@ -7,7 +7,6 @@ import 'package:bizos/features/business/bloc/business_state.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_bloc.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_event.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_state.dart';
-import 'package:bizos/features/task/presentation/bloc/task_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -17,7 +16,8 @@ import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
-import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_bloc.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_event.dart';
 
 class TaskFormSheet extends StatefulWidget {
   final String? businessId;
@@ -53,22 +53,28 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   @override
   void initState() {
     super.initState();
-    
+
     final ownerId = widget.user.isOwner
         ? (widget.user.userId.isNotEmpty ? widget.user.userId : widget.user.id)
-        : (widget.user.ownerId.isNotEmpty ? widget.user.ownerId : widget.user.id);
-    
+        : (widget.user.ownerId.isNotEmpty
+              ? widget.user.ownerId
+              : widget.user.id);
+
     // Fetch businesses list if needed
     context.read<BusinessBloc>().add(FetchBusinessesEvent(ownerId));
 
     _selectedBusinessId = widget.task?.businessId ?? widget.businessId;
 
-    if (_selectedBusinessId == null && widget.businessList != null && widget.businessList!.isNotEmpty) {
+    if (_selectedBusinessId == null &&
+        widget.businessList != null &&
+        widget.businessList!.isNotEmpty) {
       _selectedBusinessId = widget.businessList!.first.id;
     }
 
     if (_selectedBusinessId != null) {
-      context.read<StaffBloc>().add(FetchStaffByBusinessEvent(_selectedBusinessId!));
+      context.read<StaffBloc>().add(
+        FetchStaffByBusinessEvent(_selectedBusinessId!),
+      );
     }
 
     if (widget.task != null) {
@@ -79,7 +85,9 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
       _selectedAssigneeId = widget.task!.assignedto;
     } else {
       // Default assignee to owner ID if owner, else current user
-      _selectedAssigneeId = widget.user.isOwner ? widget.user.id : widget.user.id;
+      _selectedAssigneeId = widget.user.isOwner
+          ? widget.user.id
+          : widget.user.id;
     }
   }
 
@@ -118,7 +126,8 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 onPrimary: Colors.white,
                 surface: Theme.of(context).cardColor,
                 onSurface:
-                    Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+                    Theme.of(context).textTheme.bodyLarge?.color ??
+                    Colors.black,
               ),
             ),
             child: child!,
@@ -149,7 +158,9 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
       }
 
       final isEditing = widget.task != null;
-      final String ownerId = widget.user.isOwner ? widget.user.id : widget.user.ownerId;
+      final String ownerId = widget.user.isOwner
+          ? widget.user.id
+          : widget.user.ownerId;
       final String createdBy = widget.user.id;
 
       final t = TaskModel(
@@ -167,11 +178,15 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
       );
 
       if (isEditing) {
-        context.read<TaskBloc>().add(UpdateTaskEvent(t, isGlobal: widget.isGlobal));
+        context.read<BusinessTaskBloc>().add(
+          UpdateBusinessTaskEvent(t, isGlobal: widget.isGlobal),
+        );
       } else {
-        context.read<TaskBloc>().add(CreateTaskEvent(t, isGlobal: widget.isGlobal));
+        context.read<BusinessTaskBloc>().add(
+          CreateBusinessTaskEvent(t, isGlobal: widget.isGlobal),
+        );
       }
-      
+
       widget.onSave();
       Navigator.pop(context);
     }
@@ -203,211 +218,219 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
           child: Form(
             key: _formKey,
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isEditing ? 'Edit Task Details' : 'Add ToDo Task',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const Divider(),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _titleController,
-                label: 'Task Title',
-                hint: 'e.g. Schedule meeting',
-                prefixIcon: Icons.assignment_outlined,
-                validator: (val) => val == null || val.trim().isEmpty
-                    ? 'Please enter a title'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _descController,
-                label: 'Description',
-                hint: 'Specific details about the task...',
-                prefixIcon: Icons.description_outlined,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              
-              // Business Selection Dropdown
-              BlocBuilder<BusinessBloc, BusinessState>(
-                builder: (context, state) {
-                  List<BusinessModel> list = [];
-                  if (widget.businessList != null && widget.businessList!.isNotEmpty) {
-                    list = widget.businessList!;
-                  } else if (state is BusinessLoaded) {
-                    list = state.businesses;
-                  }
-
-                  if (_selectedBusinessId == null && list.isNotEmpty) {
-                    _selectedBusinessId = list.first.id;
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted && _selectedBusinessId != null) {
-                        context.read<StaffBloc>().add(
-                          FetchStaffByBusinessEvent(_selectedBusinessId!),
-                        );
-                      }
-                    });
-                  }
-
-                  return DropdownButtonFormField<String>(
-                    value: _selectedBusinessId,
-                    decoration: const InputDecoration(
-                      labelText: 'Business',
-                      prefixIcon: Icon(Icons.business),
-                    ),
-                    items: list.map((biz) {
-                      return DropdownMenuItem<String>(
-                        value: biz.id,
-                        child: Text(biz.name),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null && val != _selectedBusinessId) {
-                        setState(() {
-                          _selectedBusinessId = val;
-                          _selectedAssigneeId = ownerId;
-                        });
-                        context.read<StaffBloc>().add(
-                          FetchStaffByBusinessEvent(val),
-                        );
-                      }
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Assign To Dropdown (Owner specific requirement)
-              if (widget.user.isOwner)
-                BlocBuilder<StaffBloc, StaffState>(
-                  builder: (context, state) {
-                    final List<DropdownMenuItem<String>> assigneeItems = [
-                      DropdownMenuItem<String>(
-                        value: ownerId,
-                        child: const Text('Myself'),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? 'Edit Task Details' : 'Add ToDo Task',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                    ];
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _titleController,
+                  label: 'Task Title',
+                  hint: 'e.g. Schedule meeting',
+                  prefixIcon: Icons.assignment_outlined,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Please enter a title'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _descController,
+                  label: 'Description',
+                  hint: 'Specific details about the task...',
+                  prefixIcon: Icons.description_outlined,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
 
-                    if (state is StaffLoading) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: 'Assign To',
-                            prefixIcon: Icon(Icons.person_outline),
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                              SizedBox(width: 8),
-                              Text('Loading staff...'),
-                            ],
-                          ),
-                        ),
-                      );
+                // Business Selection Dropdown
+                BlocBuilder<BusinessBloc, BusinessState>(
+                  builder: (context, state) {
+                    List<BusinessModel> list = [];
+                    if (widget.businessList != null &&
+                        widget.businessList!.isNotEmpty) {
+                      list = widget.businessList!;
+                    } else if (state is BusinessLoaded) {
+                      list = state.businesses;
                     }
 
-                    if (state is StaffLoaded) {
-                      for (final staff in state.staffList) {
-                        // Exclude owner ID if present to prevent duplicate "Myself" entries
-                        final sId = staff.id.isNotEmpty ? staff.id : staff.userId;
-                        if (sId != ownerId) {
-                          assigneeItems.add(
-                            DropdownMenuItem<String>(
-                              value: sId,
-                              child: Text(staff.name),
-                            ),
+                    if (_selectedBusinessId == null && list.isNotEmpty) {
+                      _selectedBusinessId = list.first.id;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _selectedBusinessId != null) {
+                          context.read<StaffBloc>().add(
+                            FetchStaffByBusinessEvent(_selectedBusinessId!),
                           );
                         }
-                      }
-                    }
-
-                    // Safety check if the current value is not in items list
-                    final currentValues = assigneeItems.map((item) => item.value).toList();
-                    if (_selectedAssigneeId != null && !currentValues.contains(_selectedAssigneeId)) {
-                      _selectedAssigneeId = ownerId;
+                      });
                     }
 
                     return DropdownButtonFormField<String>(
-                      value: _selectedAssigneeId ?? ownerId,
+                      initialValue: _selectedBusinessId,
                       decoration: const InputDecoration(
-                        labelText: 'Assign To',
-                        prefixIcon: Icon(Icons.person_outline),
+                        labelText: 'Business',
+                        prefixIcon: Icon(Icons.business),
                       ),
-                      items: assigneeItems,
+                      items: list.map((biz) {
+                        return DropdownMenuItem<String>(
+                          value: biz.id,
+                          child: Text(biz.name),
+                        );
+                      }).toList(),
                       onChanged: (val) {
-                        if (val != null) {
+                        if (val != null && val != _selectedBusinessId) {
                           setState(() {
-                            _selectedAssigneeId = val;
+                            _selectedBusinessId = val;
+                            _selectedAssigneeId = ownerId;
                           });
+                          context.read<StaffBloc>().add(
+                            FetchStaffByBusinessEvent(val),
+                          );
                         }
                       },
                     );
                   },
                 ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              DropdownButtonFormField<String>(
-                value: _priority,
-                decoration: const InputDecoration(
-                  labelText: 'Priority',
-                  prefixIcon: Icon(Icons.priority_high),
-                ),
-                items: ['High', 'Medium', 'Low'].map((priority) {
-                  return DropdownMenuItem<String>(
-                    value: priority,
-                    child: Text(priority),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _priority = val;
-                    });
-                  }
-                },
-              ),
-              InkWell(
-                onTap: () => _selectDateTime(context),
-                child: InputDecorator(
+                // Assign To Dropdown (Owner specific requirement)
+                if (widget.user.isOwner)
+                  BlocBuilder<StaffBloc, StaffState>(
+                    builder: (context, state) {
+                      final List<DropdownMenuItem<String>> assigneeItems = [
+                        DropdownMenuItem<String>(
+                          value: ownerId,
+                          child: const Text('Myself'),
+                        ),
+                      ];
+
+                      if (state is StaffLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Assign To',
+                              prefixIcon: Icon(Icons.person_outline),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Text('Loading staff...'),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (state is StaffLoaded) {
+                        for (final staff in state.staffList) {
+                          // Exclude owner ID if present to prevent duplicate "Myself" entries
+                          final sId = staff.id.isNotEmpty
+                              ? staff.id
+                              : staff.userId;
+                          if (sId != ownerId) {
+                            assigneeItems.add(
+                              DropdownMenuItem<String>(
+                                value: sId,
+                                child: Text(staff.name),
+                              ),
+                            );
+                          }
+                        }
+                      }
+
+                      // Safety check if the current value is not in items list
+                      final currentValues = assigneeItems
+                          .map((item) => item.value)
+                          .toList();
+                      if (_selectedAssigneeId != null &&
+                          !currentValues.contains(_selectedAssigneeId)) {
+                        _selectedAssigneeId = ownerId;
+                      }
+
+                      return DropdownButtonFormField<String>(
+                        initialValue: _selectedAssigneeId ?? ownerId,
+                        decoration: const InputDecoration(
+                          labelText: 'Assign To',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        items: assigneeItems,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() {
+                              _selectedAssigneeId = val;
+                            });
+                          }
+                        },
+                      );
+                    },
+                  ),
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  initialValue: _priority,
                   decoration: const InputDecoration(
-                    labelText: 'Due Date & Time *',
-                    prefixIcon: Icon(Icons.access_time_outlined),
+                    labelText: 'Priority',
+                    prefixIcon: Icon(Icons.priority_high),
                   ),
-                  child: Text(
-                    DateFormat.yMMMd().add_jm().format(_dueDate),
-                    style: theme.textTheme.bodyLarge,
+                  items: ['High', 'Medium', 'Low'].map((priority) {
+                    return DropdownMenuItem<String>(
+                      value: priority,
+                      child: Text(priority),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _priority = val;
+                      });
+                    }
+                  },
+                ),
+                InkWell(
+                  onTap: () => _selectDateTime(context),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Due Date & Time *',
+                      prefixIcon: Icon(Icons.access_time_outlined),
+                    ),
+                    child: Text(
+                      DateFormat.yMMMd().add_jm().format(_dueDate),
+                      style: theme.textTheme.bodyLarge,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              CustomButton(
-                text: isEditing ? 'Save Changes' : 'Create Task',
-                onPressed: _save,
-              ),
-            ],
+                const SizedBox(height: 24),
+                CustomButton(
+                  text: isEditing ? 'Save Changes' : 'Create Task',
+                  onPressed: _save,
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

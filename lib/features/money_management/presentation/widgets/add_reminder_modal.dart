@@ -94,7 +94,7 @@ class _AddReminderModalState extends State<AddReminderModal> {
             Text(
               'Recording a reminder logs an audit event without modifying the account balance.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 16),

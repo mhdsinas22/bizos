@@ -1,5 +1,6 @@
 import 'package:bizos/features/finance/data/models/expense_model.dart';
 import 'package:bizos/features/finance/data/datasoucre/expense_remote_datasource.dart';
+import 'package:bizos/features/finance/presentation/widgets/payment_method_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
@@ -8,20 +9,37 @@ class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
   ExpenseRemoteDatasourceImpl({required this.supabaseClient});
 
   @override
-  Future<List<ExpenseModel>> getExpenseList(String businessId) async {
+  Future<List<ExpenseModel>> getExpenseList(
+    String businessId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     if (businessId.trim().isEmpty) return [];
-    final response = await supabaseClient
+    var query = supabaseClient
         .from('expenses')
         .select()
         .eq('business_id', businessId);
 
-    return response.map((row) => _fromRow(row)).toList();
+    if (startDate != null) {
+      query = query.gte('expense_date', startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      query = query.lte('expense_date', endDate.toIso8601String());
+    }
+
+    final response = await query.order('expense_date', ascending: false);
+
+    return (response as List<dynamic>)
+        .map((row) => _fromRow(row as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<List<ExpenseModel>> getAllExpenses() async {
     final response = await supabaseClient.from('expenses').select();
-    return response.map((row) => _fromRow(row)).toList();
+    return (response as List<dynamic>)
+        .map((row) => _fromRow(row as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -29,6 +47,7 @@ class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
     final Map<String, dynamic> data = {
       'amount': expense.amount,
       'category': expense.category,
+      'payment_method': PaymentMethodHelper.sanitize(expense.paymentMethod),
       'description': expense.description,
       'expense_date': expense.date.toIso8601String(),
       'business_id': expense.businessId.trim().isNotEmpty ? expense.businessId : null,
@@ -48,6 +67,7 @@ class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
         .update({
           'amount': expense.amount,
           'category': expense.category,
+          'payment_method': PaymentMethodHelper.sanitize(expense.paymentMethod),
           'description': expense.description,
           'expense_date': expense.date.toIso8601String(),
         })
@@ -66,15 +86,6 @@ class ExpenseRemoteDatasourceImpl implements ExpenseRemoteDatasource {
   }
 
   ExpenseModel _fromRow(Map<String, dynamic> row) {
-    return ExpenseModel(
-      id: row['id'] as String,
-      businessId: row['business_id'] as String,
-      amount: (row['amount'] as num).toDouble(),
-      category: row['category'] as String,
-      description: row['description'] ?? '',
-      date: DateTime.parse(row['expense_date'] as String),
-      createdByUserId: row['created_by_user_id'] as String?,
-      createdByName: row['created_by_name'] as String?,
-    );
+    return ExpenseModel.fromMap(row);
   }
 }

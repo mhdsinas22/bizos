@@ -124,7 +124,10 @@ class AppTheme {
           borderSide: const BorderSide(color: error, width: 1.5),
         ),
         labelStyle: const TextStyle(color: lightTextSecondary, fontSize: 14),
-        hintStyle: TextStyle(color: lightTextSecondary.withOpacity(0.6), fontSize: 14),
+        hintStyle: TextStyle(
+          color: lightTextSecondary.withValues(alpha: 0.6),
+          fontSize: 14,
+        ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: lightSurface,
@@ -137,17 +140,13 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: lightSurface,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: lightTextPrimary,
         contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
@@ -174,8 +173,16 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           letterSpacing: -0.2,
         ),
-        bodyLarge: TextStyle(color: lightTextPrimary, fontSize: 15, height: 1.4),
-        bodyMedium: TextStyle(color: lightTextSecondary, fontSize: 13, height: 1.4),
+        bodyLarge: TextStyle(
+          color: lightTextPrimary,
+          fontSize: 15,
+          height: 1.4,
+        ),
+        bodyMedium: TextStyle(
+          color: lightTextSecondary,
+          fontSize: 13,
+          height: 1.4,
+        ),
         labelLarge: TextStyle(
           color: lightTextSecondary,
           fontSize: 12,
@@ -281,7 +288,10 @@ class AppTheme {
           borderSide: const BorderSide(color: error, width: 1.5),
         ),
         labelStyle: const TextStyle(color: darkTextSecondary, fontSize: 14),
-        hintStyle: TextStyle(color: darkTextSecondary.withOpacity(0.6), fontSize: 14),
+        hintStyle: TextStyle(
+          color: darkTextSecondary.withValues(alpha: 0.6),
+          fontSize: 14,
+        ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: darkSurface,
@@ -294,9 +304,7 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: darkSurface,
         elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: darkSurface,
@@ -333,7 +341,11 @@ class AppTheme {
           letterSpacing: -0.2,
         ),
         bodyLarge: TextStyle(color: darkTextPrimary, fontSize: 15, height: 1.4),
-        bodyMedium: TextStyle(color: darkTextSecondary, fontSize: 13, height: 1.4),
+        bodyMedium: TextStyle(
+          color: darkTextSecondary,
+          fontSize: 13,
+          height: 1.4,
+        ),
         labelLarge: TextStyle(
           color: darkTextSecondary,
           fontSize: 12,
@@ -344,4 +356,3 @@ class AppTheme {
     );
   }
 }
-

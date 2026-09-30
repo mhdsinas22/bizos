@@ -77,7 +77,7 @@ class TimelineCardWidget extends StatelessWidget {
       child: GlassCard(
         onTap: onTap,
         padding: const EdgeInsets.all(16),
-        border: BorderSide(color: color.withOpacity(0.2), width: 1),
+        border: BorderSide(color: color.withValues(alpha: 0.2), width: 1),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -85,7 +85,7 @@ class TimelineCardWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(_getEventIcon(), color: color, size: 22),
@@ -132,9 +132,9 @@ class TimelineCardWidget extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
+                            color: color.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: color.withOpacity(0.25), width: 0.8),
+                            border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
                           ),
                           child: Text(
                             historyItem.paymentMethod!,

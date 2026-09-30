@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
 import 'package:bizos/features/dashboard/domain/repo/dashboard_repository.dart';
 
@@ -17,7 +18,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
         currentuserid,
       );
     } catch (e) {
-      print("Error fetching dashboard data: $e");
+      AppLogger.error("Error fetching dashboard data: $e");
       rethrow;
     }
   }
@@ -37,7 +38,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
         amount: amount,
       );
     } catch (e) {
-      print("Error logging activity: $e");
+      AppLogger.error("Error logging activity: $e");
     }
   }
 
@@ -48,7 +49,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
         businessId,
       );
     } catch (e) {
-      print("Error fetching specific business data: $e");
+      AppLogger.error("Error fetching specific business data: $e");
       rethrow;
     }
   }

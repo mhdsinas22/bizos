@@ -96,7 +96,7 @@ class _AddAdjustmentModalState extends State<AddAdjustmentModal> {
                       onSelected: (val) {
                         if (val) setState(() => _isDiscountOrReduction = false);
                       },
-                      selectedColor: AppTheme.error.withOpacity(0.15),
+                      selectedColor: AppTheme.error.withValues(alpha: 0.15),
                       labelStyle: TextStyle(
                         color: !_isDiscountOrReduction ? AppTheme.error : null,
                         fontWeight: !_isDiscountOrReduction ? FontWeight.bold : null,
@@ -111,7 +111,7 @@ class _AddAdjustmentModalState extends State<AddAdjustmentModal> {
                       onSelected: (val) {
                         if (val) setState(() => _isDiscountOrReduction = true);
                       },
-                      selectedColor: AppTheme.success.withOpacity(0.15),
+                      selectedColor: AppTheme.success.withValues(alpha: 0.15),
                       labelStyle: TextStyle(
                         color: _isDiscountOrReduction ? AppTheme.success : null,
                         fontWeight: _isDiscountOrReduction ? FontWeight.bold : null,

@@ -20,9 +20,9 @@ class AuthLoading extends AuthState {
 
 class AuthAuthenticated extends AuthState {
   @override
-  final UserModel user;
+  UserModel get user => super.user!;
 
-  AuthAuthenticated(this.user)
+  AuthAuthenticated(UserModel user)
     : super(status: AuthStatus.authenticated, user: user);
 }
 

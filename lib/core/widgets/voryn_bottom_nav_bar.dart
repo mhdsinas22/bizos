@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 
@@ -27,62 +28,138 @@ class VorynBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (destinations.isEmpty) return const SizedBox.shrink();
+
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+
+    if (isIOS) {
+      return _buildIOSNavBar(context);
+    } else {
+      return _buildMaterialNavBar(context);
+    }
+  }
+
+  Widget _buildIOSNavBar(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final itemCount = destinations.length;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
-    if (itemCount == 0) return const SizedBox.shrink();
+    final primaryColor = isDark
+        ? AppTheme.primaryLightColor
+        : AppTheme.primaryColor;
+    final inactiveColor = isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
 
-    // Calculate exact available width per item for dynamic responsive scaling
-    final itemWidth = screenWidth / itemCount;
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF0F172A).withValues(alpha: 0.88)
+                : Colors.white.withValues(alpha: 0.90),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : const Color(0xFFE2E8F0),
+                width: 0.8,
+              ),
+            ),
+          ),
+          padding: EdgeInsets.only(
+            top: 6,
+            bottom: bottomPadding > 0 ? bottomPadding : 10,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(destinations.length, (index) {
+              final dest = destinations[index];
+              final isSelected = selectedIndex == index;
 
-    // Dynamically scale font size, icon size, and navbar height based on item width
-    final double fontSize;
-    if (itemWidth < 56) {
-      fontSize = 9.5;
-    } else if (itemWidth < 64) {
-      fontSize = 10.0;
-    } else if (itemWidth < 72) {
-      fontSize = 11.0;
-    } else {
-      fontSize = 12.0;
-    }
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onDestinationSelected(index),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Active Pill Container
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: destinations.length > 4 ? 10 : 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? (isDark
+                                  ? AppTheme.primaryColor.withValues(alpha: 0.25)
+                                  : const Color(0xFFEDE9FE))
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          isSelected ? dest.selectedIcon : dest.icon,
+                          size: destinations.length > 4 ? 20 : 22,
+                          color: isSelected ? primaryColor : inactiveColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dest.label,
+                        style: TextStyle(
+                          fontSize: destinations.length > 4 ? 9.5 : 10.5,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected ? primaryColor : inactiveColor,
+                          letterSpacing: destinations.length > 4 ? -0.4 : -0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
 
-    final double iconSize = itemWidth < 58
-        ? 20.0
-        : (itemWidth < 68 ? 22.0 : 24.0);
-
-    final double navBarHeight = itemWidth < 60
-        ? 62.0
-        : (itemWidth < 72 ? 66.0 : 70.0);
+  Widget _buildMaterialNavBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     final selectedLabelColor = isDark
         ? AppTheme.primaryLightColor
         : AppTheme.primaryColor;
     final unselectedLabelColor = isDark
-        ? AppTheme.darkTextSecondary
-        : AppTheme.lightTextSecondary;
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
 
     final navBarTheme = NavigationBarThemeData(
-      height: navBarHeight,
+      height: 66.0,
       elevation: 0,
       backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
       indicatorColor: isDark
           ? AppTheme.primaryColor.withValues(alpha: 0.22)
-          : AppTheme.primaryColor.withValues(alpha: 0.12),
+          : const Color(0xFFEDE9FE),
       indicatorShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(itemWidth < 60 ? 10 : 14),
+        borderRadius: BorderRadius.circular(14),
       ),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
         final isSelected = states.contains(WidgetState.selected);
         return TextStyle(
-          fontSize: fontSize,
+          fontSize: 11.0,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           color: isSelected ? selectedLabelColor : unselectedLabelColor,
-          letterSpacing: itemWidth < 64 ? -0.4 : -0.2,
+          letterSpacing: -0.2,
           height: 1.1,
           overflow: TextOverflow.ellipsis,
         );
@@ -90,7 +167,7 @@ class VorynBottomNavBar extends StatelessWidget {
       iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
         final isSelected = states.contains(WidgetState.selected);
         return IconThemeData(
-          size: iconSize,
+          size: 22.0,
           color: isSelected ? selectedLabelColor : unselectedLabelColor,
         );
       }),

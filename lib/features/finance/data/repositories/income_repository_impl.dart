@@ -13,81 +13,70 @@ class IncomeRepositoryImpl implements IncomeRepository {
   });
 
   @override
-  Future<List<IncomeModel>> getIncomeList(String businessId) async {
-    try {
-      return await incomeRemoteDatasource.getIncomeList(businessId);
-    } catch (e) {
-      print("Error fetching income list: $e");
-      rethrow;
-    }
+  Future<List<IncomeModel>> getIncomeList(
+    String businessId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    return await incomeRemoteDatasource.getIncomeList(
+      businessId,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 
   @override
   Future<List<IncomeModel>> getAllIncome() async {
-    try {
-      return await incomeRemoteDatasource.getAllIncome();
-    } catch (e) {
-      print("Error fetching all income: $e");
-      rethrow;
-    }
+    return await incomeRemoteDatasource.getAllIncome();
   }
 
   @override
   Future<void> addIncome(IncomeModel income) async {
-    try {
-      await incomeRemoteDatasource.addIncome(income);
-      // Automatically log activity
-      await activityRepository.logActivity(
-        businessId: income.businessId,
-        title: "Income Added",
-        description: "Category: ${income.category} | Amount: ${income.amount} | Description: ${income.description}",
-        module: "Income",
-        action: "Add",
-        referenceId: income.id,
-      );
-    } catch (e) {
-      print("Error adding income: $e");
-      rethrow;
-    }
+    await incomeRemoteDatasource.addIncome(income);
+    // Automatically log activity
+    await activityRepository.logActivity(
+      businessId: income.businessId,
+      title: "Income Added",
+      description:
+          "Category: ${income.category} | Method: ${income.paymentMethod} | Amount: ${income.amount} | Description: ${income.description}",
+      module: "Income",
+      action: "Add",
+      referenceId: income.id,
+      createdBy: income.createdByUserId,
+    );
   }
 
   @override
   Future<void> updateIncome(IncomeModel income) async {
-    try {
-      await incomeRemoteDatasource.updateIncome(income);
-      // Automatically log activity
-      await activityRepository.logActivity(
-        businessId: income.businessId,
-        title: "Income Updated",
-        description: "Category: ${income.category} | Amount: ${income.amount} | Description: ${income.description}",
-        module: "Income",
-        action: "Update",
-        referenceId: income.id,
-      );
-    } catch (e) {
-      print("Error updating income: $e");
-      rethrow;
-    }
+    await incomeRemoteDatasource.updateIncome(income);
+    // Automatically log activity
+    await activityRepository.logActivity(
+      businessId: income.businessId,
+      title: "Income Updated",
+      description:
+          "Category: ${income.category} | Method: ${income.paymentMethod} | Amount: ${income.amount} | Description: ${income.description}",
+      module: "Income",
+      action: "Update",
+      referenceId: income.id,
+      createdBy: income.createdByUserId,
+    );
   }
 
   @override
   Future<void> deleteIncome(String id) async {
-    try {
-      final deleted = await incomeRemoteDatasource.deleteIncome(id);
-      if (deleted != null) {
-        // Automatically log activity
-        await activityRepository.logActivity(
-          businessId: deleted.businessId,
-          title: "Income Deleted",
-          description: "Category: ${deleted.category} | Amount: ${deleted.amount} | Description: ${deleted.description}",
-          module: "Income",
-          action: "Delete",
-          referenceId: deleted.id,
-        );
-      }
-    } catch (e) {
-      print("Error deleting income: $e");
-      rethrow;
+    final deleted = await incomeRemoteDatasource.deleteIncome(id);
+    if (deleted != null) {
+      // Automatically log activity
+      await activityRepository.logActivity(
+        businessId: deleted.businessId,
+        title: "Income Deleted",
+        description:
+            "Category: ${deleted.category} | Method: ${deleted.paymentMethod} | Amount: ${deleted.amount} | Description: ${deleted.description}",
+        module: "Income",
+        action: "Delete",
+        referenceId: deleted.id,
+        createdBy: deleted.createdByUserId,
+      );
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:bizos/core/exceptions/auth_exceptions.dart';
 import 'auth_remote_datasource.dart';
@@ -30,7 +31,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final userMap = Map<String, dynamic>.from(response);
       try {
-        print("user map:-${userMap['id'].toString()}");
+        AppLogger.info("user map:-${userMap['id'].toString()}");
         final permsResponse = await supabase
             .from('staff_permissions')
             .select()
@@ -57,7 +58,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         userMap['permissions'] = flatPerms.toList();
         userMap['businessPermissions'] = bizPerms;
       } catch (e) {
-        print("error:-${e.toString()}");
+        AppLogger.error("error:-${e.toString()}");
         // If staff_permissions query fails, continue without permissions
       }
 
@@ -65,7 +66,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on AppAuthException {
       rethrow;
     } catch (e) {
-      print("error in user id:-${e.toString()}");
+      AppLogger.error("error in user id:-${e.toString()}");
       final errorStr = e.toString().toLowerCase();
       if (errorStr.contains('socketexception') ||
           errorStr.contains('clientexception') ||

@@ -5,6 +5,7 @@ import 'package:bizos/features/personal_expense/presentation/bloc/personal_expen
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_event.dart';
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_state.dart';
 import 'package:bizos/features/personal_expense/presentation/widgets/add_expense_dialog.dart';
+import 'package:bizos/features/personal_expense/presentation/widgets/export_personal_expense_pdf_modal.dart';
 import 'package:bizos/features/personal_expense/presentation/widgets/expense_card.dart';
 import 'package:bizos/features/personal_expense/presentation/widgets/analytics/expense_filter_bar.dart';
 import 'package:bizos/features/personal_expense/presentation/widgets/analytics/expense_pie_chart.dart';
@@ -52,7 +53,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
       barrierDismissible: false,
       builder: (dialogContext) => AddExpenseDialog(
         expense: expense,
-        onSave: (amount, category, description, date) {
+        onSave: (amount, category, paymentMethod, description, date) {
           if (expense != null) {
             // Edit
             final updatedExpense = PersonalExpenseEntity(
@@ -60,6 +61,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
               ownerId: userId,
               amount: amount,
               category: category,
+              paymentMethod: paymentMethod,
               description: description,
               expenseDate: date,
               createdAt: expense.createdAt,
@@ -77,6 +79,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
               ownerId: userId,
               amount: amount,
               category: category,
+              paymentMethod: paymentMethod,
               description: description,
               expenseDate: date,
               createdAt: DateTime.now(),
@@ -90,6 +93,15 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
           }
         },
       ),
+    );
+  }
+
+  void _openExportPdfModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => const ExportPersonalExpensePdfModal(),
     );
   }
 
@@ -314,6 +326,39 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                   ),
 
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                  // Export PDF Button Banner
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverToBoxAdapter(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _openExportPdfModal(context),
+                        icon: const Icon(
+                          Icons.picture_as_pdf,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Export Personal Expense PDF Report',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                   // Filter Chips
                   SliverToBoxAdapter(

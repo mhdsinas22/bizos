@@ -69,8 +69,8 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : Colors.grey.withOpacity(0.12),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.grey.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -124,7 +124,7 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                      color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),

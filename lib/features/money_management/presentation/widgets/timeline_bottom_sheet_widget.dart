@@ -21,7 +21,8 @@ class TimelineBottomSheetWidget extends StatefulWidget {
   });
 
   @override
-  State<TimelineBottomSheetWidget> createState() => _TimelineBottomSheetWidgetState();
+  State<TimelineBottomSheetWidget> createState() =>
+      _TimelineBottomSheetWidgetState();
 }
 
 class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
@@ -39,7 +40,8 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
       transactionType: widget.transactionType,
       notes: widget.historyItem.notes,
     );
-    final text = 'Event: $typeTitle\n'
+    final text =
+        'Event: $typeTitle\n'
         'Amount: ₹${widget.historyItem.amount.toStringAsFixed(2)}\n'
         'Method: ${widget.historyItem.paymentMethod ?? 'N/A'}\n'
         'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(widget.historyItem.createdAt.toLocal())}\n'
@@ -48,8 +50,12 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
   }
 
   void _showEditDialog() {
-    final amountController = TextEditingController(text: widget.historyItem.amount.toString());
-    final notesController = TextEditingController(text: widget.historyItem.notes);
+    final amountController = TextEditingController(
+      text: widget.historyItem.amount.toString(),
+    );
+    final notesController = TextEditingController(
+      text: widget.historyItem.notes,
+    );
     String method = widget.historyItem.paymentMethod ?? 'Cash';
 
     showDialog(
@@ -61,10 +67,13 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.historyItem.eventType == 'payment' || widget.historyItem.eventType == 'adjustment')
+                if (widget.historyItem.eventType == 'payment' ||
+                    widget.historyItem.eventType == 'adjustment')
                   TextField(
                     controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(labelText: 'Amount (₹)'),
                   ),
                 const SizedBox(height: 12),
@@ -83,7 +92,9 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
             ),
             ElevatedButton(
               onPressed: () {
-                final newAmount = double.tryParse(amountController.text) ?? widget.historyItem.amount;
+                final newAmount =
+                    double.tryParse(amountController.text) ??
+                    widget.historyItem.amount;
                 final updated = widget.historyItem.copyWith(
                   amount: newAmount,
                   notes: notesController.text.trim(),
@@ -169,7 +180,9 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
                   CurrencyFormatter.format(item.amount),
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: item.eventType == 'payment' ? AppTheme.success : AppTheme.error,
+                    color: item.eventType == 'payment'
+                        ? AppTheme.success
+                        : AppTheme.error,
                   ),
                 ),
             ],
@@ -182,7 +195,10 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
               children: [
                 const Icon(Icons.payment, size: 18, color: Colors.grey),
                 const SizedBox(width: 8),
-                Text('Payment Method: ${item.paymentMethod}', style: theme.textTheme.bodyMedium),
+                Text(
+                  'Payment Method: ${item.paymentMethod}',
+                  style: theme.textTheme.bodyMedium,
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -213,7 +229,10 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
                     const Icon(Icons.notes, size: 18, color: Colors.grey),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text('Description: $eventDesc', style: theme.textTheme.bodyMedium),
+                      child: Text(
+                        'Description: $eventDesc',
+                        style: theme.textTheme.bodyMedium,
+                      ),
                     ),
                   ],
                 ),
@@ -245,7 +264,9 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
                     onPressed: _confirmDelete,
                     icon: const Icon(Icons.delete, size: 18),
                     label: const Text('Delete'),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.error,
+                    ),
                   ),
                 ),
               ],

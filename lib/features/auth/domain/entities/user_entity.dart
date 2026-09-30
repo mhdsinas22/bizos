@@ -39,10 +39,40 @@ class UserEntity {
     if (businessId != null) {
       final perms = businessPermissions[businessId];
       if (perms != null) {
-        return perms.contains(permission);
+        return perms.contains(permission) || perms.contains('all');
       }
       return false; // Unassigned business has no permissions
     }
     return customPermissions.contains(permission);
   }
+
+  bool canViewInvoices({String? businessId}) =>
+      hasPermission('view_invoices', businessId: businessId) ||
+      hasPermission('view_accounts', businessId: businessId);
+
+  bool canCreateInvoices({String? businessId}) =>
+      hasPermission('create_invoices', businessId: businessId) ||
+      hasPermission('view_accounts', businessId: businessId);
+
+  bool canEditInvoices({String? businessId}) =>
+      hasPermission('edit_invoices', businessId: businessId) ||
+      hasPermission('view_accounts', businessId: businessId);
+
+  bool canDeleteInvoices({String? businessId}) =>
+      isOwner || hasPermission('delete_invoices', businessId: businessId);
+
+  bool canManageCustomers({String? businessId}) =>
+      hasPermission('manage_customers', businessId: businessId) ||
+      hasPermission('view_accounts', businessId: businessId);
+
+  bool canManageProducts({String? businessId}) =>
+      hasPermission('manage_products', businessId: businessId) ||
+      hasPermission('view_accounts', businessId: businessId);
+
+  bool canManagePayments({String? businessId}) =>
+      hasPermission('manage_payments', businessId: businessId) ||
+      hasPermission('view_accounts', businessId: businessId);
+
+  bool canManageInvoiceSettings({String? businessId}) =>
+      isOwner || hasPermission('manage_invoice_settings', businessId: businessId);
 }

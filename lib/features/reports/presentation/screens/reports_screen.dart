@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:bizos/core/theme/app_theme.dart';
-import 'package:bizos/core/widgets/custom_button.dart';
-import 'package:bizos/core/widgets/glass_card.dart';
-import 'package:bizos/core/widgets/empty_state.dart';
 import 'package:bizos/core/utils/pdf_generator.dart';
-import 'package:bizos/features/business/data/models/business_model.dart';
-import 'package:bizos/features/reports/domain/repo/report_repository.dart';
-import 'package:bizos/features/business/bloc/business_bloc.dart';
-import 'package:bizos/features/business/bloc/business_state.dart';
+import 'package:bizos/core/widgets/empty_state.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
+import 'package:bizos/features/business/bloc/business_bloc.dart';
+import 'package:bizos/features/business/bloc/business_state.dart';
+import 'package:bizos/features/business/data/models/business_model.dart';
+import 'package:bizos/features/finance/presentation/widgets/date_filter_bottom_sheet.dart';
+import 'package:bizos/features/reports/domain/repo/report_repository.dart';
+import 'package:bizos/features/reports/domain/services/business_analytics_engine.dart';
+import 'package:bizos/features/reports/presentation/widgets/recent_reports_section.dart';
+import 'package:bizos/features/reports/presentation/widgets/report_configuration_card.dart';
+import 'package:bizos/features/reports/presentation/widgets/report_details_card.dart';
+import 'package:bizos/features/reports/presentation/widgets/reports_hero.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -21,13 +26,50 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   BusinessModel? _selectedBusiness;
-  String _reportType = 'Income'; // 'Income', 'Expense', 'Profit', 'Task'
+  String _reportType = 'Income Statement';
   bool _isExporting = false;
+  DateFilterOption _activeFilterOption = DateFilterOption.allTime;
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _filterLabel = 'All Time';
+
+  final List<RecentReportLog> _recentReports = [];
+
+  static const List<String> _reportTypes = [
+    'Complete Business Analytics',
+    'Profit & Loss Statement',
+    'Income Statement',
+    'Expense Statement',
+    'Task Management',
+    'Staff Report',
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Pre-select first business if available
+  }
+
+  void _openDateFilterSheet() async {
+    final result = await showModalBottomSheet<DateFilterResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => DateFilterBottomSheet(
+        initialOption: _activeFilterOption,
+        initialStartDate: _startDate,
+        initialEndDate: _endDate,
+      ),
+    );
+
+    if (result != null) {
+      if (!mounted) return;
+      setState(() {
+        _activeFilterOption = result.selectedOption;
+        _startDate = result.startDate;
+        _endDate = result.endDate;
+        _filterLabel = result.label;
+      });
+    }
   }
 
   Future<void> _handlePdfAction({required bool isShare}) async {
@@ -35,31 +77,103 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isExporting = true);
 
     try {
+      final authState = context.read<AuthBloc>().state;
+      final userName =
+          authState is Authenticated ? authState.user.name : 'Business Owner';
       final reportRepo = context.read<ReportRepository>();
 
       final incomes = await reportRepo.getIncomeReportData(
         _selectedBusiness!.id,
+        startDate: _startDate,
+        endDate: _endDate,
       );
       final expenses = await reportRepo.getExpenseReportData(
         _selectedBusiness!.id,
+        startDate: _startDate,
+        endDate: _endDate,
       );
-      final tasks = await reportRepo.getTaskReportData(_selectedBusiness!.id);
+      final allTasks =
+          await reportRepo.getTaskReportData(_selectedBusiness!.id);
+
+      final filteredTasks = allTasks.where((t) {
+        if (_startDate != null && t.dueDate.isBefore(_startDate!)) return false;
+        if (_endDate != null && t.dueDate.isAfter(_endDate!)) return false;
+        return true;
+      }).toList();
+
+      final now = DateTime.now();
+      final start = _startDate ??
+          (incomes.isNotEmpty || expenses.isNotEmpty
+              ? (incomes
+                  .map((i) => i.date)
+                  .followedBy(expenses.map((e) => e.date))
+                  .reduce((a, b) => a.isBefore(b) ? a : b))
+              : DateTime(now.year, 1, 1));
+      final end = _endDate ?? now;
+
+      final allIncomes =
+          await reportRepo.getIncomeReportData(_selectedBusiness!.id);
+      final allExpenses =
+          await reportRepo.getExpenseReportData(_selectedBusiness!.id);
+
+      final analyticsData = await BusinessAnalyticsEngine.compute(
+        incomes: incomes,
+        expenses: expenses,
+        tasks: filteredTasks,
+        startDate: start,
+        endDate: end,
+        allIncomes: allIncomes,
+        allExpenses: allExpenses,
+      );
 
       final pdfBytes = await PdfGenerator.generateReport(
         business: _selectedBusiness!,
         incomes: incomes,
         expenses: expenses,
-        tasks: tasks,
+        tasks: filteredTasks,
         reportType: _reportType,
+        ownerName: userName,
+        startDate: start,
+        endDate: end,
+        filterLabel: _filterLabel,
+        analyticsData: analyticsData,
       );
 
       final filename =
-          '${_selectedBusiness!.name.replaceAll(' ', '_')}_${_reportType}_Report.pdf';
+          '${_selectedBusiness!.name.replaceAll(' ', '_')}_${_reportType.replaceAll(' ', '_')}_Report.pdf';
 
       if (isShare) {
         await PdfGenerator.sharePdf(pdfBytes, filename);
       } else {
         await PdfGenerator.printPdf(pdfBytes, filename);
+      }
+
+      // Add to recent reports log for quick access
+      if (mounted) {
+        final formattedType = _reportType.endsWith('Statement') ||
+                _reportType.endsWith('Report')
+            ? _reportType
+            : '$_reportType Statement';
+
+        setState(() {
+          _recentReports.removeWhere((r) =>
+              r.reportType == formattedType &&
+              r.businessName == _selectedBusiness!.name &&
+              r.dateRange == _filterLabel);
+
+          _recentReports.insert(
+            0,
+            RecentReportLog(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              reportType: formattedType,
+              businessName: _selectedBusiness!.name,
+              dateRange: _filterLabel == 'All Time'
+                  ? 'All Time'
+                  : _filterLabel,
+              generatedAt: DateTime.now(),
+            ),
+          );
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -84,7 +198,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final user = authState.user;
 
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final nowStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+
     return Scaffold(
+      backgroundColor:
+          isDark ? const Color(0xFF0B0F19) : const Color(0xFFF8FAFC),
       body: BlocBuilder<BusinessBloc, BusinessState>(
         builder: (context, state) {
           List<BusinessModel> businesses = [];
@@ -106,14 +225,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
               !businesses.any((b) => b.id == _selectedBusiness!.id)) {
             _selectedBusiness = businesses.first;
           } else {
-            // Keep it updated with the latest instance from the list to avoid reference mismatches
             _selectedBusiness = businesses.firstWhere(
               (b) => b.id == _selectedBusiness!.id,
             );
           }
 
           final hasReportAccess = user.hasPermission(
-            _reportType == 'Task' ? 'view_tasks' : 'view_accounts',
+            _reportType.contains('Task') ? 'view_tasks' : 'view_accounts',
             businessId: _selectedBusiness?.id,
           );
 
@@ -127,174 +245,80 @@ class _ReportsScreenState extends State<ReportsScreen> {
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Reporting Console',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Generate and share corporate PDF statements.',
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 24),
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+              horizontal:
+                  MediaQuery.sizeOf(context).width > 600 ? 24.0 : 16.0,
+              vertical: 12.0,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 960),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 1. Reporting Console Hero Banner
+                    const ReportsHero(),
 
-                // Selection card
-                GlassCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DropdownButtonFormField<BusinessModel>(
-                        // ignore: deprecated_member_use
-                        value: _selectedBusiness,
-                        decoration: InputDecoration(
-                          labelText: 'Select Business Entity',
-                          prefixIcon: const Icon(Icons.storefront),
-                          fillColor: theme.brightness == Brightness.dark
-                              ? AppTheme.darkBg
-                              : AppTheme.lightBg,
-                        ),
-                        items: businesses.map((b) {
-                          return DropdownMenuItem(
-                            value: b,
-                            child: Text(b.name),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedBusiness = val;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                      // Select Report Type
-                      DropdownButtonFormField<String>(
-                        // ignore: deprecated_member_use
-                        value: _reportType,
-                        decoration: InputDecoration(
-                          labelText: 'Select Statement Type',
-                          prefixIcon: const Icon(Icons.description_outlined),
-                          fillColor: theme.brightness == Brightness.dark
-                              ? AppTheme.darkBg
-                              : AppTheme.lightBg,
-                        ),
-                        items: ['Income', 'Expense', 'Profit', 'Task'].map((
-                          type,
-                        ) {
-                          return DropdownMenuItem(
-                            value: type,
-                            child: Text('$type Statement'),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              _reportType = val;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+                    // 2. Report Configuration Controls Card
+                    ReportConfigurationCard(
+                      selectedBusiness: _selectedBusiness,
+                      businesses: businesses,
+                      onBusinessChanged: (b) {
+                        setState(() {
+                          _selectedBusiness = b;
+                        });
+                      },
+                      selectedReportType: _reportType,
+                      reportTypes: _reportTypes,
+                      onReportTypeChanged: (type) {
+                        setState(() {
+                          _reportType = type;
+                        });
+                      },
+                      dateRangeLabel: _filterLabel,
+                      onDateRangeTap: _openDateFilterSheet,
+                    ),
 
-                GlassCard(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.remove_red_eye_outlined,
-                            color: AppTheme.primaryColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Report Details Preview',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildPreviewRow(
-                        'Target Entity',
-                        _selectedBusiness?.name ?? '',
-                      ),
-                      _buildPreviewRow(
-                        'Report Category',
-                        '$_reportType Statement',
-                      ),
-                      _buildPreviewRow('File Format', 'Adobe PDF (.pdf)'),
-                      _buildPreviewRow(
-                        'Scope',
-                        'All recorded historical transactions',
-                      ),
-                      const SizedBox(height: 40),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CustomButton(
-                              text: 'Export & Print',
-                              icon: Icons.print_outlined,
-                              isSecondary: true,
-                              isLoading: _isExporting,
-                              onPressed: () => _handlePdfAction(isShare: false),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: CustomButton(
-                              text: 'Share Report',
-                              icon: Icons.share_outlined,
-                              isLoading: _isExporting,
-                              onPressed: () => _handlePdfAction(isShare: true),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    const SizedBox(height: 16),
+
+                    // 3. Report Details Card
+                    ReportDetailsCard(
+                      businessName: _selectedBusiness?.name ?? '',
+                      reportType: _reportType.endsWith('Statement') ||
+                              _reportType.endsWith('Report')
+                          ? _reportType
+                          : '$_reportType Statement',
+                      dateRange: _filterLabel == 'All Time'
+                          ? 'All Recorded Historical Transactions'
+                          : _filterLabel,
+                      generatedBy:
+                          user.name.isNotEmpty ? user.name : 'Business Owner',
+                      generatedAt: nowStr,
+                      fileFormat: 'PDF',
+                      isExporting: _isExporting,
+                      onExportAndPrint: () => _handlePdfAction(isShare: false),
+                      onShareReport: () => _handlePdfAction(isShare: true),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // 4. Recent Reports Section
+                    RecentReportsSection(
+                      recentReports: _recentReports,
+                      onRePrint: (log) => _handlePdfAction(isShare: false),
+                      onReShare: (log) => _handlePdfAction(isShare: true),
+                    ),
+
+                    const SizedBox(height: 32),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildPreviewRow(String label, String value) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
-              fontSize: 12.5,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-              color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
-            ),
-          ),
-        ],
       ),
     );
   }

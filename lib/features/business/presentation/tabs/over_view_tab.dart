@@ -4,11 +4,12 @@ import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
 import 'package:bizos/features/dashboard/domain/repo/dashboard_repository.dart';
-import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
-import 'package:bizos/features/task/presentation/bloc/task_state.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_bloc.dart';
+import 'package:bizos/features/task/presentation/bloc/business_task_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:bizos/features/business/presentation/screen/business_reports_screen.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_state.dart';
 import 'package:bizos/features/money_management/presentation/bloc/business_money_management_bloc.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
@@ -55,14 +56,14 @@ class OverviewTab extends StatelessWidget {
         final double profit = totalIncome - totalExpense;
         final recentActivities = dashboardData.recentActivities;
 
-        return BlocBuilder<TaskBloc, TaskState>(
+        return BlocBuilder<BusinessTaskBloc, BusinessTaskState>(
           builder: (context, taskState) {
             int pending = 0;
             int completed = 0;
             int missed = 0;
             double completionPercent = 0.0;
 
-            if (taskState is TaskLoaded) {
+            if (taskState is BusinessTaskLoaded) {
               completed = taskState.tasks.where((t) => t.isCompleted).length;
               pending = taskState.tasks.where((t) => t.isPending).length;
               missed = taskState.tasks.where((t) => t.isMissed).length;
@@ -246,8 +247,8 @@ class OverviewTab extends StatelessWidget {
                         children: [
                           Expanded(
                             child: GlassCard(
-                              color: AppTheme.error.withOpacity(0.06),
-                              border: BorderSide(color: AppTheme.error.withOpacity(0.18), width: 1.5),
+                              color: AppTheme.error.withValues(alpha: 0.06),
+                              border: BorderSide(color: AppTheme.error.withValues(alpha: 0.18), width: 1.5),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -277,8 +278,8 @@ class OverviewTab extends StatelessWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: GlassCard(
-                              color: AppTheme.success.withOpacity(0.06),
-                              border: BorderSide(color: AppTheme.success.withOpacity(0.18), width: 1.5),
+                              color: AppTheme.success.withValues(alpha: 0.06),
+                              border: BorderSide(color: AppTheme.success.withValues(alpha: 0.18), width: 1.5),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -309,6 +310,74 @@ class OverviewTab extends StatelessWidget {
                       );
                     },
                   ),
+                  if (user.isOwner) ...[
+                    const SizedBox(height: 20),
+                    GlassCard(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BusinessReportsScreen(business: business),
+                          ),
+                        );
+                      },
+                      color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                      border: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.25), width: 1.5),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.analytics_rounded, color: AppTheme.primaryColor, size: 28),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      '📊 Reports',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryColor,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'OWNER ONLY',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Generate professional financial and analytics reports for this business.',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppTheme.primaryColor),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // Recent Activities specific to business
@@ -339,7 +408,7 @@ class OverviewTab extends StatelessWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: recentActivities.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, i) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final act = recentActivities[index];
                         final isIncome = act['type'] == 'income';

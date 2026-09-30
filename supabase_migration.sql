@@ -529,3 +529,29 @@ CREATE POLICY personal_expenses_owner_policy ON personal_expenses
   USING (get_current_user_role() = 'owner' AND owner_id = get_current_user_id())
   WITH CHECK (get_current_user_role() = 'owner' AND owner_id = get_current_user_id());
 
+
+-- ==================== EXPENSE & INCOME CATEGORIES ====================
+CREATE TABLE IF NOT EXISTS expense_categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid REFERENCES businesses(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  icon text,
+  color text,
+  created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS income_categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid REFERENCES businesses(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  icon text,
+  color text,
+  created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expense_categories_business_id ON expense_categories(business_id);
+CREATE INDEX IF NOT EXISTS idx_income_categories_business_id ON income_categories(business_id);
+
+

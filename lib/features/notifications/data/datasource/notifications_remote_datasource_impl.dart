@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/notifications/data/datasource/notifications_remote_datasource.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,10 +23,10 @@ class NotificationsRemoteDatasourceImpl
         sound: true,
         provisional: false,
       );
-      print("Permission: ${settings.authorizationStatus}");
-      print("Sound ${settings.sound}");
-      print("Alert ${settings.alert}");
-      print("Badge ${settings.badge}");
+      AppLogger.info("Permission: ${settings.authorizationStatus}");
+      AppLogger.info("Sound ${settings.sound}");
+      AppLogger.info("Alert ${settings.alert}");
+      AppLogger.info("Badge ${settings.badge}");
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         String? token;
         try {
@@ -40,19 +41,19 @@ class NotificationsRemoteDatasourceImpl
 
               await Future.delayed(const Duration(seconds: 1));
             }
-            print("APNS Token:-$apnsToken");
+            AppLogger.info("APNS Token:-$apnsToken");
             if (apnsToken == null) {
-              print("APNs token not ready yet");
+              AppLogger.warning("APNs token not ready yet");
               return;
             }
           }
           token = await firebaseMessaging.getToken();
-          print("FCM Token: $token");
+          AppLogger.info("FCM Token: $token");
         } catch (apnsError) {
-          print("APNs Token not ready or running on iOS Simulator: $apnsError");
+          AppLogger.error("APNs Token not ready or running on iOS Simulator: $apnsError");
         }
         // final userId = supabaseClient.auth.currentUser?.id;
-        print(
+        AppLogger.info(
           "Userid is correwct from check the supbase:-${userId.toString()}",
         );
         if (token != null && userId.isNotEmpty) {
@@ -63,14 +64,14 @@ class NotificationsRemoteDatasourceImpl
               "created_at": DateTime.now().toIso8601String(),
               'updated_at': DateTime.now().toIso8601String(),
             }, onConflict: "fcm_token");
-            print("FCM Token saved successfully");
+            AppLogger.info("FCM Token saved successfully");
           } catch (e) {
-            print("notification errr:-${e.toString()}");
+            AppLogger.error("notification errr:-${e.toString()}");
           }
         }
       }
     } catch (e) {
-      print("notification errr:-${e.toString()}");
+      AppLogger.error("notification errr:-${e.toString()}");
     }
   }
 }

@@ -1,18 +1,18 @@
 import 'package:bizos/features/contacts/domain/entities/contact_enitiy.dart';
 
-enum contactstatus { initail, loading, selected, failure }
+enum ContactStatus { initial, loading, selected, failure }
 
 class ContactState {
-  final contactstatus status;
+  final ContactStatus status;
   final ContactEnitiy? contact;
   final String? errormessage;
   const ContactState({
-    this.status = contactstatus.initail,
+    this.status = ContactStatus.initial,
     this.contact,
     this.errormessage,
   });
   ContactState copyWith({
-    contactstatus? status,
+    ContactStatus? status,
     ContactEnitiy? contact,
     String? errormessage,
   }) {

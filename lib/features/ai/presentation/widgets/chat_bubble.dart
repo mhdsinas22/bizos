@@ -68,7 +68,7 @@ class ChatBubble extends StatelessWidget {
                     ? []
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
+                          color: Colors.black.withValues(alpha: 0.02),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -96,7 +96,7 @@ class ChatBubble extends StatelessWidget {
                         DateFormat.jm().format(message.timestamp),
                         style: TextStyle(
                           color: isUser
-                              ? Colors.white.withOpacity(0.6)
+                              ? Colors.white.withValues(alpha: 0.6)
                               : Colors.grey.shade500,
                           fontSize: 10.0,
                         ),
@@ -106,7 +106,7 @@ class ChatBubble extends StatelessWidget {
                         Icon(
                           Icons.done_all,
                           size: 12,
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha: 0.6),
                         ),
                       ],
                     ],
@@ -137,7 +137,7 @@ class ChatBubble extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.2),
+            color: AppTheme.primaryColor.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

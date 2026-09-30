@@ -117,7 +117,7 @@ class _PersonalFilterSheetState extends State<PersonalFilterSheet> {
               return ChoiceChip(
                 label: Text(p),
                 selected: isSelected,
-                selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                 labelStyle: TextStyle(
                   color: isSelected
                       ? AppTheme.primaryColor
@@ -148,7 +148,7 @@ class _PersonalFilterSheetState extends State<PersonalFilterSheet> {
               return ChoiceChip(
                 label: Text(s),
                 selected: isSelected,
-                selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                 labelStyle: TextStyle(
                   color: isSelected
                       ? AppTheme.primaryColor
@@ -179,7 +179,7 @@ class _PersonalFilterSheetState extends State<PersonalFilterSheet> {
               return ChoiceChip(
                 label: Text(r),
                 selected: isSelected,
-                selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                 labelStyle: TextStyle(
                   color: isSelected
                       ? AppTheme.primaryColor

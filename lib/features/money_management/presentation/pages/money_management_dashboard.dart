@@ -14,8 +14,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MoneyManagementDashboard extends StatelessWidget {
   final String? businessId; // null for personal
+  final bool showAppBar;
 
-  const MoneyManagementDashboard({super.key, this.businessId});
+  const MoneyManagementDashboard({
+    super.key,
+    this.businessId,
+    this.showAppBar = false,
+  });
 
   Widget _buildContent(BuildContext context, MoneyManagementState state) {
     if (state is TransactionsLoading || state is TransactionsInitial) {
@@ -107,8 +112,8 @@ class MoneyManagementDashboard extends StatelessWidget {
     return GlassCard(
       onTap: onTap,
       padding: const EdgeInsets.all(24.0),
-      color: color.withOpacity(0.06),
-      border: BorderSide(color: color.withOpacity(0.18), width: 1.5),
+      color: color.withValues(alpha: 0.06),
+      border: BorderSide(color: color.withValues(alpha: 0.18), width: 1.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -118,7 +123,7 @@ class MoneyManagementDashboard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -176,43 +181,54 @@ class MoneyManagementDashboard extends StatelessWidget {
         businessId: businessId,
       );
       if (!hasFinanceAccess) {
-        return const EmptyState(
+        const emptyState = EmptyState(
           icon: Icons.lock_outline,
           title: 'Access Restricted',
           message:
               'Your Staff account does not have access to Money Management.',
         );
+        return showAppBar
+            ? Scaffold(
+                appBar: AppBar(title: const Text('Money Management')),
+                body: emptyState,
+              )
+            : emptyState;
       }
     }
 
-    if (businessId != null) {
-      return BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(
-        buildWhen: (previous, current) {
-          if (previous.runtimeType != current.runtimeType) return true;
-          if (previous is TransactionsLoaded && current is TransactionsLoaded) {
-            return previous.totalPendingPay != current.totalPendingPay ||
-                previous.pendingPayCount != current.pendingPayCount ||
-                previous.totalPendingReceive != current.totalPendingReceive ||
-                previous.pendingReceiveCount != current.pendingReceiveCount;
-          }
-          return true;
-        },
-        builder: (context, state) => _buildContent(context, state),
-      );
-    } else {
-      return BlocBuilder<PersonalMoneyManagementBloc, MoneyManagementState>(
-        buildWhen: (previous, current) {
-          if (previous.runtimeType != current.runtimeType) return true;
-          if (previous is TransactionsLoaded && current is TransactionsLoaded) {
-            return previous.totalPendingPay != current.totalPendingPay ||
-                previous.pendingPayCount != current.pendingPayCount ||
-                previous.totalPendingReceive != current.totalPendingReceive ||
-                previous.pendingReceiveCount != current.pendingReceiveCount;
-          }
-          return true;
-        },
-        builder: (context, state) => _buildContent(context, state),
-      );
-    }
+    final Widget content = businessId != null
+        ? BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(
+            buildWhen: (previous, current) {
+              if (previous.runtimeType != current.runtimeType) return true;
+              if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+                return previous.totalPendingPay != current.totalPendingPay ||
+                    previous.pendingPayCount != current.pendingPayCount ||
+                    previous.totalPendingReceive != current.totalPendingReceive ||
+                    previous.pendingReceiveCount != current.pendingReceiveCount;
+              }
+              return true;
+            },
+            builder: (context, state) => _buildContent(context, state),
+          )
+        : BlocBuilder<PersonalMoneyManagementBloc, MoneyManagementState>(
+            buildWhen: (previous, current) {
+              if (previous.runtimeType != current.runtimeType) return true;
+              if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+                return previous.totalPendingPay != current.totalPendingPay ||
+                    previous.pendingPayCount != current.pendingPayCount ||
+                    previous.totalPendingReceive != current.totalPendingReceive ||
+                    previous.pendingReceiveCount != current.pendingReceiveCount;
+              }
+              return true;
+            },
+            builder: (context, state) => _buildContent(context, state),
+          );
+
+    return showAppBar
+        ? Scaffold(
+            appBar: AppBar(title: const Text('Money Management')),
+            body: content,
+          )
+        : content;
   }
 }

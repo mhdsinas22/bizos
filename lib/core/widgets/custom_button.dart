@@ -43,9 +43,10 @@ class _CustomButtonState extends State<CustomButton>
       lowerBound: 0.0,
       upperBound: 0.04,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.96,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -83,8 +84,8 @@ class _CustomButtonState extends State<CustomButton>
 
     if (widget.isSecondary) {
       bgColor = isDark
-          ? AppTheme.primaryLightColor.withOpacity(0.12)
-          : AppTheme.primaryColor.withOpacity(0.08);
+          ? AppTheme.primaryLightColor.withValues(alpha: 0.12)
+          : AppTheme.primaryColor.withValues(alpha: 0.08);
       fgColor = isDark ? AppTheme.primaryLightColor : AppTheme.primaryColor;
     } else if (widget.isGhost) {
       bgColor = Colors.transparent;

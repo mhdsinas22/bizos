@@ -4,9 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:bizos/core/utils/task_repeat_mapper.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/task/data/models/task_model.dart';
-import 'package:bizos/features/task/presentation/bloc/task_bloc.dart';
-import 'package:bizos/features/task/presentation/bloc/task_event.dart';
-import 'package:bizos/features/task/presentation/bloc/task_state.dart';
+import 'package:bizos/features/task/presentation/bloc/personal_task_bloc.dart';
+import 'package:bizos/features/task/presentation/bloc/personal_task_event.dart';
+import 'package:bizos/features/task/presentation/bloc/personal_task_state.dart';
 import 'package:bizos/features/task/presentation/widgets/personal_task_item.dart';
 import 'package:bizos/features/task/presentation/widgets/personal_task_form_sheet.dart';
 import 'package:bizos/features/task/presentation/widgets/personal_task_options_sheet.dart';
@@ -53,7 +53,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<AuthBloc>().state.user;
       if (user != null) {
-        context.read<TaskBloc>().add(FetchPersonalTasksEvent(user.id));
+        context.read<PersonalTaskBloc>().add(FetchPersonalTasksEvent(user.id));
       }
     });
   }
@@ -97,7 +97,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
         userId: userId,
         initialDate: _selectedDate,
         onSave: (task) {
-          context.read<TaskBloc>().add(CreateTaskEvent(task));
+          context.read<PersonalTaskBloc>().add(CreatePersonalTaskEvent(task));
         },
       ),
     );
@@ -112,7 +112,9 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
         userId: userId,
         task: task,
         onSave: (updated) {
-          context.read<TaskBloc>().add(UpdateTaskEvent(updated));
+          context.read<PersonalTaskBloc>().add(
+            UpdatePersonalTaskEvent(updated),
+          );
         },
       ),
     );
@@ -126,13 +128,13 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
         task: task,
         onEdit: () => _openEditTaskSheet(userId, task),
         onDuplicate: () {
-          context.read<TaskBloc>().add(
-            DuplicateTaskEvent(task, isPersonal: true),
+          context.read<PersonalTaskBloc>().add(
+            DuplicatePersonalTaskEvent(task),
           );
         },
         onDelete: () {
-          context.read<TaskBloc>().add(
-            DeleteTaskEvent(task.id, '', userId, isGlobal: false),
+          context.read<PersonalTaskBloc>().add(
+            DeletePersonalTaskEvent(task.id, userId),
           );
         },
       ),
@@ -194,7 +196,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                   bottom: BorderSide(
                     color: isDark
                         ? Colors.white10
-                        : Colors.black.withOpacity(0.05),
+                        : Colors.black.withValues(alpha: 0.05),
                     width: 1,
                   ),
                 ),
@@ -238,10 +240,10 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                                 (_priorityFilter != 'All' ||
                                     _statusFilter != 'All' ||
                                     _repeatFilter != 'All')
-                                ? AppTheme.primaryColor.withOpacity(0.15)
+                                ? AppTheme.primaryColor.withValues(alpha: 0.15)
                                 : (isDark
-                                      ? Colors.white.withOpacity(0.08)
-                                      : Colors.grey.withOpacity(0.12)),
+                                      ? Colors.white.withValues(alpha: 0.08)
+                                      : Colors.grey.withValues(alpha: 0.12)),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -261,10 +263,10 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                   const SizedBox(height: 12),
 
                   // Task Progress Bar & Counter
-                  BlocBuilder<TaskBloc, TaskState>(
+                  BlocBuilder<PersonalTaskBloc, PersonalTaskState>(
                     builder: (context, state) {
                       List<TaskModel> allTasks = [];
-                      if (state is TaskLoaded) {
+                      if (state is PersonalTaskLoaded) {
                         allTasks = state.tasks;
                       }
 
@@ -313,8 +315,8 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                               value: progress,
                               minHeight: 6,
                               backgroundColor: isDark
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.15),
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.grey.withValues(alpha: 0.15),
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                 AppTheme.primaryColor,
                               ),
@@ -331,8 +333,8 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                     height: 38,
                     decoration: BoxDecoration(
                       color: isDark
-                          ? Colors.white.withOpacity(0.06)
-                          : Colors.grey.withOpacity(0.08),
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.grey.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextField(
@@ -408,8 +410,10 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                                 color: isSelected
                                     ? AppTheme.primaryColor
                                     : (isDark
-                                          ? Colors.white.withOpacity(0.05)
-                                          : Colors.grey.withOpacity(0.08)),
+                                          ? Colors.white.withValues(alpha: 0.05)
+                                          : Colors.grey.withValues(
+                                              alpha: 0.08,
+                                            )),
                                 borderRadius: BorderRadius.circular(16),
                                 border: isToday && !isSelected
                                     ? Border.all(
@@ -469,16 +473,17 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
 
             // Task List View with BlocBuilder
             Expanded(
-              child: BlocBuilder<TaskBloc, TaskState>(
+              child: BlocBuilder<PersonalTaskBloc, PersonalTaskState>(
                 builder: (context, state) {
-                  if (state is TaskLoading) {
+                  if (state is PersonalTaskLoading ||
+                      state is PersonalTaskInitial) {
                     return const SkeletonListLoader(
                       itemCount: 4,
                       itemHeight: 64,
                     );
                   }
 
-                  if (state is TaskError) {
+                  if (state is PersonalTaskError) {
                     return ErrorStateWidget(
                       title: 'Failed to Load Tasks',
                       message: state.message,
@@ -486,7 +491,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                         final authState = context.read<AuthBloc>().state;
                         final user = authState.user;
                         if (user != null) {
-                          context.read<TaskBloc>().add(
+                          context.read<PersonalTaskBloc>().add(
                             FetchPersonalTasksEvent(user.id),
                           );
                         }
@@ -494,12 +499,13 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                     );
                   }
 
-                  if (state is TaskLoaded) {
+                  if (state is PersonalTaskLoaded) {
                     // Filter tasks
                     final filteredTasks = state.tasks.where((task) {
                       // Date match
-                      if (!_isSameDay(task.dueDate, _selectedDate))
+                      if (!_isSameDay(task.dueDate, _selectedDate)) {
                         return false;
+                      }
 
                       // Search query
                       if (_searchQuery.isNotEmpty) {
@@ -519,13 +525,16 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
 
                       // Status filter
                       if (_statusFilter != 'All') {
-                        if (_statusFilter == 'Completed' && !task.isCompleted)
+                        if (_statusFilter == 'Completed' && !task.isCompleted) {
                           return false;
+                        }
                         if (_statusFilter == 'Pending' &&
-                            (task.isCompleted || task.isMissed))
+                            (task.isCompleted || task.isMissed)) {
                           return false;
-                        if (_statusFilter == 'Missed' && !task.isMissed)
+                        }
+                        if (_statusFilter == 'Missed' && !task.isMissed) {
                           return false;
+                        }
                       }
 
                       // Repeat filter
@@ -572,7 +581,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                       ),
                       physics: const BouncingScrollPhysics(),
                       itemCount: filteredTasks.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, e) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final task = filteredTasks[index];
 
@@ -587,34 +596,29 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                                   ? DateTime.now()
                                   : null,
                             );
-                            context.read<TaskBloc>().add(
-                              UpdateTaskEvent(updated),
+                            context.read<PersonalTaskBloc>().add(
+                              UpdatePersonalTaskEvent(updated),
                             );
                           },
                           onEdit: () => _openEditTaskSheet(user.id, task),
                           onDelete: () {
-                            context.read<TaskBloc>().add(
-                              DeleteTaskEvent(
-                                task.id,
-                                '',
-                                user.id,
-                                isGlobal: false,
-                              ),
+                            context.read<PersonalTaskBloc>().add(
+                              DeletePersonalTaskEvent(task.id, user.id),
                             );
                           },
                           onLongPress: () =>
                               _openTaskOptionsSheet(user.id, task),
                           onResolveCompletedLate: () {
-                            context.read<TaskBloc>().add(
-                              ResolveMissedTaskEvent(
+                            context.read<PersonalTaskBloc>().add(
+                              ResolveMissedPersonalTaskEvent(
                                 task,
                                 outcomeStatus: 'Completed Late',
                               ),
                             );
                           },
                           onResolveNotCompleted: () {
-                            context.read<TaskBloc>().add(
-                              ResolveMissedTaskEvent(
+                            context.read<PersonalTaskBloc>().add(
+                              ResolveMissedPersonalTaskEvent(
                                 task,
                                 outcomeStatus: 'Not Completed',
                               ),

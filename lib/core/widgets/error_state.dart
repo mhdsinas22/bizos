@@ -46,13 +46,13 @@ class ErrorStateWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.error.withOpacity(0.08),
+                color: AppTheme.error.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.error_outline_rounded,
                 size: 36,
-                color: AppTheme.error.withOpacity(0.9),
+                color: AppTheme.error.withValues(alpha: 0.9),
               ),
             ),
             const SizedBox(height: 20),
@@ -69,7 +69,9 @@ class ErrorStateWidget extends StatelessWidget {
             Text(
               friendlyMessage,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                color: isDark
+                    ? AppTheme.darkTextSecondary
+                    : AppTheme.lightTextSecondary,
                 fontSize: 13.5,
                 height: 1.4,
               ),
@@ -91,4 +93,3 @@ class ErrorStateWidget extends StatelessWidget {
     );
   }
 }
-

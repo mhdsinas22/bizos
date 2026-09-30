@@ -322,7 +322,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                           // Business Dropdown (if Business selected)
                           if (!state.isPersonal) ...[
                             DropdownButtonFormField<String>(
-                              value: state.businessId ?? 'all',
+                              initialValue: state.businessId ?? 'all',
                               decoration: InputDecoration(
                                 labelText: 'Filter by Business',
                                 prefixIcon: const Icon(
@@ -404,7 +404,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                                         label: Text(label),
                                         selected: isSelected,
                                         selectedColor: AppTheme.primaryColor
-                                            .withOpacity(0.18),
+                                            .withValues(alpha: 0.18),
                                         checkmarkColor: AppTheme.primaryColor,
                                         onSelected: (_) =>
                                             _setDateFilter(label),

@@ -616,10 +616,12 @@ class MoneyManagementRemoteDatasourceImpl
             'notes': parent.notes.isNotEmpty ? parent.notes : 'Debt Created',
             'created_at': parent.createdAt.toUtc().toIso8601String(),
           };
-          if (isPersonal && parent.userId != null)
+          if (isPersonal && parent.userId != null) {
             historyCreatedData['user_id'] = parent.userId;
-          if (!isPersonal && parent.businessId != null)
+          }
+          if (!isPersonal && parent.businessId != null) {
             historyCreatedData['business_id'] = parent.businessId;
+          }
 
           final insertedHistory = await supabaseClient
               .from(historyTable)
@@ -641,10 +643,12 @@ class MoneyManagementRemoteDatasourceImpl
                   .toUtc()
                   .toIso8601String(),
             };
-            if (isPersonal && parent.userId != null)
+            if (isPersonal && parent.userId != null) {
               paymentHistoryData['user_id'] = parent.userId;
-            if (!isPersonal && parent.businessId != null)
+            }
+            if (!isPersonal && parent.businessId != null) {
               paymentHistoryData['business_id'] = parent.businessId;
+            }
 
             final insertedPayment = await supabaseClient
                 .from(historyTable)

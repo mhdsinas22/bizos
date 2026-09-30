@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasource.dart';
 import 'package:bizos/features/staff/data/models/staff_business_model.dart';
@@ -11,7 +12,7 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
 
   @override
   Future<List<UserModel>> getStaffList(String ownerId) async {
-    print("ownerId:-$ownerId");
+    AppLogger.info("ownerId:-$ownerId");
     final response = await supabaseClient
         .from('users')
         .select()

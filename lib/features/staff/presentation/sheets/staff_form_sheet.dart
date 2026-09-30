@@ -1,4 +1,5 @@
 import 'package:bizos/core/theme/app_theme.dart';
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/core/utils/responsive_breakpoints.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
@@ -61,7 +62,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
         });
       }
     } catch (e) {
-      print("Error loading assigned businesses: $e");
+      AppLogger.error("Error loading assigned businesses: $e");
     }
   }
 
@@ -205,7 +206,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
                     ),
                     BlocBuilder<BusinessBloc, BusinessState>(
                       builder: (context, state) {
-                        print("Current State = ${state.runtimeType}");
+                        AppLogger.debug("Current State = ${state.runtimeType}");
                         if (state is BusinessError) {
                           return Text(state.message);
                         }
