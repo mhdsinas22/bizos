@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bizos/core/config/auth_config.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
@@ -19,12 +20,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _userIdController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _userIdController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -33,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         LoginRequested(
-          userId: _userIdController.text.trim(),
+          email: _emailController.text.trim(),
           password: _passwordController.text,
         ),
       );
@@ -178,15 +179,44 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: theme.textTheme.labelLarge,
                                 ),
                                 const SizedBox(height: 24),
-                                CustomTextField(
-                                  controller: _userIdController,
-                                  label: 'User ID',
-                                  hint: 'Enter your User ID',
-                                  prefixIcon: Icons.person_outline,
-                                  validator: (val) =>
-                                      val == null || val.trim().isEmpty
-                                      ? 'Please enter your User ID'
-                                      : null,
+                                Builder(
+                                  builder: (context) {
+                                    final isSupabaseAuth =
+                                        AuthConfig.useSupabaseAuth;
+                                    return CustomTextField(
+                                      controller: _emailController,
+                                      label: isSupabaseAuth
+                                          ? 'Email'
+                                          : 'User ID',
+                                      hint: isSupabaseAuth
+                                          ? 'Enter your email'
+                                          : 'Enter your User ID',
+                                      prefixIcon: isSupabaseAuth
+                                          ? Icons.email_outlined
+                                          : Icons.person_outline,
+                                      keyboardType: isSupabaseAuth
+                                          ? TextInputType.emailAddress
+                                          : TextInputType.text,
+                                      validator: (val) {
+                                        if (val == null || val.trim().isEmpty) {
+                                          return isSupabaseAuth
+                                              ? 'Please enter your email'
+                                              : 'Please enter your User ID';
+                                        }
+                                        if (isSupabaseAuth) {
+                                          final emailRegex = RegExp(
+                                            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                                          );
+                                          if (!emailRegex.hasMatch(
+                                            val.trim(),
+                                          )) {
+                                            return 'Please enter a valid email address';
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    );
+                                  },
                                 ),
                                 const SizedBox(height: 16),
                                 CustomTextField(

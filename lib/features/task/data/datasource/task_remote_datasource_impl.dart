@@ -44,6 +44,7 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
     }
 
     final response = await query;
+
     return response.map((row) => _fromRow(row)).toList();
   }
 
@@ -107,25 +108,39 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           .from('tasks')
           .select()
           .or('created_by.eq.$userId,assigned_to.eq.$userId');
+
       final list = response.map((row) => _fromRow(row)).toList();
-      return list.where((t) => t.isPersonal || t.businessId.trim().isEmpty).toList();
+      return list
+          .where((t) => t.isPersonal || t.businessId.trim().isEmpty)
+          .toList();
     }
   }
 
   @override
   Future<void> createTask(TaskModel task) async {
-    final isPersonal = task.isPersonal || task.taskType == 'personal' || task.businessId.trim().isEmpty;
+    final isPersonal =
+        task.isPersonal ||
+        task.taskType == 'personal' ||
+        task.businessId.trim().isEmpty;
     final Map<String, dynamic> insertData = {
       if (task.id.trim().isNotEmpty) 'id': task.id,
-      'business_id': isPersonal ? null : (task.businessId.trim().isNotEmpty ? task.businessId : null),
+      'business_id': isPersonal
+          ? null
+          : (task.businessId.trim().isNotEmpty ? task.businessId : null),
       'created_at': DateTime.now().toUtc().toIso8601String(),
       'title': task.title,
       'description': task.description,
       'priority': task.priority,
       'due_date': task.dueDate.toUtc().toIso8601String(),
       'status': task.status,
-      'assigned_to': (task.assignedto.trim().isNotEmpty && task.assignedto != 'null') ? task.assignedto : null,
-      'created_by': (task.createdBy.trim().isNotEmpty && task.createdBy != 'null') ? task.createdBy : null,
+      'assigned_to':
+          (task.assignedto.trim().isNotEmpty && task.assignedto != 'null')
+          ? task.assignedto
+          : null,
+      'created_by':
+          (task.createdBy.trim().isNotEmpty && task.createdBy != 'null')
+          ? task.createdBy
+          : null,
       'is_notified': false,
       'task_type': isPersonal ? 'personal' : 'business',
       'repeat': TaskRepeatMapper.toDb(task.repeat),
@@ -136,27 +151,35 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
   @override
   Future<void> updateTask(TaskModel task) async {
     if (task.id.trim().isEmpty) return;
-    final isPersonal = task.isPersonal || task.taskType == 'personal' || task.businessId.trim().isEmpty;
+    final isPersonal =
+        task.isPersonal ||
+        task.taskType == 'personal' ||
+        task.businessId.trim().isEmpty;
     final Map<String, dynamic> updateData = {
       'title': task.title,
       'description': task.description,
       'priority': task.priority,
       'due_date': task.dueDate.toUtc().toIso8601String(),
       'status': task.status,
-      'assigned_to': (task.assignedto.trim().isNotEmpty && task.assignedto != 'null') ? task.assignedto : null,
-      'created_by': (task.createdBy.trim().isNotEmpty && task.createdBy != 'null') ? task.createdBy : null,
+      'assigned_to':
+          (task.assignedto.trim().isNotEmpty && task.assignedto != 'null')
+          ? task.assignedto
+          : null,
+      'created_by':
+          (task.createdBy.trim().isNotEmpty && task.createdBy != 'null')
+          ? task.createdBy
+          : null,
       'is_notified': task.isNotified,
       if (task.completedAt != null)
         'completed_at': task.completedAt!.toUtc().toIso8601String(),
       'task_type': isPersonal ? 'personal' : 'business',
-      'business_id': isPersonal ? null : (task.businessId.trim().isNotEmpty ? task.businessId : null),
+      'business_id': isPersonal
+          ? null
+          : (task.businessId.trim().isNotEmpty ? task.businessId : null),
       'repeat': TaskRepeatMapper.toDb(task.repeat),
     };
 
-    await supabaseClient
-        .from('tasks')
-        .update(updateData)
-        .eq('id', task.id);
+    await supabaseClient.from('tasks').update(updateData).eq('id', task.id);
   }
 
   @override
@@ -242,8 +265,14 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
     if (userId.trim().isEmpty) return false;
     try {
       final dbRepeat = TaskRepeatMapper.toDb(repeat);
-      final startWindow = dueDate.subtract(const Duration(minutes: 1)).toUtc().toIso8601String();
-      final endWindow = dueDate.add(const Duration(minutes: 1)).toUtc().toIso8601String();
+      final startWindow = dueDate
+          .subtract(const Duration(minutes: 1))
+          .toUtc()
+          .toIso8601String();
+      final endWindow = dueDate
+          .add(const Duration(minutes: 1))
+          .toUtc()
+          .toIso8601String();
 
       final response = await supabaseClient
           .from('tasks')
@@ -265,7 +294,8 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
   // Row mapper logic with Local Time conversion
   TaskModel _fromRow(Map<String, dynamic> row) {
     final statusStr = row['status'] as String? ?? '';
-    final isComp = statusStr.toLowerCase() == 'completed' ||
+    final isComp =
+        statusStr.toLowerCase() == 'completed' ||
         statusStr.toLowerCase() == 'completed late';
     return TaskModel(
       id: row['id'] as String? ?? '',

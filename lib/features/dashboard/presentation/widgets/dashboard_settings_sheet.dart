@@ -1,3 +1,4 @@
+import 'package:bizos/features/shortcut/presentation/pages/quick_add_onboarding_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/theme/app_theme.dart';
@@ -55,7 +56,7 @@ class DashboardSettingsSheet extends StatelessWidget {
               builder: (context, themeState) {
                 final isDarkModeActive =
                     themeState.themeMode == ThemeMode.dark ||
-                        (themeState.themeMode == ThemeMode.system && isDark);
+                    (themeState.themeMode == ThemeMode.system && isDark);
 
                 return SwitchListTile(
                   secondary: Container(
@@ -122,8 +123,39 @@ class DashboardSettingsSheet extends StatelessWidget {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: (isDark ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.08),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+              ),
+              title: const Text(
+                'Personal Quick Expense',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Add expenses in just  a few taps',
+                style: TextStyle(fontSize: 12),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const QuickAddOnboardingPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (isDark ? Colors.white : Colors.black).withValues(
+                    alpha: 0.08,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(

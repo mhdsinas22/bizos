@@ -36,7 +36,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final user = await loginUseCase.execute(event.userId, event.password);
+      final user = await loginUseCase.execute(event.email, event.password);
       emit(AuthAuthenticated(user));
       _saveFcmToken(user.id);
     } on AppAuthException catch (e) {
@@ -94,7 +94,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
       final success = await changePasswordUseCase.execute(
-        currentUser.userId,
+        currentUser.email.isNotEmpty ? currentUser.email : currentUser.userId,
         event.oldPassword,
         event.newPassword,
       );

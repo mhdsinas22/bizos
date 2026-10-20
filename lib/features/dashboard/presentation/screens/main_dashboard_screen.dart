@@ -132,10 +132,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         ),
     ];
 
-    final Widget bodyContent = IndexedStack(
-      index: safeIndex,
-      children: pages,
-    );
+    final Widget bodyContent = IndexedStack(index: safeIndex, children: pages);
 
     return Scaffold(
       appBar: DashboardAppBar(user: user),

@@ -58,6 +58,8 @@ dependencies:
   firebase_messaging: ^16.4.3
   logger: ^2.8.0
   shared_preferences: ^2.5.5
+  flutter_secure_storage: ^11.2.0
+  get_it: ^9.3.0
 
 
 dev_dependencies:

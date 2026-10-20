@@ -163,7 +163,9 @@ class PersonalTaskBloc extends Bloc<PersonalTaskEvent, PersonalTaskState> {
         add(FetchPersonalTasksEvent(userId));
       }
     } catch (e) {
-      AppLogger.error("Error processing recurring personal task occurrence: $e");
+      AppLogger.error(
+        "Error processing recurring personal task occurrence: $e",
+      );
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:bizos/core/di/injection.dart';
 import 'package:bizos/features/attachments/data/datasources/attachment_remote_datasource_impl.dart';
 import 'package:bizos/features/attachments/data/repositories/attachment_repository_impl.dart';
 import 'package:bizos/features/attachments/domain/repositories/attachment_repository.dart';
@@ -43,6 +44,13 @@ import 'package:bizos/features/notifications/data/datasource/notifications_remot
 import 'package:bizos/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
 import 'package:bizos/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:bizos/features/shortcut/core/shortcut_constants.dart';
+import 'package:bizos/features/shortcut/domain/usecases/pair_shortcut.dart';
+import 'package:bizos/features/shortcut/domain/usecases/verify_shortcut_pairing_code.dart';
+import 'package:bizos/features/shortcut/presentation/bloc/shortcut_bloc.dart';
+import 'package:bizos/features/shortcut/presentation/bloc/shortcut_event.dart';
+import 'package:bizos/features/shortcut/presentation/bloc/shortcut_pair_bloc.dart';
+import 'package:bizos/features/shortcut/presentation/pages/quick_add_onboarding_page.dart';
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasouceimpl.dart';
 import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasoucre_impl.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
@@ -108,6 +116,7 @@ import 'package:bizos/features/activity/presentation/bloc/activity_bloc.dart';
 import 'package:bizos/features/activity/presentation/bloc/activity_event.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -421,11 +430,21 @@ class BizosApp extends StatelessWidget {
             create: (context) =>
                 NotificationBloc(saveFcmTokenUsecase: saveFcmTokenUsecase),
           ),
+          BlocProvider(
+            create: (context) => ShortcutPairBloc(
+              pairShortcut: getIt<PairShortcut>(),
+              verifyShortcutPairingCode: getIt<VerifyShortcutPairingCode>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => getIt<ShortcutBloc>(),
+          ),
         ],
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, themeState) {
             return MaterialApp(
               title: 'Voryn ERP',
+              navigatorKey: appNavigatorKey,
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
@@ -439,8 +458,63 @@ class BizosApp extends StatelessWidget {
   }
 }
 
-class AppStartupFlow extends StatelessWidget {
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
+class AppStartupFlow extends StatefulWidget {
   const AppStartupFlow({super.key});
+
+  @override
+  State<AppStartupFlow> createState() => _AppStartupFlowState();
+}
+
+class _AppStartupFlowState extends State<AppStartupFlow> {
+  static const MethodChannel _shortcutChannel =
+      MethodChannel(ShortcutConstants.methodChannelName);
+
+  @override
+  void initState() {
+    super.initState();
+    _setupShortcutBridgeListener();
+  }
+
+  void _setupShortcutBridgeListener() {
+    _shortcutChannel.setMethodCallHandler((call) async {
+      if (call.method == 'onQuickAddTriggered') {
+        final args = call.arguments as Map?;
+        final amount = (args?['amount'] as num?)?.toDouble();
+        final category = args?['category'] as String?;
+        final note = args?['note'] as String?;
+        final paymentMethod = args?['payment_method'] as String?;
+
+        if (mounted) {
+          context.read<ShortcutBloc>().add(
+                DeepLinkQuickAddReceived(
+                  amount: amount,
+                  category: category,
+                  note: note,
+                  paymentMethod: paymentMethod,
+                ),
+              );
+
+          appNavigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => const QuickAddOnboardingPage(initialStep: 10),
+            ),
+          );
+        }
+      }
+    });
+
+    _shortcutChannel.invokeMethod<String>('getPendingDeepLink').then((url) {
+      if (url != null && url.contains('quick-add') && mounted) {
+        appNavigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => const QuickAddOnboardingPage(initialStep: 10),
+          ),
+        );
+      }
+    }).catchError((_) {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -466,7 +540,7 @@ class AppStartupFlow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Loading Bizos Workspace...',
+                    'Loading Voryn Workspace...',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,

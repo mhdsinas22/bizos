@@ -43,7 +43,10 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
     });
   }
 
-  void _showAddExpenseDialog(BuildContext context, {PersonalExpenseEntity? expense}) {
+  void _showAddExpenseDialog(
+    BuildContext context, {
+    PersonalExpenseEntity? expense,
+  }) {
     final authState = context.read<AuthBloc>().state;
     final userId = authState.user?.id ?? '';
     if (userId.isEmpty) return;
@@ -172,7 +175,9 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                     setState(() {
                       _pendingAction = 'load';
                     });
-                    context.read<PersonalExpenseBloc>().add(LoadPersonalExpenses(userId));
+                    context.read<PersonalExpenseBloc>().add(
+                      LoadPersonalExpenses(userId),
+                    );
                   }
                 },
                 child: ListView(
@@ -211,7 +216,9 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                     setState(() {
                                       _pendingAction = 'load';
                                     });
-                                    context.read<PersonalExpenseBloc>().add(LoadPersonalExpenses(userId));
+                                    context.read<PersonalExpenseBloc>().add(
+                                      LoadPersonalExpenses(userId),
+                                    );
                                   }
                                 },
                                 child: const Text('Retry'),
@@ -227,7 +234,9 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
             }
 
             // Show loading state if we have no cached data
-            if ((state is PersonalExpenseLoading || state is PersonalExpenseInitial) && _lastLoadedState == null) {
+            if ((state is PersonalExpenseLoading ||
+                    state is PersonalExpenseInitial) &&
+                _lastLoadedState == null) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -244,7 +253,9 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                   setState(() {
                     _pendingAction = 'load';
                   });
-                  context.read<PersonalExpenseBloc>().add(LoadPersonalExpenses(userId));
+                  context.read<PersonalExpenseBloc>().add(
+                    LoadPersonalExpenses(userId),
+                  );
                 }
               },
               child: CustomScrollView(
@@ -254,64 +265,68 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                   SliverPadding(
                     padding: const EdgeInsets.all(16.0),
                     sliver: SliverToBoxAdapter(
-                      child: BlocBuilder<PersonalMoneyManagementBloc, MoneyManagementState>(
-                        builder: (context, mmState) {
-                          double pendingPay = 0.0;
-                          double pendingReceive = 0.0;
-                          if (mmState is TransactionsLoaded) {
-                            pendingPay = mmState.totalPendingPay;
-                            pendingReceive = mmState.totalPendingReceive;
-                          }
+                      child:
+                          BlocBuilder<
+                            PersonalMoneyManagementBloc,
+                            MoneyManagementState
+                          >(
+                            builder: (context, mmState) {
+                              double pendingPay = 0.0;
+                              double pendingReceive = 0.0;
+                              if (mmState is TransactionsLoaded) {
+                                pendingPay = mmState.totalPendingPay;
+                                pendingReceive = mmState.totalPendingReceive;
+                              }
 
-                          return GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.5,
-                            children: [
-                              ExpenseSummaryCard(
-                                title: 'Total Expenses',
-                                value: displayState.totalExpense,
-                                icon: Icons.account_balance_wallet,
-                                color: AppTheme.primaryColor,
-                              ),
-                              ExpenseSummaryCard(
-                                title: 'This Month',
-                                value: displayState.monthlyExpense,
-                                icon: Icons.calendar_today,
-                                color: AppTheme.accentColor,
-                              ),
-                              ExpenseSummaryCard(
-                                title: 'Today Expenses',
-                                value: displayState.todayExpense,
-                                icon: Icons.today,
-                                color: Colors.green,
-                              ),
-                              ExpenseSummaryCard(
-                                title: 'Highest Category',
-                                value: displayState.highestCategory,
-                                icon: Icons.trending_up,
-                                color: Colors.orange,
-                                isCurrency: false,
-                              ),
-                              ExpenseSummaryCard(
-                                title: 'Money to Pay',
-                                value: pendingPay,
-                                icon: Icons.outbox_outlined,
-                                color: AppTheme.error,
-                              ),
-                              ExpenseSummaryCard(
-                                title: 'Money to Receive',
-                                value: pendingReceive,
-                                icon: Icons.inbox_outlined,
-                                color: AppTheme.accentColor,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                              return GridView.count(
+                                crossAxisCount: 2,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 1.5,
+                                children: [
+                                  ExpenseSummaryCard(
+                                    title: 'Total Expenses',
+                                    value: displayState.totalExpense,
+                                    icon: Icons.account_balance_wallet,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  ExpenseSummaryCard(
+                                    title: 'This Month',
+                                    value: displayState.monthlyExpense,
+                                    icon: Icons.calendar_today,
+                                    color: AppTheme.accentColor,
+                                  ),
+                                  ExpenseSummaryCard(
+                                    title: 'Today Expenses',
+                                    value: displayState.todayExpense,
+                                    icon: Icons.today,
+                                    color: Colors.green,
+                                  ),
+                                  ExpenseSummaryCard(
+                                    title: 'Highest Category',
+                                    value: displayState.highestCategory,
+                                    icon: Icons.trending_up,
+                                    color: Colors.orange,
+                                    isCurrency: false,
+                                  ),
+                                  ExpenseSummaryCard(
+                                    title: 'Money to Pay',
+                                    value: pendingPay,
+                                    icon: Icons.outbox_outlined,
+                                    color: AppTheme.error,
+                                  ),
+                                  ExpenseSummaryCard(
+                                    title: 'Money to Receive',
+                                    value: pendingReceive,
+                                    icon: Icons.inbox_outlined,
+                                    color: AppTheme.accentColor,
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                     ),
                   ),
 
@@ -326,6 +341,8 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                   ),
 
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                   // Export PDF Button Banner
                   SliverPadding(
@@ -399,10 +416,14 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                       searchQuery: displayState.searchQuery,
                       selectedSort: displayState.currentSort,
                       onSearchChanged: (query) {
-                        context.read<PersonalExpenseBloc>().add(SearchPersonalExpenses(query));
+                        context.read<PersonalExpenseBloc>().add(
+                          SearchPersonalExpenses(query),
+                        );
                       },
                       onSortChanged: (sortBy) {
-                        context.read<PersonalExpenseBloc>().add(SortPersonalExpenses(sortBy));
+                        context.read<PersonalExpenseBloc>().add(
+                          SortPersonalExpenses(sortBy),
+                        );
                       },
                     ),
                   ),
@@ -441,24 +462,24 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final expense = expenses[index];
-                            return ExpenseCard(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final expense = expenses[index];
+                          return ExpenseCard(
+                            expense: expense,
+                            onEdit: () => _showAddExpenseDialog(
+                              context,
                               expense: expense,
-                              onEdit: () => _showAddExpenseDialog(context, expense: expense),
-                              onDelete: () {
-                                setState(() {
-                                  _pendingAction = 'delete';
-                                });
-                                context.read<PersonalExpenseBloc>().add(
-                                  DeletePersonalExpense(expense.id, userId),
-                                );
-                              },
-                            );
-                          },
-                          childCount: expenses.length,
-                        ),
+                            ),
+                            onDelete: () {
+                              setState(() {
+                                _pendingAction = 'delete';
+                              });
+                              context.read<PersonalExpenseBloc>().add(
+                                DeletePersonalExpense(expense.id, userId),
+                              );
+                            },
+                          );
+                        }, childCount: expenses.length),
                       ),
                     ),
 

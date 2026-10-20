@@ -29,8 +29,8 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
       final userId = authState.user?.id ?? '';
       if (userId.isNotEmpty) {
         context.read<PersonalMoneyManagementBloc>().add(
-              WatchTransactionsEvent(userId: userId),
-            );
+          WatchTransactionsEvent(userId: userId),
+        );
       }
     });
   }
@@ -60,26 +60,44 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
 
     return Column(
       children: [
-        // Top Apple-style Segmented Control Header
+        // Top Apple-style Segmented Control Header with Quick Add action
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           color: theme.scaffoldBackgroundColor,
-          child: Container(
-            height: 40,
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.grey.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                _buildSegmentItem(0, 'To-Do', Icons.check_circle_outline_rounded),
-                _buildSegmentItem(1, 'Expenses', Icons.receipt_long_rounded),
-                _buildSegmentItem(2, 'Money', Icons.account_balance_wallet_rounded),
-              ],
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.grey.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildSegmentItem(
+                        0,
+                        'To-Do',
+                        Icons.check_circle_outline_rounded,
+                      ),
+                      _buildSegmentItem(
+                        1,
+                        'Expenses',
+                        Icons.receipt_long_rounded,
+                      ),
+                      _buildSegmentItem(
+                        2,
+                        'Money',
+                        Icons.account_balance_wallet_rounded,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
 
@@ -124,7 +142,9 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.3 : 0.08,
+                      ),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),

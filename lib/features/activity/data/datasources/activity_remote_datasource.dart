@@ -193,15 +193,15 @@ class ActivityRemoteDatasourceImpl implements ActivityRemoteDatasource {
     try {
       String? resolvedCreatedBy = createdBy;
       if (resolvedCreatedBy == null || resolvedCreatedBy.trim().isEmpty) {
-        resolvedCreatedBy = supabaseClient.auth.currentUser?.id;
-      }
-      if (resolvedCreatedBy == null || resolvedCreatedBy.trim().isEmpty) {
         final prefs = await SharedPreferences.getInstance();
         final userJson = prefs.getString('logged_in_user');
         if (userJson != null) {
           final userMap = jsonDecode(userJson);
           resolvedCreatedBy = userMap['id']?.toString();
         }
+      }
+      if (resolvedCreatedBy == null || resolvedCreatedBy.trim().isEmpty) {
+        resolvedCreatedBy = supabaseClient.auth.currentUser?.id;
       }
 
       final uuidRegex = RegExp(

@@ -9,10 +9,7 @@ import 'package:bizos/features/dashboard/presentation/widgets/dashboard_settings
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserModel user;
 
-  const DashboardAppBar({
-    super.key,
-    required this.user,
-  });
+  const DashboardAppBar({super.key, required this.user});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -77,12 +74,12 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color:
-                  isDark ? const Color(0xFF161F30) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF161F30) : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
               border: Border.all(
-                color:
-                    isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFE2E8F0),
                 width: 1,
               ),
             ),
@@ -102,12 +99,12 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color:
-                  isDark ? const Color(0xFF161F30) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF161F30) : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
               border: Border.all(
-                color:
-                    isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFE2E8F0),
                 width: 1,
               ),
             ),

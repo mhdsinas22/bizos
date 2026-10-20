@@ -10,6 +10,7 @@ class UserModel extends UserEntity {
     super.phone = '',
     super.role = '',
     super.ownerId = '',
+    super.authUserId = '',
     String? userid,
     String? userId,
     this.password = '',
@@ -45,6 +46,7 @@ class UserModel extends UserEntity {
       role: json['role']?.toString() ?? '',
       userid: json['userid']?.toString() ?? '',
       ownerId: json['owner_id']?.toString() ?? '',
+      authUserId: json['auth_user_id']?.toString() ?? "",
       password: json['password']?.toString() ?? '',
       customPermissions: custPerms,
       businessPermissions: bizPerms,
@@ -55,8 +57,12 @@ class UserModel extends UserEntity {
     return UserModel.fromJson(map);
   }
 
-  Map<String, dynamic> toJson() {
-    return {
+  /// Serializes the user model.
+  ///
+  /// CRITICAL SECURITY REQUIREMENT: [includePassword] defaults to false to prevent
+  /// plaintext passwords from ever being written to SharedPreferences or local cache.
+  Map<String, dynamic> toJson({bool includePassword = false}) {
+    final map = <String, dynamic>{
       'id': id,
       'name': name,
       'email': email,
@@ -64,10 +70,14 @@ class UserModel extends UserEntity {
       'role': role,
       'userid': userid,
       'owner_id': ownerId,
-      'password': password,
+      'auth_user_id': authUserId,
       'customPermissions': customPermissions,
       'businessPermissions': businessPermissions,
     };
+    if (includePassword && password.isNotEmpty) {
+      map['password'] = password;
+    }
+    return map;
   }
 
   Map<String, dynamic> toMap() {
@@ -83,6 +93,7 @@ class UserModel extends UserEntity {
     String? userid,
     String? userId,
     String? ownerId,
+    String? authUserId,
     String? password,
     List<String>? customPermissions,
     Map<String, List<String>>? businessPermissions,
@@ -96,6 +107,7 @@ class UserModel extends UserEntity {
       userid: userid ?? this.userid,
       userId: userId ?? this.userId,
       ownerId: ownerId ?? this.ownerId,
+      authUserId: authUserId ?? this.authUserId,
       password: password ?? this.password,
       customPermissions: customPermissions ?? this.customPermissions,
       businessPermissions: businessPermissions ?? this.businessPermissions,

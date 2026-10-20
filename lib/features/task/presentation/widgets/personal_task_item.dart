@@ -106,11 +106,7 @@ class PersonalTaskItem extends StatelessWidget {
                 backgroundColor: const Color(0xFFEF4444),
                 content: Row(
                   children: const [
-                    Icon(
-                      Icons.cancel_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    Icon(Icons.cancel_rounded, color: Colors.white, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(

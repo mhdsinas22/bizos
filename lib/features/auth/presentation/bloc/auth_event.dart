@@ -1,10 +1,14 @@
 abstract class AuthEvent {}
 
 class LoginRequested extends AuthEvent {
-  final String userId;
+  final String email;
   final String password;
 
-  LoginRequested({required this.userId, required this.password});
+  LoginRequested({String? email, String? userId, required this.password})
+    : email = (email ?? userId ?? '').trim();
+
+  // Backward compatibility getter
+  String get userId => email;
 }
 
 class LogoutRequested extends AuthEvent {}
@@ -13,7 +17,7 @@ class CheckAuthStatus extends AuthEvent {}
 
 // Backward compatibility classes
 class LoginEvent extends LoginRequested {
-  LoginEvent({required super.userId, required super.password});
+  LoginEvent({super.email, super.userId, required super.password});
 }
 
 class LogoutEvent extends LogoutRequested {}

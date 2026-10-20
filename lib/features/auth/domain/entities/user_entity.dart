@@ -6,6 +6,7 @@ class UserEntity {
   final String role;
   final String userid;
   final String ownerId;
+  final String authUserId;
   final List<String> customPermissions;
   final Map<String, List<String>> businessPermissions;
 
@@ -17,6 +18,7 @@ class UserEntity {
     this.role = '',
     this.userid = '',
     this.ownerId = '',
+    this.authUserId = '',
     this.customPermissions = const [],
     this.businessPermissions = const {},
   });
@@ -74,5 +76,6 @@ class UserEntity {
       hasPermission('view_accounts', businessId: businessId);
 
   bool canManageInvoiceSettings({String? businessId}) =>
-      isOwner || hasPermission('manage_invoice_settings', businessId: businessId);
+      isOwner ||
+      hasPermission('manage_invoice_settings', businessId: businessId);
 }

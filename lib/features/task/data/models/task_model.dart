@@ -15,7 +15,8 @@ class TaskModel {
   final DateTime? completedAt;
   final String _status;
   final String taskType; // 'personal' or 'business'
-  final String repeat; // DB constraint values: 'none', 'daily', 'weekly', 'monthly', 'yearly'
+  final String
+  repeat; // DB constraint values: 'none', 'daily', 'weekly', 'monthly', 'yearly'
 
   TaskModel({
     required this.id,
@@ -34,13 +35,12 @@ class TaskModel {
     this.completedAt,
     String? taskType,
     String repeat = 'none',
-  })  : repeat = TaskRepeatMapper.toDb(repeat),
-        _status = status ?? (isCompleted ? 'Completed' : 'Pending'),
-        taskType =
-            taskType ?? (businessId.isNotEmpty ? 'business' : 'personal');
+  }) : repeat = TaskRepeatMapper.toDb(repeat),
+       _status = status ?? (isCompleted ? 'Completed' : 'Pending'),
+       taskType = taskType ?? (businessId.isNotEmpty ? 'business' : 'personal');
 
-  bool get isPersonal => taskType == 'personal';
-  bool get isBusiness => taskType == 'business';
+  bool get isPersonal => taskType.toLowerCase() == 'personal';
+  bool get isBusiness => taskType.toLowerCase() == 'business';
 
   String get repeatDisplay => TaskRepeatMapper.toUi(repeat);
 
@@ -55,8 +55,7 @@ class TaskModel {
     return _status.isNotEmpty ? _status : 'Pending';
   }
 
-  bool get isCompleted =>
-      status == 'Completed' || status == 'Completed Late';
+  bool get isCompleted => status == 'Completed' || status == 'Completed Late';
 
   bool get isCompletedLate => status == 'Completed Late';
 
@@ -97,7 +96,9 @@ class TaskModel {
     final isPers = isPersonal || businessId.trim().isEmpty;
     return {
       if (id.trim().isNotEmpty) 'id': id,
-      'business_id': isPers ? null : (businessId.trim().isNotEmpty ? businessId : null),
+      'business_id': isPers
+          ? null
+          : (businessId.trim().isNotEmpty ? businessId : null),
       'title': title,
       'description': description,
       'priority': priority,
@@ -117,13 +118,15 @@ class TaskModel {
 
   factory TaskModel.fromMap(Map<String, dynamic> map) {
     final rawStatus = (map['status'] as String?)?.trim() ?? '';
-    final isComp = map['isCompleted'] == true ||
+    final isComp =
+        map['isCompleted'] == true ||
         rawStatus.toLowerCase() == 'completed' ||
         rawStatus.toLowerCase() == 'completed late' ||
         rawStatus.toLowerCase() == 'completed_late';
 
     final bizId = (map['businessId'] ?? map['business_id'] ?? '').toString();
-    final tType = (map['task_type'] as String?) ??
+    final tType =
+        (map['task_type'] as String?) ??
         (bizId.isNotEmpty ? 'business' : 'personal');
 
     return TaskModel(

@@ -1,4 +1,4 @@
-abstract class AppAuthException implements Exception {
+class AppAuthException implements Exception {
   final String message;
   AppAuthException(this.message);
 
@@ -7,26 +7,36 @@ abstract class AppAuthException implements Exception {
 }
 
 class UserNotFoundException extends AppAuthException {
-  UserNotFoundException() : super('User account not found');
+  UserNotFoundException([super.message = 'User account not found']);
 }
 
 class InvalidPasswordException extends AppAuthException {
-  InvalidPasswordException() : super('Incorrect password');
+  InvalidPasswordException([super.message = 'Incorrect password']);
+}
+
+class InvalidCredentialsException extends AppAuthException {
+  InvalidCredentialsException([
+    super.message = 'Invalid email or password. Please try again.',
+  ]);
 }
 
 class AccountInactiveException extends AppAuthException {
-  AccountInactiveException()
-    : super('Your account has been disabled. Please contact administrator.');
+  AccountInactiveException([
+    super.message =
+        'Your account has been disabled. Please contact administrator.',
+  ]);
 }
 
 class UserNotAuthorizedException extends AppAuthException {
-  UserNotAuthorizedException()
-    : super('You are not authorized to access this application.');
+  UserNotAuthorizedException([
+    super.message = 'You are not authorized to access this application.',
+  ]);
 }
 
 class NetworkException extends AppAuthException {
-  NetworkException()
-    : super('No internet connection. Please check your network.');
+  NetworkException([
+    super.message = 'No internet connection. Please check your network.',
+  ]);
 }
 
 class ServerException extends AppAuthException {

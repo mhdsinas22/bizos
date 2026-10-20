@@ -6,7 +6,7 @@ class LoginUseCase {
 
   LoginUseCase({required this.repository});
 
-  Future<UserModel> execute(String userId, String password) {
-    return repository.login(userId, password);
+  Future<UserModel> execute(String email, String password) {
+    return repository.login(email, password);
   }
 }
