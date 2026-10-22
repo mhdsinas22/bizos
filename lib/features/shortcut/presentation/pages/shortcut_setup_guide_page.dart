@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class ShortcutSetupGuidePage extends StatelessWidget {
   final int guideStep;
 
-  const ShortcutSetupGuidePage({
-    super.key,
-    this.guideStep = 4,
-  });
+  const ShortcutSetupGuidePage({super.key, this.guideStep = 4});
 
   @override
   Widget build(BuildContext context) {

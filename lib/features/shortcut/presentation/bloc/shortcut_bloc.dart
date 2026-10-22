@@ -38,11 +38,6 @@ class ShortcutBloc extends Bloc<ShortcutEvent, ShortcutState> {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       final status = await getShortcutSetupStatus();
-      List<String> categories = state.categories;
-      if (event.userId.isNotEmpty) {
-        categories = await shortcutRepository.getCategories(event.userId);
-      }
-      final paymentMethods = await shortcutRepository.getPaymentMethods();
 
       final stepToUse = event.initialStep != null && event.initialStep! > 1
           ? event.initialStep!
@@ -58,12 +53,6 @@ class ShortcutBloc extends Bloc<ShortcutEvent, ShortcutState> {
           isShortcutInstalled: status.isShortcutInstalled,
           isBackTapConfigured: status.isBackTapConfigured,
           isCompleted: status.isCompleted,
-          categories: categories.isNotEmpty
-              ? categories
-              : ShortcutConstants.defaultCategories,
-          paymentMethods: paymentMethods.isNotEmpty
-              ? paymentMethods
-              : ShortcutConstants.defaultPaymentMethods,
         ),
       );
     } catch (e) {

@@ -151,11 +151,22 @@ class ProductServiceBloc extends Bloc<ProductServiceEvent, ProductServiceState> 
     AddProductServiceEvent event,
     Emitter<ProductServiceState> emit,
   ) async {
+    final currentFilter = state is ProductServiceLoaded
+        ? (state as ProductServiceLoaded).typeFilter
+        : 'all';
+    final currentSearch = state is ProductServiceLoaded
+        ? (state as ProductServiceLoaded).searchQuery
+        : null;
+
     emit(ProductServiceLoading());
     try {
       await repository.addProductService(event.item);
       emit(const ProductServiceActionSuccess('Item added successfully'));
-      add(FetchProductsServicesEvent(businessId: event.item.businessId));
+      add(FetchProductsServicesEvent(
+        businessId: event.item.businessId,
+        typeFilter: currentFilter,
+        searchQuery: currentSearch,
+      ));
     } catch (e) {
       emit(ProductServiceError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -165,11 +176,22 @@ class ProductServiceBloc extends Bloc<ProductServiceEvent, ProductServiceState> 
     UpdateProductServiceEvent event,
     Emitter<ProductServiceState> emit,
   ) async {
+    final currentFilter = state is ProductServiceLoaded
+        ? (state as ProductServiceLoaded).typeFilter
+        : 'all';
+    final currentSearch = state is ProductServiceLoaded
+        ? (state as ProductServiceLoaded).searchQuery
+        : null;
+
     emit(ProductServiceLoading());
     try {
       await repository.updateProductService(event.item);
       emit(const ProductServiceActionSuccess('Item updated successfully'));
-      add(FetchProductsServicesEvent(businessId: event.item.businessId));
+      add(FetchProductsServicesEvent(
+        businessId: event.item.businessId,
+        typeFilter: currentFilter,
+        searchQuery: currentSearch,
+      ));
     } catch (e) {
       emit(ProductServiceError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -179,11 +201,22 @@ class ProductServiceBloc extends Bloc<ProductServiceEvent, ProductServiceState> 
     DeleteProductServiceEvent event,
     Emitter<ProductServiceState> emit,
   ) async {
+    final currentFilter = state is ProductServiceLoaded
+        ? (state as ProductServiceLoaded).typeFilter
+        : 'all';
+    final currentSearch = state is ProductServiceLoaded
+        ? (state as ProductServiceLoaded).searchQuery
+        : null;
+
     emit(ProductServiceLoading());
     try {
       await repository.deleteProductService(event.itemId);
       emit(const ProductServiceActionSuccess('Item deleted successfully'));
-      add(FetchProductsServicesEvent(businessId: event.businessId));
+      add(FetchProductsServicesEvent(
+        businessId: event.businessId,
+        typeFilter: currentFilter,
+        searchQuery: currentSearch,
+      ));
     } catch (e) {
       emit(ProductServiceError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -193,11 +226,29 @@ class ProductServiceBloc extends Bloc<ProductServiceEvent, ProductServiceState> 
     ToggleProductServiceActiveEvent event,
     Emitter<ProductServiceState> emit,
   ) async {
+    final currentState = state;
+    if (currentState is ProductServiceLoaded) {
+      final updatedItems = currentState.items.map((item) {
+        if (item.id == event.itemId) {
+          return item.copyWith(isActive: event.isActive);
+        }
+        return item;
+      }).toList();
+      emit(ProductServiceLoaded(
+        items: updatedItems,
+        typeFilter: currentState.typeFilter,
+        searchQuery: currentState.searchQuery,
+      ));
+    }
+
     try {
       await repository.toggleActiveStatus(event.itemId, event.isActive);
-      add(FetchProductsServicesEvent(businessId: event.businessId));
     } catch (e) {
       emit(ProductServiceError(e.toString().replaceAll('Exception: ', '')));
+      // Rollback to previous state on failure
+      if (currentState is ProductServiceLoaded) {
+        emit(currentState);
+      }
     }
   }
 }

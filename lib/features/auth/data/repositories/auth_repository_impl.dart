@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bizos/core/config/auth_config.dart';
 import 'package:bizos/core/exceptions/auth_exceptions.dart';
@@ -7,12 +8,17 @@ import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource authRemoteDataSource;
+  final ShortcutRepository shortcutRepository;
   static const String _userKey = 'logged_in_user';
 
-  AuthRepositoryImpl({required this.authRemoteDataSource});
+  AuthRepositoryImpl({
+    required this.authRemoteDataSource,
+    required this.shortcutRepository,
+  });
 
   @override
   Future<UserModel> login(String emailOrUserId, String password) async {
@@ -139,11 +145,34 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userKey);
+
     try {
-      await authRemoteDataSource.signOut();
-    } catch (e) {
-      AppLogger.error('Error during Supabase Auth signOut: $e');
+      // 1. Revoke the shortcut token while Supabase session is active.
+      try {
+        await shortcutRepository.revokeAndDeleteToken();
+      } catch (e, stackTrace) {
+        AppLogger.error(
+          'Shortcut token revocation failed during logout: $e\n$stackTrace',
+        );
+      } finally {
+        // 2. Always clear the local shortcut token.
+        try {
+          await shortcutRepository.deleteToken();
+        } catch (e, stackTrace) {
+          AppLogger.error(
+            'Failed to delete local shortcut token: $e\n$stackTrace',
+          );
+        }
+      }
+    } finally {
+      // 3. Always clear the cached user and complete logout.
+      await prefs.remove(_userKey);
+
+      try {
+        await authRemoteDataSource.signOut();
+      } catch (e, stackTrace) {
+        AppLogger.error('Error during Supabase Auth signOut: $e\n$stackTrace');
+      }
     }
   }
 
@@ -154,10 +183,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (AuthConfig.useSupabaseAuth) {
         // Validate Supabase Auth session first
-        final session = authRemoteDataSource.currentSession;
+        final session = Supabase.instance.client.auth.currentSession;
 
         AppLogger.info('SESSION EXISTS: ${session != null}');
-
         AppLogger.info('SESSION EXPIRED: ${session?.isExpired}');
         if (session == null || session.isExpired) {
           // No valid session, clear cached profile and return unauthenticated

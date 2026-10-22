@@ -32,10 +32,14 @@ class ShortcutLocalDatasourceImpl implements ShortcutLocalDatasource {
     try {
       final prefs = await _getPrefs();
       final currentStep = prefs.getInt(ShortcutConstants.prefKeySetupStep) ?? 1;
-      final isInstalled = prefs.getBool(ShortcutConstants.prefKeyShortcutInstalled) ?? false;
-      final isBackTap = prefs.getBool(ShortcutConstants.prefKeyBackTapConfigured) ?? false;
-      final isCompleted = prefs.getBool(ShortcutConstants.prefKeySetupCompleted) ?? false;
-      final deviceName = prefs.getString(ShortcutConstants.prefKeyDeviceName) ?? 'iPhone';
+      final isInstalled =
+          prefs.getBool(ShortcutConstants.prefKeyShortcutInstalled) ?? false;
+      final isBackTap =
+          prefs.getBool(ShortcutConstants.prefKeyBackTapConfigured) ?? false;
+      final isCompleted =
+          prefs.getBool(ShortcutConstants.prefKeySetupCompleted) ?? false;
+      final deviceName =
+          prefs.getString(ShortcutConstants.prefKeyDeviceName) ?? 'iPhone';
 
       return ShortcutSetupModel(
         currentStep: currentStep,
@@ -54,11 +58,26 @@ class ShortcutLocalDatasourceImpl implements ShortcutLocalDatasource {
   Future<void> saveSetupProgress(ShortcutSetupModel status) async {
     try {
       final prefs = await _getPrefs();
-      await prefs.setInt(ShortcutConstants.prefKeySetupStep, status.currentStep);
-      await prefs.setBool(ShortcutConstants.prefKeyShortcutInstalled, status.isShortcutInstalled);
-      await prefs.setBool(ShortcutConstants.prefKeyBackTapConfigured, status.isBackTapConfigured);
-      await prefs.setBool(ShortcutConstants.prefKeySetupCompleted, status.isCompleted);
-      await prefs.setString(ShortcutConstants.prefKeyDeviceName, status.deviceName);
+      await prefs.setInt(
+        ShortcutConstants.prefKeySetupStep,
+        status.currentStep,
+      );
+      await prefs.setBool(
+        ShortcutConstants.prefKeyShortcutInstalled,
+        status.isShortcutInstalled,
+      );
+      await prefs.setBool(
+        ShortcutConstants.prefKeyBackTapConfigured,
+        status.isBackTapConfigured,
+      );
+      await prefs.setBool(
+        ShortcutConstants.prefKeySetupCompleted,
+        status.isCompleted,
+      );
+      await prefs.setString(
+        ShortcutConstants.prefKeyDeviceName,
+        status.deviceName,
+      );
     } catch (e, stackTrace) {
       AppLogger.error('Error saving shortcut setup progress: $e');
       Error.throwWithStackTrace(e, stackTrace);

@@ -53,6 +53,7 @@ class ProductServiceModel extends ProductServiceEntity {
     return map;
   }
 
+  @override
   ProductServiceModel copyWith({
     String? id,
     String? businessId,

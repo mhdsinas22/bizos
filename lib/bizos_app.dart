@@ -4,14 +4,12 @@ import 'package:bizos/features/attachments/data/repositories/attachment_reposito
 import 'package:bizos/features/attachments/domain/repositories/attachment_repository.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/theme/theme_bloc.dart';
-import 'package:bizos/features/auth/data/datasources/auth_remote_datasource_impl.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
-import 'package:bizos/features/auth/data/repositories/auth_repository_impl.dart';
-
 import 'package:bizos/features/customers/data/datasources/customer_remote_datasource.dart';
 import 'package:bizos/features/customers/data/repositories/customer_repository_impl.dart';
 import 'package:bizos/features/customers/domain/repositories/customer_repository.dart';
 import 'package:bizos/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart';
 
 import 'package:bizos/features/products_services/data/datasources/product_service_remote_datasource.dart';
 import 'package:bizos/features/products_services/data/repositories/product_service_repository_impl.dart';
@@ -45,6 +43,7 @@ import 'package:bizos/features/notifications/data/repositories/notification_repo
 import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
 import 'package:bizos/features/notifications/presentation/bloc/notification_bloc.dart';
 import 'package:bizos/features/shortcut/core/shortcut_constants.dart';
+import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 import 'package:bizos/features/shortcut/domain/usecases/pair_shortcut.dart';
 import 'package:bizos/features/shortcut/domain/usecases/verify_shortcut_pairing_code.dart';
 import 'package:bizos/features/shortcut/presentation/bloc/shortcut_bloc.dart';
@@ -79,7 +78,6 @@ import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/business/bloc/business_bloc.dart';
-import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_bloc.dart';
 import 'package:bizos/features/personal_expense/data/datasource/personal_expense_remote_datasource.dart';
 import 'package:bizos/features/personal_expense/domain/repository/personal_expense_repository.dart';
@@ -114,7 +112,6 @@ import 'package:bizos/features/activity/data/repositories/activity_repository_im
 import 'package:bizos/features/activity/domain/usecases/get_activities.dart';
 import 'package:bizos/features/activity/presentation/bloc/activity_bloc.dart';
 import 'package:bizos/features/activity/presentation/bloc/activity_event.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -130,7 +127,7 @@ class BizosApp extends StatelessWidget {
     final firebaseMessaging = FirebaseMessaging.instance;
 
     // Data Sources
-    final authDatasource = AuthRemoteDataSourceImpl(supabase: supabaseClient);
+
     final businessDatasource = BusinessRemoteDatasourceImpl(
       supabaseClient: supabaseClient,
     );
@@ -216,7 +213,10 @@ class BizosApp extends StatelessWidget {
       remoteDatasource: categoryDatasource,
       activityRepository: activityRepo,
     );
-    final authRepo = AuthRepositoryImpl(authRemoteDataSource: authDatasource);
+    // final authRepo = AuthRepositoryImpl(
+    //   authRemoteDataSource: authDatasource,
+    //   shortcutRepository: GetIt<ShortcutRepository>(),
+    // );
     final businessRepo = BusinessRepositoryImpl(
       businessRemoteDatasource: businessDatasource,
       activityRepository: activityRepo,
@@ -279,7 +279,9 @@ class BizosApp extends StatelessWidget {
         ),
         RepositoryProvider<AttachmentRepository>(create: (_) => attachmentRepo),
         RepositoryProvider<ActivityRepository>(create: (_) => activityRepo),
-        RepositoryProvider<AuthRepository>(create: (_) => authRepo),
+        RepositoryProvider<AuthRepository>(
+          create: (_) => getIt<AuthRepository>(),
+        ),
         RepositoryProvider<AiRepository>(create: (_) => aiRepo),
         RepositoryProvider<BusinessRepository>(create: (_) => businessRepo),
         RepositoryProvider<TaskRepository>(create: (_) => taskRepo),
@@ -332,7 +334,8 @@ class BizosApp extends StatelessWidget {
             create: (context) => AuthBloc(
               authRepo: context.read<AuthRepository>(),
               saveFcmTokenUsecase: saveFcmTokenUsecase,
-            )..add(CheckAuthEvent()),
+              shortcutRepository: getIt<ShortcutRepository>(),
+            )..add(CheckAuthStatus()),
           ),
           BlocProvider<BusinessBloc>(
             create: (context) =>
@@ -436,9 +439,7 @@ class BizosApp extends StatelessWidget {
               verifyShortcutPairingCode: getIt<VerifyShortcutPairingCode>(),
             ),
           ),
-          BlocProvider(
-            create: (context) => getIt<ShortcutBloc>(),
-          ),
+          BlocProvider(create: (context) => getIt<ShortcutBloc>()),
         ],
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, themeState) {
@@ -468,8 +469,9 @@ class AppStartupFlow extends StatefulWidget {
 }
 
 class _AppStartupFlowState extends State<AppStartupFlow> {
-  static const MethodChannel _shortcutChannel =
-      MethodChannel(ShortcutConstants.methodChannelName);
+  static const MethodChannel _shortcutChannel = MethodChannel(
+    ShortcutConstants.methodChannelName,
+  );
 
   @override
   void initState() {
@@ -488,13 +490,13 @@ class _AppStartupFlowState extends State<AppStartupFlow> {
 
         if (mounted) {
           context.read<ShortcutBloc>().add(
-                DeepLinkQuickAddReceived(
-                  amount: amount,
-                  category: category,
-                  note: note,
-                  paymentMethod: paymentMethod,
-                ),
-              );
+            DeepLinkQuickAddReceived(
+              amount: amount,
+              category: category,
+              note: note,
+              paymentMethod: paymentMethod,
+            ),
+          );
 
           appNavigatorKey.currentState?.push(
             MaterialPageRoute(
@@ -505,24 +507,25 @@ class _AppStartupFlowState extends State<AppStartupFlow> {
       }
     });
 
-    _shortcutChannel.invokeMethod<String>('getPendingDeepLink').then((url) {
-      if (url != null && url.contains('quick-add') && mounted) {
-        appNavigatorKey.currentState?.push(
-          MaterialPageRoute(
-            builder: (_) => const QuickAddOnboardingPage(initialStep: 10),
-          ),
-        );
-      }
-    }).catchError((_) {});
+    _shortcutChannel
+        .invokeMethod<String>('getPendingDeepLink')
+        .then((url) {
+          if (url != null && url.contains('quick-add') && mounted) {
+            appNavigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder: (_) => const QuickAddOnboardingPage(initialStep: 10),
+              ),
+            );
+          }
+        })
+        .catchError((_) {});
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        if (state.user != null) {
-          return const MainDashboardScreen();
-        } else if (state.status == AuthStatus.initial) {
+        if (state.status == AuthStatus.loading) {
           // Loading Screen (Splash)
           return const Scaffold(
             body: Center(
@@ -551,6 +554,9 @@ class _AppStartupFlowState extends State<AppStartupFlow> {
               ),
             ),
           );
+        } else if (state.user != null ||
+            state.status == AuthStatus.authenticated) {
+          return const MainDashboardScreen();
         } else {
           return const LoginScreen();
         }

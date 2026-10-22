@@ -1,4 +1,3 @@
-import 'package:bizos/features/shortcut/domain/entities/quick_expense_entity.dart';
 import 'package:bizos/features/shortcut/domain/entities/shortcut_setup_entity.dart';
 
 abstract class ShortcutRepository {
@@ -14,14 +13,6 @@ abstract class ShortcutRepository {
   Future<void> saveShortcutSetupProgress(ShortcutSetupEntity status);
   Future<void> resetShortcutSetupProgress();
 
-  // Quick Expense Creation & Data
-  Future<QuickExpenseEntity> createQuickExpense(
-    QuickExpenseEntity expense,
-    String userId,
-  );
-  Future<List<String>> getCategories(String userId);
-  Future<List<String>> getPaymentMethods();
-
   // Platform Integration Helpers
   Future<bool> openAppleShortcuts(String url);
   Future<bool> openIosSettings();
@@ -29,4 +20,5 @@ abstract class ShortcutRepository {
   /// Creates a new secure shortcut token for the
   /// currently authenticated device and saves it locally.
   Future<void> provisionShortcutToken({required String deviceName});
+  Future<void> revokeAndDeleteToken();
 }

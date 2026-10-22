@@ -1,5 +1,6 @@
 import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
+import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/domain/usecases/login_usecase.dart';
@@ -17,13 +18,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUseCase logoutUseCase;
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final ChangePasswordUseCase changePasswordUseCase;
+  final ShortcutRepository shortcutRepository;
 
-  AuthBloc({required this.authRepo, required this.saveFcmTokenUsecase})
-    : loginUseCase = LoginUseCase(repository: authRepo),
-      logoutUseCase = LogoutUseCase(repository: authRepo),
-      checkAuthStatusUseCase = CheckAuthStatusUseCase(repository: authRepo),
-      changePasswordUseCase = ChangePasswordUseCase(repository: authRepo),
-      super(AuthInitial()) {
+  AuthBloc({
+    required this.authRepo,
+    required this.saveFcmTokenUsecase,
+    required this.shortcutRepository,
+  }) : loginUseCase = LoginUseCase(repository: authRepo),
+       logoutUseCase = LogoutUseCase(repository: authRepo),
+       checkAuthStatusUseCase = CheckAuthStatusUseCase(repository: authRepo),
+       changePasswordUseCase = ChangePasswordUseCase(repository: authRepo),
+       super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<CheckAuthStatus>(_onCheckAuthStatus);
@@ -37,6 +42,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final user = await loginUseCase.execute(event.email, event.password);
+      try {
+        final token = await shortcutRepository.getToken();
+        if (token == null || token.isEmpty) {
+          await shortcutRepository.provisionShortcutToken(
+            deviceName: "Voryn Ios",
+          );
+        }
+      } catch (e) {
+        AppLogger.error("Failed to provision shortcut token: $e");
+      }
       emit(AuthAuthenticated(user));
       _saveFcmToken(user.id);
     } on AppAuthException catch (e) {
@@ -70,9 +85,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckAuthStatus event,
     Emitter<AuthState> emit,
   ) async {
+    emit(AuthLoading());
     try {
       final user = await checkAuthStatusUseCase.execute();
       if (user != null) {
+        print("working:-${user.email}");
         emit(AuthAuthenticated(user));
       } else {
         emit(AuthUnauthenticated());

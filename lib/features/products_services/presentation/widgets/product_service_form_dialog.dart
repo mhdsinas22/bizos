@@ -86,14 +86,15 @@ class _ProductServiceFormDialogState extends State<ProductServiceFormDialog> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(
         isEdit ? 'Edit Product/Service' : 'Add Product or Service',
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       ),
       content: SingleChildScrollView(
-        child: SizedBox(
-          width: 420,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
           child: Form(
             key: _formKey,
             child: Column(
@@ -105,26 +106,29 @@ class _ProductServiceFormDialogState extends State<ProductServiceFormDialog> {
                   'Item Type *',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
-                const SizedBox(height: 6),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(
-                      value: 'service',
-                      label: Text('Service'),
-                      icon: Icon(Icons.build_outlined, size: 16),
-                    ),
-                    ButtonSegment(
-                      value: 'product',
-                      label: Text('Product'),
-                      icon: Icon(Icons.inventory_2_outlined, size: 16),
-                    ),
-                  ],
-                  selected: {_selectedType},
-                  onSelectionChanged: (set) {
-                    setState(() {
-                      _selectedType = set.first;
-                    });
-                  },
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 'service',
+                        label: Text('Service'),
+                        icon: Icon(Icons.build_outlined, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: 'product',
+                        label: Text('Product'),
+                        icon: Icon(Icons.inventory_2_outlined, size: 16),
+                      ),
+                    ],
+                    selected: {_selectedType},
+                    onSelectionChanged: (set) {
+                      setState(() {
+                        _selectedType = set.first;
+                      });
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -146,15 +150,16 @@ class _ProductServiceFormDialogState extends State<ProductServiceFormDialog> {
                 const SizedBox(height: 14),
 
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: TextFormField(
                         controller: _priceController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
                           labelText: 'Price (₹) *',
-                          prefixIcon: const Icon(Icons.currency_rupee),
+                          prefixIcon: const Icon(Icons.currency_rupee, size: 18),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         validator: (val) {
@@ -170,6 +175,7 @@ class _ProductServiceFormDialogState extends State<ProductServiceFormDialog> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
+                      flex: 2,
                       child: TextFormField(
                         controller: _unitController,
                         decoration: InputDecoration(
@@ -188,7 +194,7 @@ class _ProductServiceFormDialogState extends State<ProductServiceFormDialog> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     labelText: 'Tax Rate (%)',
-                    prefixIcon: const Icon(Icons.percent_outlined),
+                    prefixIcon: const Icon(Icons.percent_outlined, size: 18),
                     hintText: 'e.g. 18',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -204,10 +210,11 @@ class _ProductServiceFormDialogState extends State<ProductServiceFormDialog> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 SwitchListTile(
-                  title: const Text('Active Status', style: TextStyle(fontSize: 14)),
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Active Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   subtitle: Text(
                     _isActive ? 'Available for new invoices' : 'Hidden from new invoices',
                     style: TextStyle(
@@ -241,9 +248,10 @@ class _ProductServiceFormDialogState extends State<ProductServiceFormDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primaryColor,
             foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: Text(isEdit ? 'Save Changes' : 'Add Item'),
+          child: Text(isEdit ? 'Save Changes' : 'Add Item', style: const TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
     );

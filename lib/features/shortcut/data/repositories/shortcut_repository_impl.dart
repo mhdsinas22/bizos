@@ -1,9 +1,7 @@
 import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/shortcut/data/datasources/shortcut_local_datasource.dart';
 import 'package:bizos/features/shortcut/data/datasources/shortcut_remote_datasource.dart';
-import 'package:bizos/features/shortcut/data/models/quick_expense_model.dart';
 import 'package:bizos/features/shortcut/data/models/shortcut_setup_model.dart';
-import 'package:bizos/features/shortcut/domain/entities/quick_expense_entity.dart';
 import 'package:bizos/features/shortcut/domain/entities/shortcut_setup_entity.dart';
 import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -77,25 +75,6 @@ class ShortcutRepositoryImpl implements ShortcutRepository {
   }
 
   @override
-  Future<QuickExpenseEntity> createQuickExpense(
-    QuickExpenseEntity expense,
-    String userId,
-  ) async {
-    final model = QuickExpenseModel.fromEntity(expense);
-    return await shortcutRemoteDatasource.createQuickExpense(model, userId);
-  }
-
-  @override
-  Future<List<String>> getCategories(String userId) async {
-    return await shortcutRemoteDatasource.getCategories(userId);
-  }
-
-  @override
-  Future<List<String>> getPaymentMethods() async {
-    return await shortcutRemoteDatasource.getPaymentMethods();
-  }
-
-  @override
   Future<bool> openAppleShortcuts(String url) async {
     try {
       final uri = Uri.parse(url);
@@ -127,5 +106,16 @@ class ShortcutRepositoryImpl implements ShortcutRepository {
       deviceName: deviceName,
     );
     await saveToken(token);
+  }
+
+  @override
+  Future<void> revokeAndDeleteToken() async {
+    final token = await getToken();
+    AppLogger.info("TokenL-${token}");
+    if (token == null || token.isEmpty) return;
+
+    await shortcutRemoteDatasource.revokeShortcutToken(token: token);
+
+    await deleteToken();
   }
 }
