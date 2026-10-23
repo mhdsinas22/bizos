@@ -130,12 +130,46 @@ class _StaffListViewState extends State<StaffListView> {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              Text(
-                                '@${staff.userId}',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontSize: 12,
-                                ),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.email_outlined,
+                                    size: 13,
+                                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      staff.email.isNotEmpty
+                                          ? staff.email
+                                          : (staff.userId.isNotEmpty ? '@${staff.userId}' : 'No email assigned'),
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontSize: 12,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
+                              if (staff.phone.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.phone_outlined,
+                                      size: 13,
+                                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      staff.phone,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               const SizedBox(height: 8),
                               Wrap(
                                 spacing: 6,
@@ -259,8 +293,11 @@ class _StaffListViewState extends State<StaffListView> {
           ),
           ElevatedButton(
             onPressed: () {
+              final identifier = staff.id.isNotEmpty
+                  ? staff.id
+                  : (staff.email.isNotEmpty ? staff.email : staff.userId);
               context.read<StaffBloc>().add(
-                DeleteStaffEvent(staff.userId, _getOwnerId()),
+                DeleteStaffEvent(identifier, _getOwnerId()),
               );
               Navigator.pop(dialogContext);
             },

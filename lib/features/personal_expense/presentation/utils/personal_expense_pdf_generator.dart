@@ -65,19 +65,24 @@ class PersonalExpensePdfGenerator {
     final double effectiveWeeks = effectiveDays / 7.0;
     final double effectiveMonths = effectiveDays / 30.4375;
 
-    final double avgDailyExpense =
-        totalTransactions > 0 ? totalExpense / effectiveDays : 0.0;
-    final double avgWeeklyExpense =
-        totalTransactions > 0 ? totalExpense / (effectiveWeeks > 0 ? effectiveWeeks : 1) : 0.0;
-    final double avgMonthlyExpense =
-        totalTransactions > 0 ? totalExpense / (effectiveMonths > 0 ? effectiveMonths : 1) : 0.0;
-    final double avgTransactionValue =
-        totalTransactions > 0 ? totalExpense / totalTransactions : 0.0;
+    final double avgDailyExpense = totalTransactions > 0
+        ? totalExpense / effectiveDays
+        : 0.0;
+    final double avgWeeklyExpense = totalTransactions > 0
+        ? totalExpense / (effectiveWeeks > 0 ? effectiveWeeks : 1)
+        : 0.0;
+    final double avgMonthlyExpense = totalTransactions > 0
+        ? totalExpense / (effectiveMonths > 0 ? effectiveMonths : 1)
+        : 0.0;
+    final double avgTransactionValue = totalTransactions > 0
+        ? totalExpense / totalTransactions
+        : 0.0;
 
     // Median Expense
     double medianExpense = 0.0;
     if (totalTransactions > 0) {
-      final sortedAmounts = filteredExpenses.map((e) => e.amount).toList()..sort();
+      final sortedAmounts = filteredExpenses.map((e) => e.amount).toList()
+        ..sort();
       final mid = sortedAmounts.length ~/ 2;
       if (sortedAmounts.length % 2 == 0) {
         medianExpense = (sortedAmounts[mid - 1] + sortedAmounts[mid]) / 2.0;
@@ -203,12 +208,19 @@ class PersonalExpensePdfGenerator {
     if (minDayAmt == 999999999.0) lowestSpendingDay = 'N/A';
 
     // Weekly Spending Breakdown (Week 1 to Week 5)
-    final Map<int, double> weeklySpending = {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0};
+    final Map<int, double> weeklySpending = {
+      1: 0.0,
+      2: 0.0,
+      3: 0.0,
+      4: 0.0,
+      5: 0.0,
+    };
     for (final e in filteredExpenses) {
       final dayOfMonth = e.expenseDate.day;
       final weekIndex = ((dayOfMonth - 1) ~/ 7) + 1;
       final clampedWeek = weekIndex.clamp(1, 5);
-      weeklySpending[clampedWeek] = (weeklySpending[clampedWeek] ?? 0.0) + e.amount;
+      weeklySpending[clampedWeek] =
+          (weeklySpending[clampedWeek] ?? 0.0) + e.amount;
     }
 
     int highestSpendingWeekNum = 1;
@@ -269,8 +281,18 @@ class PersonalExpensePdfGenerator {
     });
 
     const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     // Previous Period Comparison (MoM)
@@ -279,7 +301,9 @@ class PersonalExpensePdfGenerator {
     final DateTime prevEndDate = startDate.subtract(const Duration(days: 1));
 
     final prevExpenses = allExpenses.where((e) {
-      return e.expenseDate.isAfter(prevStartDate.subtract(const Duration(days: 1))) &&
+      return e.expenseDate.isAfter(
+            prevStartDate.subtract(const Duration(days: 1)),
+          ) &&
           e.expenseDate.isBefore(prevEndDate.add(const Duration(days: 1)));
     }).toList();
 
@@ -308,12 +332,17 @@ class PersonalExpensePdfGenerator {
           'Total spending $direction by $pctStr% compared to the previous period (${CurrencyFormatter.format(prevTotalExpense)}).',
         );
       }
-      if (highestSpendingMonthNum >= 1 && highestSpendingMonthNum <= 12 && maxMonthAmt > 0) {
+      if (highestSpendingMonthNum >= 1 &&
+          highestSpendingMonthNum <= 12 &&
+          maxMonthAmt > 0) {
         insights.add(
           'Your highest spending month in $currentYear was ${monthNames[highestSpendingMonthNum - 1]} (${CurrencyFormatter.format(maxMonthAmt)}).',
         );
       }
-      if (lowestSpendingMonthNum >= 1 && lowestSpendingMonthNum <= 12 && minMonthAmt < 999999999.0 && minMonthAmt > 0) {
+      if (lowestSpendingMonthNum >= 1 &&
+          lowestSpendingMonthNum <= 12 &&
+          minMonthAmt < 999999999.0 &&
+          minMonthAmt > 0) {
         insights.add(
           'Your lowest spending month in $currentYear was ${monthNames[lowestSpendingMonthNum - 1]} (${CurrencyFormatter.format(minMonthAmt)}).',
         );
@@ -322,7 +351,9 @@ class PersonalExpensePdfGenerator {
         final weekendDailyAvg = weekendExpense / 2.0;
         final weekdayDailyAvg = weekdayExpense / 5.0;
         if (weekendDailyAvg > weekdayDailyAvg) {
-          final diffPct = (((weekendDailyAvg - weekdayDailyAvg) / weekdayDailyAvg) * 100).toStringAsFixed(1);
+          final diffPct =
+              (((weekendDailyAvg - weekdayDailyAvg) / weekdayDailyAvg) * 100)
+                  .toStringAsFixed(1);
           insights.add(
             'You spent $diffPct% more per day during weekends compared to weekdays.',
           );
@@ -333,7 +364,9 @@ class PersonalExpensePdfGenerator {
       );
       if (mostUsedPaymentMethod != 'N/A') {
         final methodAmt = paymentMethodAmounts[mostUsedPaymentMethod] ?? 0.0;
-        final pct = totalExpense > 0 ? ((methodAmt / totalExpense) * 100).toStringAsFixed(1) : '0';
+        final pct = totalExpense > 0
+            ? ((methodAmt / totalExpense) * 100).toStringAsFixed(1)
+            : '0';
         insights.add(
           '$mostUsedPaymentMethod is your most used payment method ($pct% of total volume).',
         );
@@ -390,7 +423,9 @@ class PersonalExpensePdfGenerator {
                   children: [
                     pw.Container(
                       padding: const pw.EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: pw.BoxDecoration(
                         color: primaryColor,
                         borderRadius: pw.BorderRadius.circular(4),
@@ -497,7 +532,9 @@ class PersonalExpensePdfGenerator {
                     children: [
                       pw.Container(
                         padding: const pw.EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: pw.BoxDecoration(
                           color: primaryLight,
                           borderRadius: pw.BorderRadius.circular(6),
@@ -529,25 +566,65 @@ class PersonalExpensePdfGenerator {
             // ----------------------------------------------------------------
             pw.Row(
               children: [
-                _buildSummaryCard('Total Expense', CurrencyFormatter.format(totalExpense), dangerColor, PdfColor.fromHex('#FEF2F2')),
+                _buildSummaryCard(
+                  'Total Expense',
+                  CurrencyFormatter.format(totalExpense),
+                  dangerColor,
+                  PdfColor.fromHex('#FEF2F2'),
+                ),
                 pw.SizedBox(width: 8),
-                _buildSummaryCard('Avg Daily Expense', CurrencyFormatter.format(avgDailyExpense), primaryColor, primaryLight),
+                _buildSummaryCard(
+                  'Avg Daily Expense',
+                  CurrencyFormatter.format(avgDailyExpense),
+                  primaryColor,
+                  primaryLight,
+                ),
                 pw.SizedBox(width: 8),
-                _buildSummaryCard('Highest Expense', CurrencyFormatter.format(highestExpenseAmount), accentAmber, PdfColor.fromHex('#FEF3C7')),
+                _buildSummaryCard(
+                  'Highest Expense',
+                  CurrencyFormatter.format(highestExpenseAmount),
+                  accentAmber,
+                  PdfColor.fromHex('#FEF3C7'),
+                ),
                 pw.SizedBox(width: 8),
-                _buildSummaryCard('Lowest Expense', CurrencyFormatter.format(lowestExpenseAmount), accentBlue, PdfColor.fromHex('#EFF6FF')),
+                _buildSummaryCard(
+                  'Lowest Expense',
+                  CurrencyFormatter.format(lowestExpenseAmount),
+                  accentBlue,
+                  PdfColor.fromHex('#EFF6FF'),
+                ),
               ],
             ),
             pw.SizedBox(height: 8),
             pw.Row(
               children: [
-                _buildSummaryCard('Total Transactions', '$totalTransactions', secondaryDark, bgLight),
+                _buildSummaryCard(
+                  'Total Transactions',
+                  '$totalTransactions',
+                  secondaryDark,
+                  bgLight,
+                ),
                 pw.SizedBox(width: 8),
-                _buildSummaryCard('Avg Transaction', CurrencyFormatter.format(avgTransactionValue), accentPurple, PdfColor.fromHex('#F3E8FF')),
+                _buildSummaryCard(
+                  'Avg Transaction',
+                  CurrencyFormatter.format(avgTransactionValue),
+                  accentPurple,
+                  PdfColor.fromHex('#F3E8FF'),
+                ),
                 pw.SizedBox(width: 8),
-                _buildSummaryCard('Median Expense', CurrencyFormatter.format(medianExpense), primaryColor, primaryLight),
+                _buildSummaryCard(
+                  'Median Expense',
+                  CurrencyFormatter.format(medianExpense),
+                  primaryColor,
+                  primaryLight,
+                ),
                 pw.SizedBox(width: 8),
-                _buildSummaryCard('Most Expensive Cat', mostExpensiveCategoryName, dangerColor, PdfColor.fromHex('#FEF2F2')),
+                _buildSummaryCard(
+                  'Most Expensive Cat',
+                  mostExpensiveCategoryName,
+                  dangerColor,
+                  PdfColor.fromHex('#FEF2F2'),
+                ),
               ],
             ),
             pw.SizedBox(height: 14),
@@ -607,7 +684,9 @@ class PersonalExpensePdfGenerator {
                     final entry = top10Categories[idx];
                     final catName = entry.key;
                     final catAmt = entry.value;
-                    final pct = totalExpense > 0 ? (catAmt / totalExpense) : 0.0;
+                    final pct = totalExpense > 0
+                        ? (catAmt / totalExpense)
+                        : 0.0;
                     final color = catColors[idx % catColors.length];
 
                     return pw.Padding(
@@ -616,7 +695,8 @@ class PersonalExpensePdfGenerator {
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           pw.Row(
-                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
                             children: [
                               pw.Text(
                                 '${idx + 1}. $catName',
@@ -696,8 +776,12 @@ class PersonalExpensePdfGenerator {
                         final barHeight = maxMonthAmt > 0
                             ? ((amt / maxMonthAmt) * 50).clamp(4.0, 50.0)
                             : 4.0;
-                        final isHighest = monthNum == highestSpendingMonthNum && maxMonthAmt > 0;
-                        final isLowest = monthNum == lowestSpendingMonthNum && minMonthAmt < 999999999.0;
+                        final isHighest =
+                            monthNum == highestSpendingMonthNum &&
+                            maxMonthAmt > 0;
+                        final isLowest =
+                            monthNum == lowestSpendingMonthNum &&
+                            minMonthAmt < 999999999.0;
 
                         final barColor = isHighest
                             ? dangerColor
@@ -706,11 +790,15 @@ class PersonalExpensePdfGenerator {
                         return pw.Column(
                           children: [
                             pw.Text(
-                              amt > 0 ? '${(amt / 1000).toStringAsFixed(0)}k' : '-',
+                              amt > 0
+                                  ? '${(amt / 1000).toStringAsFixed(0)}k'
+                                  : '-',
                               style: pw.TextStyle(
                                 fontSize: 7,
                                 color: isHighest ? dangerColor : textGrey,
-                                fontWeight: isHighest ? pw.FontWeight.bold : pw.FontWeight.normal,
+                                fontWeight: isHighest
+                                    ? pw.FontWeight.bold
+                                    : pw.FontWeight.normal,
                               ),
                             ),
                             pw.SizedBox(height: 2),
@@ -768,8 +856,11 @@ class PersonalExpensePdfGenerator {
                 children: List.generate(5, (wIdx) {
                   final weekNum = wIdx + 1;
                   final amt = weeklySpending[weekNum] ?? 0.0;
-                  final pct = totalExpense > 0 ? (amt / totalExpense * 100) : 0.0;
-                  final isHighest = weekNum == highestSpendingWeekNum && maxWeekAmt > 0;
+                  final pct = totalExpense > 0
+                      ? (amt / totalExpense * 100)
+                      : 0.0;
+                  final isHighest =
+                      weekNum == highestSpendingWeekNum && maxWeekAmt > 0;
 
                   return pw.Expanded(
                     child: pw.Container(
@@ -835,7 +926,9 @@ class PersonalExpensePdfGenerator {
                 children: paymentMethodAmounts.entries.map((e) {
                   final method = e.key;
                   final amt = e.value;
-                  final pct = totalExpense > 0 ? (amt / totalExpense * 100) : 0.0;
+                  final pct = totalExpense > 0
+                      ? (amt / totalExpense * 100)
+                      : 0.0;
 
                   return pw.Expanded(
                     child: pw.Container(
@@ -916,11 +1009,13 @@ class PersonalExpensePdfGenerator {
                               child: pw.Row(
                                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                                 children: [
-                                  pw.Text('• ',
-                                      style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold,
-                                        color: primaryColor,
-                                      )),
+                                  pw.Text(
+                                    '• ',
+                                    style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: primaryColor,
+                                    ),
+                                  ),
                                   pw.Expanded(
                                     child: pw.Text(
                                       txt,
@@ -962,12 +1057,22 @@ class PersonalExpensePdfGenerator {
                             ),
                           ),
                           pw.SizedBox(height: 6),
-                          _buildStatRow('Current Period Total', CurrencyFormatter.format(totalExpense)),
-                          _buildStatRow('Previous Period Total', CurrencyFormatter.format(prevTotalExpense)),
-                          _buildStatRow('Absolute Variance', CurrencyFormatter.format(periodDiff.abs())),
+                          _buildStatRow(
+                            'Current Period Total',
+                            CurrencyFormatter.format(totalExpense),
+                          ),
+                          _buildStatRow(
+                            'Previous Period Total',
+                            CurrencyFormatter.format(prevTotalExpense),
+                          ),
+                          _buildStatRow(
+                            'Absolute Variance',
+                            CurrencyFormatter.format(periodDiff.abs()),
+                          ),
                           pw.Divider(color: borderColor, height: 6),
                           pw.Row(
-                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
                             children: [
                               pw.Text(
                                 'Growth Status',
@@ -978,9 +1083,14 @@ class PersonalExpensePdfGenerator {
                                 ),
                               ),
                               pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const pw.EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: pw.BoxDecoration(
-                                  color: periodDiff <= 0 ? successLight : PdfColor.fromHex('#FEF2F2'),
+                                  color: periodDiff <= 0
+                                      ? successLight
+                                      : PdfColor.fromHex('#FEF2F2'),
                                   borderRadius: pw.BorderRadius.circular(4),
                                 ),
                                 child: pw.Text(
@@ -988,7 +1098,9 @@ class PersonalExpensePdfGenerator {
                                   style: pw.TextStyle(
                                     fontSize: 9,
                                     fontWeight: pw.FontWeight.bold,
-                                    color: periodDiff <= 0 ? successColor : dangerColor,
+                                    color: periodDiff <= 0
+                                        ? successColor
+                                        : dangerColor,
                                   ),
                                 ),
                               ),
@@ -1042,14 +1154,20 @@ class PersonalExpensePdfGenerator {
                           ...List.generate(top10HighestExpenses.length, (i) {
                             final item = top10HighestExpenses[i];
                             return pw.Padding(
-                              padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                              padding: const pw.EdgeInsets.symmetric(
+                                vertical: 2,
+                              ),
                               child: pw.Row(
-                                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    pw.MainAxisAlignment.spaceBetween,
                                 children: [
                                   pw.Expanded(
                                     child: pw.Text(
                                       '${i + 1}. ${item.category} (${shortDateFormat.format(item.expenseDate)})',
-                                      style: pw.TextStyle(fontSize: 8, color: textDark),
+                                      style: pw.TextStyle(
+                                        fontSize: 8,
+                                        color: textDark,
+                                      ),
                                       maxLines: 1,
                                     ),
                                   ),
@@ -1095,13 +1213,19 @@ class PersonalExpensePdfGenerator {
                           ...List.generate(top10ExpensiveDays.length, (i) {
                             final item = top10ExpensiveDays[i];
                             return pw.Padding(
-                              padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                              padding: const pw.EdgeInsets.symmetric(
+                                vertical: 2,
+                              ),
                               child: pw.Row(
-                                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    pw.MainAxisAlignment.spaceBetween,
                                 children: [
                                   pw.Text(
                                     '${i + 1}. ${item.key}',
-                                    style: pw.TextStyle(fontSize: 8, color: textDark),
+                                    style: pw.TextStyle(
+                                      fontSize: 8,
+                                      color: textDark,
+                                    ),
                                   ),
                                   pw.Text(
                                     CurrencyFormatter.format(item.value),
@@ -1145,13 +1269,19 @@ class PersonalExpensePdfGenerator {
                           ...List.generate(top10CheapestDays.length, (i) {
                             final item = top10CheapestDays[i];
                             return pw.Padding(
-                              padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                              padding: const pw.EdgeInsets.symmetric(
+                                vertical: 2,
+                              ),
                               child: pw.Row(
-                                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    pw.MainAxisAlignment.spaceBetween,
                                 children: [
                                   pw.Text(
                                     '${i + 1}. ${item.key}',
-                                    style: pw.TextStyle(fontSize: 8, color: textDark),
+                                    style: pw.TextStyle(
+                                      fontSize: 8,
+                                      color: textDark,
+                                    ),
                                   ),
                                   pw.Text(
                                     CurrencyFormatter.format(item.value),
@@ -1211,9 +1341,11 @@ class PersonalExpensePdfGenerator {
                       children: [
                         _buildTableCell(dateFormat.format(exp.expenseDate)),
                         _buildTableCell(exp.category),
-                        _buildTableCell(exp.description.trim().isNotEmpty
-                            ? exp.description
-                            : '-'),
+                        _buildTableCell(
+                          exp.description.trim().isNotEmpty
+                              ? exp.description
+                              : '-',
+                        ),
                         _buildTableCell(exp.paymentMethod),
                         _buildTableCell(
                           CurrencyFormatter.format(exp.amount),
@@ -1249,27 +1381,87 @@ class PersonalExpensePdfGenerator {
                 ),
                 child: pw.Column(
                   children: [
-                    _buildStatRow('Highest Spending Month', '${monthNames[highestSpendingMonthNum - 1]} (${CurrencyFormatter.format(maxMonthAmt)})'),
-                    _buildStatRow('Lowest Spending Month', '${monthNames[lowestSpendingMonthNum - 1]} (${CurrencyFormatter.format(minMonthAmt < 999999999.0 ? minMonthAmt : 0.0)})'),
-                    _buildStatRow('Highest Spending Day', '$highestSpendingDay (${CurrencyFormatter.format(maxDayAmt)})'),
-                    _buildStatRow('Lowest Spending Day', '$lowestSpendingDay (${CurrencyFormatter.format(minDayAmt < 999999999.0 ? minDayAmt : 0.0)})'),
-                    _buildStatRow('Highest Spending Week', 'Week $highestSpendingWeekNum (${CurrencyFormatter.format(maxWeekAmt)})'),
-                    _buildStatRow('Lowest Spending Week', 'Week $lowestSpendingWeekNum (${CurrencyFormatter.format(minWeekAmt < 999999999.0 ? minWeekAmt : 0.0)})'),
-                    _buildStatRow('Highest Single Expense', CurrencyFormatter.format(highestExpenseAmount)),
-                    _buildStatRow('Lowest Single Expense', CurrencyFormatter.format(lowestExpenseAmount)),
-                    _buildStatRow('Average Daily Expense', CurrencyFormatter.format(avgDailyExpense)),
-                    _buildStatRow('Average Weekly Expense', CurrencyFormatter.format(avgWeeklyExpense)),
-                    _buildStatRow('Average Monthly Expense', CurrencyFormatter.format(avgMonthlyExpense)),
-                    _buildStatRow('Average Transaction Value', CurrencyFormatter.format(avgTransactionValue)),
-                    _buildStatRow('Median Expense Value', CurrencyFormatter.format(medianExpense)),
-                    _buildStatRow('Total Recorded Transactions', '$totalTransactions'),
+                    _buildStatRow(
+                      'Highest Spending Month',
+                      '${monthNames[highestSpendingMonthNum - 1]} (${CurrencyFormatter.format(maxMonthAmt)})',
+                    ),
+                    _buildStatRow(
+                      'Lowest Spending Month',
+                      '${monthNames[lowestSpendingMonthNum - 1]} (${CurrencyFormatter.format(minMonthAmt < 999999999.0 ? minMonthAmt : 0.0)})',
+                    ),
+                    _buildStatRow(
+                      'Highest Spending Day',
+                      '$highestSpendingDay (${CurrencyFormatter.format(maxDayAmt)})',
+                    ),
+                    _buildStatRow(
+                      'Lowest Spending Day',
+                      '$lowestSpendingDay (${CurrencyFormatter.format(minDayAmt < 999999999.0 ? minDayAmt : 0.0)})',
+                    ),
+                    _buildStatRow(
+                      'Highest Spending Week',
+                      'Week $highestSpendingWeekNum (${CurrencyFormatter.format(maxWeekAmt)})',
+                    ),
+                    _buildStatRow(
+                      'Lowest Spending Week',
+                      'Week $lowestSpendingWeekNum (${CurrencyFormatter.format(minWeekAmt < 999999999.0 ? minWeekAmt : 0.0)})',
+                    ),
+                    _buildStatRow(
+                      'Highest Single Expense',
+                      CurrencyFormatter.format(highestExpenseAmount),
+                    ),
+                    _buildStatRow(
+                      'Lowest Single Expense',
+                      CurrencyFormatter.format(lowestExpenseAmount),
+                    ),
+                    _buildStatRow(
+                      'Average Daily Expense',
+                      CurrencyFormatter.format(avgDailyExpense),
+                    ),
+                    _buildStatRow(
+                      'Average Weekly Expense',
+                      CurrencyFormatter.format(avgWeeklyExpense),
+                    ),
+                    _buildStatRow(
+                      'Average Monthly Expense',
+                      CurrencyFormatter.format(avgMonthlyExpense),
+                    ),
+                    _buildStatRow(
+                      'Average Transaction Value',
+                      CurrencyFormatter.format(avgTransactionValue),
+                    ),
+                    _buildStatRow(
+                      'Median Expense Value',
+                      CurrencyFormatter.format(medianExpense),
+                    ),
+                    _buildStatRow(
+                      'Total Recorded Transactions',
+                      '$totalTransactions',
+                    ),
                     _buildStatRow('Categories Count', '$numCategories'),
-                    _buildStatRow('Most Used Category', '$mostUsedCategoryName ($maxCategoryCnt times)'),
-                    _buildStatRow('Least Used Category', '$leastUsedCategoryName ($minCategoryCnt times)'),
-                    _buildStatRow('Most Expensive Category', '$mostExpensiveCategoryName (${CurrencyFormatter.format(maxCategoryAmt)})'),
-                    _buildStatRow('Least Expensive Category', '$leastExpensiveCategoryName (${CurrencyFormatter.format(minCategoryAmt < 999999999.0 ? minCategoryAmt : 0.0)})'),
-                    _buildStatRow('Most Used Payment Method', '$mostUsedPaymentMethod ($maxMethodCnt times)'),
-                    _buildStatRow('Least Used Payment Method', '$leastUsedPaymentMethod ($minMethodCnt times)'),
+                    _buildStatRow(
+                      'Most Used Category',
+                      '$mostUsedCategoryName ($maxCategoryCnt times)',
+                    ),
+                    _buildStatRow(
+                      'Least Used Category',
+                      '$leastUsedCategoryName ($minCategoryCnt times)',
+                    ),
+                    _buildStatRow(
+                      'Most Expensive Category',
+                      '$mostExpensiveCategoryName (${CurrencyFormatter.format(maxCategoryAmt)})',
+                    ),
+                    _buildStatRow(
+                      'Least Expensive Category',
+                      '$leastExpensiveCategoryName (${CurrencyFormatter.format(minCategoryAmt < 999999999.0 ? minCategoryAmt : 0.0)})',
+                    ),
+                    _buildStatRow(
+                      'Most Used Payment Method',
+                      '$mostUsedPaymentMethod ($maxMethodCnt times)',
+                    ),
+                    _buildStatRow(
+                      'Least Used Payment Method',
+                      '$leastUsedPaymentMethod ($minMethodCnt times)',
+                    ),
                   ],
                 ),
               ),
@@ -1346,7 +1538,10 @@ class PersonalExpensePdfGenerator {
     );
   }
 
-  static pw.Widget _buildTableHeaderCell(String title, {bool alignRight = false}) {
+  static pw.Widget _buildTableHeaderCell(
+    String title, {
+    bool alignRight = false,
+  }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       child: pw.Text(
@@ -1388,7 +1583,10 @@ class PersonalExpensePdfGenerator {
         children: [
           pw.Text(
             label,
-            style: pw.TextStyle(fontSize: 8.5, color: PdfColor.fromHex('#64748B')),
+            style: pw.TextStyle(
+              fontSize: 8.5,
+              color: PdfColor.fromHex('#64748B'),
+            ),
           ),
           pw.Text(
             value,
@@ -1414,7 +1612,10 @@ class PersonalExpensePdfGenerator {
       mimeType: 'application/pdf',
     );
     await SharePlus.instance.share(
-      ShareParams(files: [file], text: 'Executive Personal Expense Analytics Report'),
+      ShareParams(
+        files: [file],
+        text: 'Executive Personal Expense Analytics Report',
+      ),
     );
   }
 

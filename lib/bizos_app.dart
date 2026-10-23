@@ -2,6 +2,9 @@ import 'package:bizos/core/di/injection.dart';
 import 'package:bizos/features/attachments/data/datasources/attachment_remote_datasource_impl.dart';
 import 'package:bizos/features/attachments/data/repositories/attachment_repository_impl.dart';
 import 'package:bizos/features/attachments/domain/repositories/attachment_repository.dart';
+import 'package:bizos/features/currency/domain/repositories/currency_repository.dart';
+import 'package:bizos/features/currency/presentation/bloc/currency_bloc.dart';
+import 'package:bizos/features/currency/presentation/bloc/currency_event.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/theme/theme_bloc.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
@@ -50,6 +53,7 @@ import 'package:bizos/features/shortcut/presentation/bloc/shortcut_bloc.dart';
 import 'package:bizos/features/shortcut/presentation/bloc/shortcut_event.dart';
 import 'package:bizos/features/shortcut/presentation/bloc/shortcut_pair_bloc.dart';
 import 'package:bizos/features/shortcut/presentation/pages/quick_add_onboarding_page.dart';
+import 'package:bizos/features/splash/presentation/splash_screen.dart';
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasouceimpl.dart';
 import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasoucre_impl.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
@@ -119,7 +123,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BizosApp extends StatelessWidget {
-  const BizosApp({super.key});
+  final ThemeMode initialThemeMode;
+
+  const BizosApp({super.key, this.initialThemeMode = ThemeMode.light});
 
   @override
   Widget build(BuildContext context) {
@@ -297,9 +303,15 @@ class BizosApp extends StatelessWidget {
           create: (_) => moneyManagementRepo,
         ),
         RepositoryProvider<CategoryRepository>(create: (_) => categoryRepo),
+        RepositoryProvider<CurrencyRepository>(
+          create: (_) => getIt<CurrencyRepository>(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
+          BlocProvider<CurrencyBloc>(
+            create: (_) => getIt<CurrencyBloc>()..add(LoadCurrenciesEvent()),
+          ),
           BlocProvider<CustomerBloc>(
             create: (context) =>
                 CustomerBloc(repository: context.read<CustomerRepository>()),
@@ -328,7 +340,8 @@ class BizosApp extends StatelessWidget {
                 CategoryBloc(repository: context.read<CategoryRepository>()),
           ),
           BlocProvider<ThemeBloc>(
-            create: (_) => ThemeBloc()..add(LoadThemeEvent()),
+            create: (_) =>
+                ThemeBloc(initialMode: initialThemeMode)..add(LoadThemeEvent()),
           ),
           BlocProvider<AuthBloc>(
             create: (context) => AuthBloc(
@@ -473,6 +486,9 @@ class _AppStartupFlowState extends State<AppStartupFlow> {
     ShortcutConstants.methodChannelName,
   );
 
+  bool _splashAnimationCompleted = false;
+  bool _initialAuthResolved = false;
+
   @override
   void initState() {
     super.initState();
@@ -523,43 +539,47 @@ class _AppStartupFlowState extends State<AppStartupFlow> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state.status == AuthStatus.loading) {
-          // Loading Screen (Splash)
-          return const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: 40,
-                    width: 40,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Loading Voryn Workspace...',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        } else if (state.user != null ||
-            state.status == AuthStatus.authenticated) {
-          return const MainDashboardScreen();
-        } else {
-          return const LoginScreen();
+    return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status &&
+          current.status != AuthStatus.loading,
+      listener: (context, state) {
+        if (!_initialAuthResolved) {
+          setState(() {
+            _initialAuthResolved = true;
+          });
         }
+      },
+      builder: (context, state) {
+        if (!_initialAuthResolved && state.status != AuthStatus.loading) {
+          _initialAuthResolved = true;
+        }
+
+        // 1. Initial app launch: play coordinated splash animation
+        if (!_splashAnimationCompleted) {
+          return SplashScreen(
+            onAnimationComplete: () {
+              if (mounted) {
+                setState(() {
+                  _splashAnimationCompleted = true;
+                });
+              }
+            },
+          );
+        }
+
+        // 2. Initial splash finished, but INITIAL session restoration still in progress:
+        if (!_initialAuthResolved && state.status == AuthStatus.loading) {
+          return const SplashScreen(isWaitingForAuth: true);
+        }
+
+        // 3. User authenticated: display MainDashboardScreen
+        if (state.user != null || state.status == AuthStatus.authenticated) {
+          return const MainDashboardScreen();
+        }
+
+        // 4. User unauthenticated, expired, or logging in/out: display LoginScreen
+        return const LoginScreen();
       },
     );
   }

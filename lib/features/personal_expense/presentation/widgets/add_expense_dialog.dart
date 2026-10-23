@@ -1,6 +1,8 @@
 import 'package:bizos/core/theme/app_theme.dart';
+import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bizos/features/currency/presentation/bloc/currency_bloc.dart';
 import 'package:bizos/features/finance/presentation/widgets/payment_method_dropdown_field.dart';
 import 'package:bizos/features/finance/presentation/widgets/payment_method_helper.dart';
 import 'package:bizos/features/personal_expense/domain/entities/personal_expense_category_entity.dart';
@@ -22,13 +24,10 @@ class AddExpenseDialog extends StatefulWidget {
     String paymentMethod,
     String description,
     DateTime date,
-  ) onSave;
+  )
+  onSave;
 
-  const AddExpenseDialog({
-    super.key,
-    this.expense,
-    required this.onSave,
-  });
+  const AddExpenseDialog({super.key, this.expense, required this.onSave});
 
   @override
   State<AddExpenseDialog> createState() => _AddExpenseDialogState();
@@ -51,7 +50,12 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     super.initState();
     if (widget.expense != null) {
       final exp = widget.expense!;
-      _amountController.text = exp.amount.toString();
+      final digits = CurrencyFormatter.currentCurrency?.decimalDigits ?? 2;
+      _amountController.text = digits == 0
+          ? exp.amount.toInt().toString()
+          : (exp.amount == exp.amount.roundToDouble()
+                ? exp.amount.toStringAsFixed(digits)
+                : exp.amount.toString());
       _descriptionController.text = exp.description;
       _selectedPaymentMethod = PaymentMethodHelper.sanitize(exp.paymentMethod);
       _selectedDate = exp.expenseDate;
@@ -62,9 +66,9 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       final authState = context.read<AuthBloc>().state;
       final userId = authState.user?.id ?? '';
       if (userId.isNotEmpty) {
-        context
-            .read<PersonalExpenseCategoryBloc>()
-            .add(LoadPersonalCategoriesEvent(userId));
+        context.read<PersonalExpenseCategoryBloc>().add(
+          LoadPersonalCategoriesEvent(userId),
+        );
       }
     });
   }
@@ -106,9 +110,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) => ManagePersonalCategoriesSheet(
-        userId: userId,
-      ),
+      builder: (sheetContext) => ManagePersonalCategoriesSheet(userId: userId),
     );
   }
 
@@ -125,7 +127,8 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
               primary: AppTheme.primaryColor,
               onPrimary: Colors.white,
               surface: Theme.of(context).cardColor,
-              onSurface: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+              onSurface:
+                  Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
             ),
           ),
           child: child!,
@@ -172,9 +175,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
 
     final double? parsedAmount = double.tryParse(_amountController.text);
     if (parsedAmount == null || parsedAmount <= 0) {
+      final symbol = CurrencyFormatter.currencySymbol;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount greater than 0'),
+        SnackBar(
+          content: Text('Please enter a valid amount greater than $symbol 0'),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -199,10 +203,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         _isSaving = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: AppTheme.error,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error),
       );
     }
   }
@@ -213,12 +214,24 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     final isDark = theme.brightness == Brightness.dark;
     final isEdit = widget.expense != null;
 
+    final currencyBloc = context.watch<CurrencyBloc>();
+    final currencyEntity =
+        currencyBloc.state.selectedCurrency ??
+        CurrencyFormatter.currentCurrency;
+    final currencyCode =
+        currencyEntity?.code ?? CurrencyFormatter.currentCurrencyCode;
+    final currencySymbol =
+        currencyEntity?.symbol ?? CurrencyFormatter.currencySymbol;
+    final decimalDigits = currencyEntity?.decimalDigits ?? 2;
+    final hintText = decimalDigits == 0 ? '0' : '0.${'0' * decimalDigits}';
+
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 24.0,
+        vertical: 24.0,
+      ),
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -269,17 +282,43 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    hintText: '0.00',
-                    prefixIcon: Icon(Icons.attach_money),
+                  keyboardType: TextInputType.numberWithOptions(
+                    decimal: decimalDigits > 0,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hintText,
+                    prefixIcon: Container(
+                      width: 48,
+                      alignment: Alignment.center,
+                      child: Text(
+                        currencySymbol,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    helperText: 'Currency: $currencyCode ($currencySymbol)',
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Amount is required';
                     }
-                    if (double.tryParse(value) == null) {
+                    final numVal = double.tryParse(value.trim());
+                    if (numVal == null) {
                       return 'Please enter a valid number';
+                    }
+                    if (numVal <= 0) {
+                      return 'Amount must be greater than $currencySymbol 0';
+                    }
+                    if (decimalDigits == 0 && value.contains('.')) {
+                      final parts = value.split('.');
+                      if (parts.length > 1 &&
+                          int.tryParse(parts[1]) != null &&
+                          int.parse(parts[1]) > 0) {
+                        return '$currencyCode does not support decimal subunits';
+                      }
                     }
                     return null;
                   },
@@ -294,7 +333,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                BlocBuilder<PersonalExpenseCategoryBloc, PersonalExpenseCategoryState>(
+                BlocBuilder<
+                  PersonalExpenseCategoryBloc,
+                  PersonalExpenseCategoryState
+                >(
                   builder: (context, catState) {
                     List<PersonalExpenseCategoryEntity> loadedCategories = [];
                     if (catState is PersonalExpenseCategoryLoaded) {
@@ -303,8 +345,9 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                       loadedCategories = catState.currentCategories;
                     }
 
-                    final categoryNames =
-                        loadedCategories.map((c) => c.name).toList();
+                    final categoryNames = loadedCategories
+                        .map((c) => c.name)
+                        .toList();
 
                     final items = <DropdownMenuItem<String>>[];
 
@@ -358,18 +401,21 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
 
                     final validValue =
                         items.any((i) => i.value == _selectedCategory)
-                            ? _selectedCategory
-                            : null;
+                        ? _selectedCategory
+                        : null;
 
                     return DropdownButtonFormField<String>(
                       initialValue: validValue,
                       hint: const Text('Select Category'),
                       decoration: const InputDecoration(
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
-                      dropdownColor:
-                          isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+                      dropdownColor: isDark
+                          ? AppTheme.darkSurface
+                          : AppTheme.lightSurface,
                       items: items,
                       onChanged: (value) {
                         if (value == 'custom') {
@@ -474,12 +520,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.darkBg : AppTheme.lightBg,
                       border: Border.all(
-                        color:
-                            isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                        color: isDark
+                            ? AppTheme.darkBorder
+                            : AppTheme.lightBorder,
                         width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(12),

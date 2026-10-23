@@ -8,7 +8,6 @@ import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource authRemoteDataSource;
@@ -183,7 +182,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (AuthConfig.useSupabaseAuth) {
         // Validate Supabase Auth session first
-        final session = Supabase.instance.client.auth.currentSession;
+        final session = authRemoteDataSource.currentSession;
 
         AppLogger.info('SESSION EXISTS: ${session != null}');
         AppLogger.info('SESSION EXPIRED: ${session?.isExpired}');
@@ -279,5 +278,39 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<UserModel> updateCurrency(String currencyCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString(_userKey);
+    if (userJson == null) {
+      throw ServerException('No logged-in user profile found.');
+    }
+
+    final current = UserModel.fromJson(
+      jsonDecode(userJson) as Map<String, dynamic>,
+    );
+    final code = currencyCode.trim().toUpperCase();
+
+    // Persist to Supabase if valid user ID is present
+    if (current.id.isNotEmpty) {
+      try {
+        await authRemoteDataSource.updateUserCurrency(
+          userId: current.id,
+          currencyCode: code,
+        );
+      } catch (e) {
+        AppLogger.error('Failed to sync currency to Supabase: $e');
+        // Still update locally so offline / local preference persists
+      }
+    }
+
+    final updated = current.copyWith(currencyCode: code);
+    await prefs.setString(
+      _userKey,
+      jsonEncode(updated.toJson(includePassword: false)),
+    );
+    return updated;
   }
 }

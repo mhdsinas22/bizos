@@ -5,4 +5,8 @@ class AppImages {
       "assets/icon/Glossy V-Ribbon Tech Emblem.png";
   static const String appIconCenterLighTheme =
       "assets/icon/Glossy Blue V Logo with Floating Diamond.png";
+  static const String vorynGradientLogo =
+      "assets/icon/voryn_gradient_v_transparent.png";
+  static const String vorynGradientLogoOriginal =
+      "assets/icon/Polished Gradient V Logo.png";
 }

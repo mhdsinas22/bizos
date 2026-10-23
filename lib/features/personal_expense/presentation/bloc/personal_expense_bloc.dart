@@ -9,7 +9,8 @@ import 'package:bizos/features/personal_expense/presentation/bloc/personal_expen
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseState> {
+class PersonalExpenseBloc
+    extends Bloc<PersonalExpenseEvent, PersonalExpenseState> {
   final AddPersonalExpenseUseCase addUseCase;
   final UpdatePersonalExpenseUseCase updateUseCase;
   final DeletePersonalExpenseUseCase deleteUseCase;
@@ -60,7 +61,7 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
       emit(PersonalExpenseLoading());
       try {
         await addUseCase.execute(event.expense, event.userId);
-        
+
         // Reload raw expenses based on the current filter to keep UI consistent
         final expenses = await _fetchExpensesForFilter(
           userId: event.userId,
@@ -102,7 +103,7 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
       emit(PersonalExpenseLoading());
       try {
         await updateUseCase.execute(event.expense, event.userId);
-        
+
         final expenses = await _fetchExpensesForFilter(
           userId: event.userId,
           filterType: currentFilter,
@@ -143,7 +144,7 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
       emit(PersonalExpenseLoading());
       try {
         await deleteUseCase.execute(event.expenseId, event.userId);
-        
+
         final expenses = await _fetchExpensesForFilter(
           userId: event.userId,
           filterType: currentFilter,
@@ -198,11 +199,13 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
           searchQuery: event.query,
           sortBy: currentState.currentSort,
         );
-        
-        emit(currentState.copyWith(
-          filteredExpenses: filtered,
-          searchQuery: event.query,
-        ));
+
+        emit(
+          currentState.copyWith(
+            filteredExpenses: filtered,
+            searchQuery: event.query,
+          ),
+        );
       }
     });
 
@@ -215,10 +218,12 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
           sortBy: event.sortBy,
         );
 
-        emit(currentState.copyWith(
-          filteredExpenses: filtered,
-          currentSort: event.sortBy,
-        ));
+        emit(
+          currentState.copyWith(
+            filteredExpenses: filtered,
+            currentSort: event.sortBy,
+          ),
+        );
       }
     });
 
@@ -253,11 +258,21 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
       start = DateTime(now.year, now.month, now.day);
       end = DateTime(now.year, now.month, now.day, 23, 59, 59);
     } else if (filterType == 'week') {
-      start = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
-      end = start.add(const Duration(days: 7)).subtract(const Duration(seconds: 1));
+      start = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: now.weekday - 1));
+      end = start
+          .add(const Duration(days: 7))
+          .subtract(const Duration(seconds: 1));
     } else if (filterType == 'month') {
       start = DateTime(now.year, now.month, 1);
-      end = DateTime(now.year, now.month + 1, 1).subtract(const Duration(seconds: 1));
+      end = DateTime(
+        now.year,
+        now.month + 1,
+        1,
+      ).subtract(const Duration(seconds: 1));
     } else if (filterType == 'year') {
       start = DateTime(now.year, 1, 1);
       end = DateTime(now.year, 12, 31, 23, 59, 59);
@@ -315,7 +330,8 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
     // 4. Calculate Category Analytics based on filtered expenses
     final Map<String, double> categoryAnalytics = {};
     for (final e in filtered) {
-      categoryAnalytics[e.category] = (categoryAnalytics[e.category] ?? 0.0) + e.amount;
+      categoryAnalytics[e.category] =
+          (categoryAnalytics[e.category] ?? 0.0) + e.amount;
     }
 
     // 5. Highest category
@@ -358,11 +374,15 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
     // 1. Search Filter
     if (searchQuery.isNotEmpty) {
       final query = searchQuery.toLowerCase();
-      result = result.where((e) =>
-          e.category.toLowerCase().contains(query) ||
-          e.paymentMethod.toLowerCase().contains(query) ||
-          e.description.toLowerCase().contains(query) ||
-          e.amount.toString().contains(query)).toList();
+      result = result
+          .where(
+            (e) =>
+                e.category.toLowerCase().contains(query) ||
+                e.paymentMethod.toLowerCase().contains(query) ||
+                e.description.toLowerCase().contains(query) ||
+                e.amount.toString().contains(query),
+          )
+          .toList();
     }
 
     // 2. Sorting
@@ -387,7 +407,9 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
     return result;
   }
 
-  Map<String, double> _calculateMonthlyTrend(List<PersonalExpenseEntity> expenses) {
+  Map<String, double> _calculateMonthlyTrend(
+    List<PersonalExpenseEntity> expenses,
+  ) {
     final Map<String, double> trend = {
       'Jan': 0.0,
       'Feb': 0.0,
@@ -403,7 +425,20 @@ class PersonalExpenseBloc extends Bloc<PersonalExpenseEvent, PersonalExpenseStat
       'Dec': 0.0,
     };
     final currentYear = DateTime.now().year;
-    final monthKeys = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final monthKeys = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
     for (final exp in expenses) {
       if (exp.expenseDate.year == currentYear) {

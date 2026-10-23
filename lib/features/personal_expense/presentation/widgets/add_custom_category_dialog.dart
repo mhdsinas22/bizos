@@ -105,19 +105,17 @@ class _AddCustomCategoryDialogState extends State<AddCustomCategoryDialog> {
       icon: _selectedIconName,
       color: _selectedColorHex,
       isSystem: false,
-      createdAt: isEditing
-          ? widget.categoryToEdit!.createdAt
-          : DateTime.now(),
+      createdAt: isEditing ? widget.categoryToEdit!.createdAt : DateTime.now(),
     );
 
     if (isEditing) {
-      context
-          .read<PersonalExpenseCategoryBloc>()
-          .add(UpdatePersonalCategoryEvent(category, widget.userId));
+      context.read<PersonalExpenseCategoryBloc>().add(
+        UpdatePersonalCategoryEvent(category, widget.userId),
+      );
     } else {
-      context
-          .read<PersonalExpenseCategoryBloc>()
-          .add(AddPersonalCategoryEvent(category, widget.userId));
+      context.read<PersonalExpenseCategoryBloc>().add(
+        AddPersonalCategoryEvent(category, widget.userId),
+      );
     }
   }
 
@@ -128,7 +126,10 @@ class _AddCustomCategoryDialogState extends State<AddCustomCategoryDialog> {
     final isEditing = widget.categoryToEdit != null;
     final title = isEditing ? 'Edit Category' : 'Add Custom Category';
 
-    return BlocListener<PersonalExpenseCategoryBloc, PersonalExpenseCategoryState>(
+    return BlocListener<
+      PersonalExpenseCategoryBloc,
+      PersonalExpenseCategoryState
+    >(
       listener: (context, state) {
         if (state is PersonalExpenseCategoryLoaded) {
           setState(() {
@@ -160,11 +161,12 @@ class _AddCustomCategoryDialogState extends State<AddCustomCategoryDialog> {
         }
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 24.0,
+          vertical: 24.0,
+        ),
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -291,8 +293,11 @@ class _AddCustomCategoryDialogState extends State<AddCustomCategoryDialog> {
                                 : null,
                           ),
                           child: isSelected
-                              ? const Icon(Icons.check,
-                                  color: Colors.white, size: 18)
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 18,
+                                )
                               : null,
                         ),
                       );

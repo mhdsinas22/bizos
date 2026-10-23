@@ -10,6 +10,7 @@ import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:bizos/core/utils/app_logger.dart';
+import 'package:bizos/features/auth/presentation/screens/staff_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -83,6 +84,12 @@ class _LoginScreenState extends State<LoginScreen> {
           AppLogger.info('Current Status: ${state.status}');
           if (state.errorMessage != null) {
             AppLogger.error('Error Message: ${state.errorMessage}');
+          }
+
+          if (state.status == AuthStatus.authenticated && state.user != null) {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
           }
 
           if (state.status == AuthStatus.error) {
@@ -230,10 +237,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                       : null,
                                 ),
                                 const SizedBox(height: 24),
-                                CustomButton(
+                                 CustomButton(
                                   text: 'Sign In',
                                   onPressed: _submit,
                                   isLoading: state.status == AuthStatus.loading,
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const StaffLoginScreen(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.badge_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Staff Portal Login'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),

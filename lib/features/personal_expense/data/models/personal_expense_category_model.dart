@@ -38,7 +38,8 @@ class PersonalExpenseCategoryModel extends PersonalExpenseCategoryEntity {
   }
 
   factory PersonalExpenseCategoryModel.fromEntity(
-      PersonalExpenseCategoryEntity entity) {
+    PersonalExpenseCategoryEntity entity,
+  ) {
     return PersonalExpenseCategoryModel(
       id: entity.id,
       ownerId: entity.ownerId,

@@ -1,0 +1,196 @@
+00:00 +0: loading /Users/mhdsinas/Downloads/bizos/test/features/auth/login_logout_relogin_flow_test.dart
+00:00 +0: Voryn Login -> Logout -> Re-Login Lifecycle Tests AppStartupFlow switches LoginScreen -> MainDashboard -> LoginScreen -> MainDashboard seamlessly
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ #0   AppLogger.info (package:bizos/core/utils/app_logger.dart:16:13)[0m
+[38;5;12m│ #1   _LoginScreenState.build.<anonymous closure> (package:bizos/features/auth/presentation/screens/login_screen.dart:86:21)[0m
+[38;5;12m├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄[0m
+[38;5;12m│ 20:33:08.805 (+0:00:00.000000)[0m
+[38;5;12m├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄[0m
+[38;5;12m│ 💡 Current Status: AuthStatus.authenticated[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────[0m
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TypeWidgetFinder:<Found 0 widgets with type "MainDashboardScreen": []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure>.<anonymous closure> (file:///Users/mhdsinas/Downloads/bizos/test/features/auth/login_logout_relogin_flow_test.dart:82:9)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:197:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/mhdsinas/Downloads/bizos/test/features/auth/login_logout_relogin_flow_test.dart line 82
+The test description was:
+  AppStartupFlow switches LoginScreen -> MainDashboard -> LoginScreen -> MainDashboard seamlessly
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:00 +0 -1: Voryn Login -> Logout -> Re-Login Lifecycle Tests AppStartupFlow switches LoginScreen -> MainDashboard -> LoginScreen -> MainDashboard seamlessly [E]
+  Test failed. See exception logs above.
+  The test description was: AppStartupFlow switches LoginScreen -> MainDashboard -> LoginScreen -> MainDashboard seamlessly
+  
+00:00 +0 -1: Voryn Login -> Logout -> Re-Login Lifecycle Tests Standalone or pushed LoginScreen navigates to MainDashboardScreen on authentication success
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ #0   AppLogger.info (package:bizos/core/utils/app_logger.dart:16:13)[0m
+[38;5;12m│ #1   _LoginScreenState.build.<anonymous closure> (package:bizos/features/auth/presentation/screens/login_screen.dart:86:21)[0m
+[38;5;12m├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄[0m
+[38;5;12m│ 20:33:07.922 (+-0:00:00.883038)[0m
+[38;5;12m├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄[0m
+[38;5;12m│ 💡 Current Status: AuthStatus.authenticated[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────[0m
+══╡ EXCEPTION CAUGHT BY WIDGETS LIBRARY ╞═══════════════════════════════════════════════════════════
+The following ProviderNotFoundException was thrown building MainDashboardScreen(dirty, state:
+_MainDashboardScreenState#1c53d):
+Error: Could not find the correct Provider<AuthBloc> above this MainDashboardScreen Widget
+
+This happens because you used a `BuildContext` that does not include the provider
+of your choice. There are a few common scenarios:
+
+- You added a new provider in your `main.dart` and performed a hot-reload.
+  To fix, perform a hot-restart.
+
+- The provider you are trying to read is in a different route.
+
+  Providers are "scoped". So if you insert of provider inside a route, then
+  other routes will not be able to access that provider.
+
+- You used a `BuildContext` that is an ancestor of the provider you are trying to read.
+
+  Make sure that MainDashboardScreen is under your MultiProvider/Provider<AuthBloc>.
+  This usually happens when you are creating a provider and trying to read it immediately.
+
+  For example, instead of:
+
+  ```
+  Widget build(BuildContext context) {
+    return Provider<Example>(
+      create: (_) => Example(),
+      // Will throw a ProviderNotFoundError, because `context` is associated
+      // to the widget that is the parent of `Provider<Example>`
+      child: Text(context.watch<Example>().toString()),
+    );
+  }
+  ```
+
+  consider using `builder` like so:
+
+  ```
+  Widget build(BuildContext context) {
+    return Provider<Example>(
+      create: (_) => Example(),
+      // we use `builder` to obtain a new `BuildContext` that has access to the provider
+      builder: (context, child) {
+        // No longer throws
+        return Text(context.watch<Example>().toString());
+      }
+    );
+  }
+  ```
+
+If none of these solutions work, consider asking for help on StackOverflow:
+https://stackoverflow.com/questions/tagged/flutter
+
+The relevant error-causing widget was:
+  MainDashboardScreen
+  MainDashboardScreen:file:///Users/mhdsinas/Downloads/bizos/lib/features/auth/presentation/screens/login_screen.dart:101:43
+
+When the exception was thrown, this was the stack:
+#0      Provider._inheritedElementOf (package:provider/src/provider.dart:377:7)
+#1      Provider.of (package:provider/src/provider.dart:327:30)
+#2      WatchContext.watch (package:provider/src/provider.dart:727:21)
+#3      _MainDashboardScreenState.build (package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart:37:31)
+#4      StatefulElement.build (package:flutter/src/widgets/framework.dart:6165:27)
+#5      ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6049:15)
+#6      StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:6218:11)
+#7      Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#8      ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:6031:5)
+#9      StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:6209:11)
+#10     ComponentElement.mount (package:flutter/src/widgets/framework.dart:6025:5)
+...     Normal element mounting (260 frames)
+#270    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4753:20)
+#271    MultiChildRenderObjectElement.inflateWidget (package:flutter/src/widgets/framework.dart:7590:36)
+#272    Element.updateChild (package:flutter/src/widgets/framework.dart:4176:18)
+#273    Element.updateChildren (package:flutter/src/widgets/framework.dart:4392:32)
+#274    MultiChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7626:17)
+#275    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#276    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#277    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:6218:11)
+#278    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#279    StatefulElement.update (package:flutter/src/widgets/framework.dart:6246:5)
+#280    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#281    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#282    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#283    ProxyElement.update (package:flutter/src/widgets/framework.dart:6409:5)
+#284    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#285    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#286    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#287    ProxyElement.update (package:flutter/src/widgets/framework.dart:6409:5)
+#288    _InheritedNotifierElement.update (package:flutter/src/widgets/inherited_notifier.dart:108:11)
+#289    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#290    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#291    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:6218:11)
+#292    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#293    StatefulElement.update (package:flutter/src/widgets/framework.dart:6246:5)
+#294    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#295    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#296    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#297    ProxyElement.update (package:flutter/src/widgets/framework.dart:6409:5)
+#298    _InheritedNotifierElement.update (package:flutter/src/widgets/inherited_notifier.dart:108:11)
+#299    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#300    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#301    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:6218:11)
+#302    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#303    StatefulElement.update (package:flutter/src/widgets/framework.dart:6246:5)
+#304    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#305    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#306    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:6218:11)
+#307    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#308    StatefulElement.update (package:flutter/src/widgets/framework.dart:6246:5)
+#309    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#310    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7423:14)
+#311    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#312    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7423:14)
+#313    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#314    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#315    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#316    ProxyElement.update (package:flutter/src/widgets/framework.dart:6409:5)
+#317    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#318    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#319    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#320    ProxyElement.update (package:flutter/src/widgets/framework.dart:6409:5)
+#321    Element.updateChild (package:flutter/src/widgets/framework.dart:4154:15)
+#322    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:6073:16)
+#323    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:6218:11)
+#324    Element.rebuild (package:flutter/src/widgets/framework.dart:5757:7)
+#325    BuildScope._tryRebuild (package:flutter/src/widgets/framework.dart:2795:15)
+#326    BuildScope._flushDirtyElements (package:flutter/src/widgets/framework.dart:2860:11)
+#327    BuildOwner.buildScope (package:flutter/src/widgets/framework.dart:3174:18)
+#328    AutomatedTestWidgetsFlutterBinding.drawFrame (package:flutter_test/src/binding.dart:2131:19)
+#329    RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495:5)
+#330    SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1430:15)
+#331    SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1345:9)
+#332    AutomatedTestWidgetsFlutterBinding.pump.<anonymous closure> (package:flutter_test/src/binding.dart:1960:9)
+#335    TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#336    AutomatedTestWidgetsFlutterBinding.pump (package:flutter_test/src/binding.dart:1949:27)
+#337    WidgetTester.pump.<anonymous closure> (package:flutter_test/src/widget_tester.dart:686:53)
+#340    TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#341    WidgetTester.pump (package:flutter_test/src/widget_tester.dart:686:27)
+#342    main.<anonymous closure>.<anonymous closure> (file:///Users/mhdsinas/Downloads/bizos/test/features/auth/login_logout_relogin_flow_test.dart:134:22)
+<asynchronous suspension>
+#343    testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:197:15)
+<asynchronous suspension>
+#344    TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 5 frames from dart:async and package:stack_trace)
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:00 +0 -2: Voryn Login -> Logout -> Re-Login Lifecycle Tests Standalone or pushed LoginScreen navigates to MainDashboardScreen on authentication success [E]
+  Test failed. See exception logs above.
+  The test description was: Standalone or pushed LoginScreen navigates to MainDashboardScreen on authentication success
+  
+00:00 +0 -2: Some tests failed.

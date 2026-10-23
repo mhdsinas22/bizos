@@ -1,4 +1,5 @@
 import 'package:bizos/features/auth/presentation/di/auth_injection.dart';
+import 'package:bizos/features/currency/presentation/di/currency_injection.dart';
 import 'package:bizos/features/notifications/presentation/di/notification_injection.dart';
 import 'package:bizos/features/shortcut/presentation/di/shortcut_injection.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -21,4 +22,5 @@ Future<void> setupDependencies() async {
   registerShortcutDependencies(getIt);
   registerAuthDependencies(getIt);
   registerNotificationDependinces(getIt);
+  registerCurrencyDependencies(getIt);
 }

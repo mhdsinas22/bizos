@@ -1,3 +1,6 @@
+import 'package:bizos/bizos_app.dart';
+import 'package:bizos/core/utils/currency_formatter.dart';
+import 'package:bizos/features/currency/presentation/pages/currency_settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/theme/app_theme.dart';
@@ -11,10 +14,7 @@ import 'package:bizos/features/auth/presentation/screens/change_password_screen.
 class DashboardProfileSheet extends StatelessWidget {
   final UserModel user;
 
-  const DashboardProfileSheet({
-    super.key,
-    required this.user,
-  });
+  const DashboardProfileSheet({super.key, required this.user});
 
   static Future<void> show(BuildContext context, UserModel user) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -64,8 +64,9 @@ class DashboardProfileSheet extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 26,
-                    backgroundColor:
-                        AppTheme.primaryColor.withValues(alpha: 0.15),
+                    backgroundColor: AppTheme.primaryColor.withValues(
+                      alpha: 0.15,
+                    ),
                     child: Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
                       style: const TextStyle(
@@ -99,12 +100,15 @@ class DashboardProfileSheet extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryColor
-                                    .withValues(alpha: 0.12),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.12,
+                                ),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                user.isOwner ? 'OWNER' : user.role.toUpperCase(),
+                                user.isOwner
+                                    ? 'OWNER'
+                                    : user.role.toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -129,6 +133,27 @@ class DashboardProfileSheet extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.currency_exchange_rounded, size: 20),
+              title: const Text(
+                'Currency Settings',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                '${user.currencyCode} (${CurrencyFormatter.currencySymbol})',
+                style: const TextStyle(fontSize: 12),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CurrencySettingsPage(),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.vpn_key_outlined, size: 20),
               title: const Text(
@@ -162,6 +187,7 @@ class DashboardProfileSheet extends StatelessWidget {
               ),
               onTap: () {
                 Navigator.pop(context);
+                appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
                 context.read<AuthBloc>().add(LogoutEvent());
               },
             ),

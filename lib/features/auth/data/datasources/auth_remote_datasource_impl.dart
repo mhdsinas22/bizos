@@ -292,4 +292,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return true;
     }
   }
+
+  @override
+  Future<void> updateUserCurrency({
+    required String userId,
+    required String currencyCode,
+  }) async {
+    try {
+      await supabase
+          .from('users')
+          .update({'currency_code': currencyCode.trim().toUpperCase()})
+          .eq('id', userId);
+    } catch (e) {
+      AppLogger.error("Failed to update user currency: $e");
+      rethrow;
+    }
+  }
 }

@@ -30,3 +30,9 @@ class ChangePasswordEvent extends AuthEvent {
 
   ChangePasswordEvent({required this.oldPassword, required this.newPassword});
 }
+
+class UpdateUserCurrencyEvent extends AuthEvent {
+  final String currencyCode;
+
+  UpdateUserCurrencyEvent(this.currencyCode);
+}

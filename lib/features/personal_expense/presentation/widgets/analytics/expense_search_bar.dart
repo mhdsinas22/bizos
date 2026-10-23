@@ -31,7 +31,8 @@ class _ExpenseSearchBarState extends State<ExpenseSearchBar> {
   @override
   void didUpdateWidget(covariant ExpenseSearchBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.searchQuery != widget.searchQuery && _controller.text != widget.searchQuery) {
+    if (oldWidget.searchQuery != widget.searchQuery &&
+        _controller.text != widget.searchQuery) {
       _controller.text = widget.searchQuery;
     }
   }
@@ -126,7 +127,9 @@ class _ExpenseSearchBarState extends State<ExpenseSearchBar> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    currentSortLabel.split(' ')[0], // just 'Newest', 'Oldest', etc.
+                    currentSortLabel.split(
+                      ' ',
+                    )[0], // just 'Newest', 'Oldest', etc.
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white70 : Colors.black87,
@@ -156,7 +159,9 @@ class _ExpenseSearchBarState extends State<ExpenseSearchBar> {
                       Text(
                         opt['label']!,
                         style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           color: isSelected
                               ? AppTheme.primaryColor
                               : (isDark ? Colors.white70 : Colors.black87),

@@ -9,6 +9,7 @@ class UserEntity {
   final String authUserId;
   final List<String> customPermissions;
   final Map<String, List<String>> businessPermissions;
+  final String currencyCode;
 
   UserEntity({
     this.id = '',
@@ -21,6 +22,7 @@ class UserEntity {
     this.authUserId = '',
     this.customPermissions = const [],
     this.businessPermissions = const {},
+    this.currencyCode = 'INR',
   });
 
   String get userId => userid;

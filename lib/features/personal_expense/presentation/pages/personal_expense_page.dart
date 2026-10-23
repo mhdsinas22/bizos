@@ -1,6 +1,6 @@
-import 'package:bizos/core/di/injection.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/empty_state.dart';
+import 'package:bizos/features/currency/presentation/bloc/currency_bloc.dart';
 import 'package:bizos/features/personal_expense/domain/entities/personal_expense_entity.dart';
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_bloc.dart';
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_event.dart';
@@ -15,7 +15,6 @@ import 'package:bizos/features/personal_expense/presentation/widgets/analytics/e
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/money_management/presentation/bloc/money_management_state.dart';
 import 'package:bizos/features/money_management/presentation/bloc/personal_money_management_bloc.dart';
-import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -112,6 +111,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<CurrencyBloc>();
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -324,15 +324,6 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                     value: pendingReceive,
                                     icon: Icons.inbox_outlined,
                                     color: AppTheme.accentColor,
-                                  ),
-                                  TextButton(
-                                    onPressed: () async {
-                                      final token = getIt<ShortcutRepository>();
-                                      final cheecktoeken = await token
-                                          .getToken();
-                                      print("CheckToken:-$cheecktoeken");
-                                    },
-                                    child: Text('See All'),
                                   ),
                                 ],
                               );

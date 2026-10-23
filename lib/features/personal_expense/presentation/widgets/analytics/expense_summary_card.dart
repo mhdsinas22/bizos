@@ -23,7 +23,7 @@ class ExpenseSummaryCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     String displayValue = '';
-    if (isCurrency && value is double) {
+    if (isCurrency && value is num) {
       displayValue = CurrencyFormatter.format(value);
     } else {
       displayValue = value.toString();

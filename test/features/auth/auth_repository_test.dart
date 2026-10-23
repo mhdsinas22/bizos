@@ -6,6 +6,8 @@ import 'package:bizos/core/config/auth_config.dart';
 import 'package:bizos/core/exceptions/auth_exceptions.dart';
 import 'package:bizos/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:bizos/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:bizos/features/shortcut/domain/entities/shortcut_setup_entity.dart';
+import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 
 class MockAuthRemoteDataSource implements AuthRemoteDataSource {
   String? lastSignInEmail;
@@ -104,7 +106,42 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
     lastUpdatedPassword = newPassword;
     return true;
   }
+
+  @override
+  Future<void> updateUserCurrency({
+    required String userId,
+    required String currencyCode,
+  }) async {}
 }
+
+class _TestMockShortcutRepository implements ShortcutRepository {
+  @override
+  Future<void> deleteToken() async {}
+  @override
+  Future<ShortcutSetupEntity> getShortcutSetupStatus() async =>
+      const ShortcutSetupEntity();
+  @override
+  Future<String?> getToken() async => null;
+  @override
+  Future<bool> openAppleShortcuts(String url) async => true;
+  @override
+  Future<bool> openIosSettings() async => true;
+  @override
+  Future<Map<String, dynamic>> pairShortCut({required String deviceName}) async => {};
+  @override
+  Future<void> provisionShortcutToken({required String deviceName}) async {}
+  @override
+  Future<void> resetShortcutSetupProgress() async {}
+  @override
+  Future<void> revokeAndDeleteToken() async {}
+  @override
+  Future<void> saveShortcutSetupProgress(ShortcutSetupEntity status) async {}
+  @override
+  Future<void> saveToken(String token) async {}
+  @override
+  Future<void> verifyPairingCode({required String code}) async {}
+}
+
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -115,8 +152,12 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     mockDataSource = MockAuthRemoteDataSource();
-    repository = AuthRepositoryImpl(authRemoteDataSource: mockDataSource);
+    repository = AuthRepositoryImpl(
+      authRemoteDataSource: mockDataSource,
+      shortcutRepository: _TestMockShortcutRepository(),
+    );
   });
+
 
   tearDown(() {
     AuthConfig.setUseSupabaseAuthForTesting(null);

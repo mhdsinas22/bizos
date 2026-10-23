@@ -1,5 +1,7 @@
 import 'package:bizos/bizos_app.dart';
 import 'package:bizos/core/di/injection.dart';
+import 'package:bizos/core/theme/theme_bloc.dart';
+import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -15,5 +17,7 @@ void main() async {
     publishableKey: dotenv.env['PUBLISHABLE_KEY']!,
   );
   await setupDependencies();
-  runApp(const BizosApp());
+  await CurrencyFormatter.init();
+  final initialThemeMode = await ThemeBloc.getInitialThemeMode();
+  runApp(BizosApp(initialThemeMode: initialThemeMode));
 }

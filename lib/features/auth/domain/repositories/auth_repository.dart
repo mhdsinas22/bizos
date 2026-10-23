@@ -9,4 +9,5 @@ abstract class AuthRepository {
     String oldPassword,
     String newPassword,
   );
+  Future<UserModel> updateCurrency(String currencyCode);
 }

@@ -16,9 +16,13 @@ abstract class PersonalExpenseRepository {
   // Category Methods
   Future<List<PersonalExpenseCategoryEntity>> getCategories(String userId);
   Future<PersonalExpenseCategoryEntity> addCategory(
-      PersonalExpenseCategoryEntity category, String userId);
+    PersonalExpenseCategoryEntity category,
+    String userId,
+  );
   Future<void> updateCategory(
-      PersonalExpenseCategoryEntity category, String userId);
+    PersonalExpenseCategoryEntity category,
+    String userId,
+  );
   Future<void> deleteCategory(String categoryId, String userId);
   Future<bool> isCategoryUsed(String categoryName, String userId);
 }

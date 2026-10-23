@@ -1,4 +1,5 @@
 import 'package:bizos/core/utils/app_logger.dart';
+import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
 import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,6 +34,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutRequested>(_onLogoutRequested);
     on<CheckAuthStatus>(_onCheckAuthStatus);
     on<ChangePasswordEvent>(_onChangePassword);
+    on<UpdateUserCurrencyEvent>(_onUpdateUserCurrency);
   }
 
   Future<void> _onLoginRequested(
@@ -42,6 +44,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final user = await loginUseCase.execute(event.email, event.password);
+      CurrencyFormatter.setCurrency(user.currencyCode);
       try {
         final token = await shortcutRepository.getToken();
         if (token == null || token.isEmpty) {
@@ -89,7 +92,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await checkAuthStatusUseCase.execute();
       if (user != null) {
-        print("working:-${user.email}");
+        CurrencyFormatter.setCurrency(user.currencyCode);
         emit(AuthAuthenticated(user));
       } else {
         emit(AuthUnauthenticated());
@@ -128,6 +131,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           user: currentUser,
         ),
       );
+    }
+  }
+
+  Future<void> _onUpdateUserCurrency(
+    UpdateUserCurrencyEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      final updatedUser = await authRepo.updateCurrency(event.currencyCode);
+      CurrencyFormatter.setCurrency(updatedUser.currencyCode);
+      emit(AuthAuthenticated(updatedUser));
+    } catch (e) {
+      AppLogger.error("Failed to update currency in AuthBloc: $e");
     }
   }
 

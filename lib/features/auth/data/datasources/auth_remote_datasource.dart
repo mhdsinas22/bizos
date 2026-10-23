@@ -32,4 +32,10 @@ abstract class AuthRemoteDataSource {
     String oldPassword,
     String newPassword,
   );
+
+  // Update user's preferred ISO 4217 currency code
+  Future<void> updateUserCurrency({
+    required String userId,
+    required String currencyCode,
+  });
 }

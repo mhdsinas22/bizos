@@ -18,9 +18,13 @@ abstract class PersonalExpenseRemoteDatasource {
   // Category methods
   Future<List<PersonalExpenseCategoryModel>> getCategories(String userId);
   Future<PersonalExpenseCategoryModel> addCategory(
-      PersonalExpenseCategoryModel category, String userId);
+    PersonalExpenseCategoryModel category,
+    String userId,
+  );
   Future<void> updateCategory(
-      PersonalExpenseCategoryModel category, String userId);
+    PersonalExpenseCategoryModel category,
+    String userId,
+  );
   Future<void> deleteCategory(String categoryId, String userId);
   Future<bool> isCategoryUsed(String categoryName, String userId);
 }
@@ -68,8 +72,10 @@ class PersonalExpenseRemoteDatasourceImpl
 
       final List<dynamic> list = response as List<dynamic>? ?? [];
       return list
-          .map((item) =>
-              PersonalExpenseModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                PersonalExpenseModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       throw ServerException('Failed to load personal expenses: $e');
@@ -95,7 +101,9 @@ class PersonalExpenseRemoteDatasourceImpl
 
   @override
   Future<void> updateExpense(
-      PersonalExpenseModel expense, String userId) async {
+    PersonalExpenseModel expense,
+    String userId,
+  ) async {
     await _verifyOwnerOnlyAccess(userId);
 
     try {
@@ -147,18 +155,24 @@ class PersonalExpenseRemoteDatasourceImpl
 
       if (startDate != null) {
         query = query.gte(
-            'expense_date', startDate.toIso8601String().split('T')[0]);
+          'expense_date',
+          startDate.toIso8601String().split('T')[0],
+        );
       }
       if (endDate != null) {
         query = query.lte(
-            'expense_date', endDate.toIso8601String().split('T')[0]);
+          'expense_date',
+          endDate.toIso8601String().split('T')[0],
+        );
       }
 
       final response = await query.order('expense_date', ascending: false);
       final List<dynamic> list = response as List<dynamic>? ?? [];
       return list
-          .map((item) =>
-              PersonalExpenseModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                PersonalExpenseModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       throw ServerException('Failed to load filtered personal expenses: $e');
@@ -171,7 +185,8 @@ class PersonalExpenseRemoteDatasourceImpl
 
   @override
   Future<List<PersonalExpenseCategoryModel>> getCategories(
-      String userId) async {
+    String userId,
+  ) async {
     await _verifyOwnerOnlyAccess(userId);
 
     try {
@@ -182,15 +197,16 @@ class PersonalExpenseRemoteDatasourceImpl
 
       final List<dynamic> list = response as List<dynamic>? ?? [];
       final categories = list
-          .map((item) => PersonalExpenseCategoryModel.fromJson(
-              item as Map<String, dynamic>))
+          .map(
+            (item) => PersonalExpenseCategoryModel.fromJson(
+              item as Map<String, dynamic>,
+            ),
+          )
           .toList();
 
       // Separate system categories and custom categories
-      final systemCategories =
-          categories.where((c) => c.isSystem).toList();
-      final customCategories =
-          categories.where((c) => !c.isSystem).toList();
+      final systemCategories = categories.where((c) => c.isSystem).toList();
+      final customCategories = categories.where((c) => !c.isSystem).toList();
 
       // Define default system categories order
       const systemOrder = [
@@ -246,7 +262,9 @@ class PersonalExpenseRemoteDatasourceImpl
 
   @override
   Future<PersonalExpenseCategoryModel> addCategory(
-      PersonalExpenseCategoryModel category, String userId) async {
+    PersonalExpenseCategoryModel category,
+    String userId,
+  ) async {
     await _verifyOwnerOnlyAccess(userId);
 
     final cleanName = category.name.trim();
@@ -290,7 +308,9 @@ class PersonalExpenseRemoteDatasourceImpl
 
   @override
   Future<void> updateCategory(
-      PersonalExpenseCategoryModel category, String userId) async {
+    PersonalExpenseCategoryModel category,
+    String userId,
+  ) async {
     await _verifyOwnerOnlyAccess(userId);
 
     final cleanName = category.name.trim();

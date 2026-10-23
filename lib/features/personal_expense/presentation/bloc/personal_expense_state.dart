@@ -21,7 +21,8 @@ class PersonalExpenseLoaded extends PersonalExpenseState {
   final String highestCategory;
   final Map<String, double> categoryAnalytics;
   final Map<String, double> monthlyTrend;
-  final String currentFilter; // 'today', 'week', 'month', 'year', 'custom', 'all'
+  final String
+  currentFilter; // 'today', 'week', 'month', 'year', 'custom', 'all'
   final String currentSort; // 'newest', 'oldest', 'highest', 'lowest'
   final String searchQuery;
   final DateTime? customStartDate;
@@ -77,20 +78,20 @@ class PersonalExpenseLoaded extends PersonalExpenseState {
 
   @override
   List<Object?> get props => [
-        expenses,
-        filteredExpenses,
-        totalExpense,
-        monthlyExpense,
-        todayExpense,
-        highestCategory,
-        categoryAnalytics,
-        monthlyTrend,
-        currentFilter,
-        currentSort,
-        searchQuery,
-        customStartDate,
-        customEndDate,
-      ];
+    expenses,
+    filteredExpenses,
+    totalExpense,
+    monthlyExpense,
+    todayExpense,
+    highestCategory,
+    categoryAnalytics,
+    monthlyTrend,
+    currentFilter,
+    currentSort,
+    searchQuery,
+    customStartDate,
+    customEndDate,
+  ];
 }
 
 class PersonalExpenseError extends PersonalExpenseState {

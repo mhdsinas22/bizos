@@ -9,7 +9,7 @@ class PersonalExpenseCategoryBloc
   final PersonalExpenseRepository repository;
 
   PersonalExpenseCategoryBloc({required this.repository})
-      : super(PersonalExpenseCategoryInitial()) {
+    : super(PersonalExpenseCategoryInitial()) {
     on<LoadPersonalCategoriesEvent>(_onLoadCategories);
     on<AddPersonalCategoryEvent>(_onAddCategory);
     on<UpdatePersonalCategoryEvent>(_onUpdateCategory);
@@ -25,7 +25,11 @@ class PersonalExpenseCategoryBloc
       final categories = await repository.getCategories(event.userId);
       emit(PersonalExpenseCategoryLoaded(categories: categories));
     } catch (e) {
-      emit(PersonalExpenseCategoryError(e.toString().replaceAll('Exception: ', '')));
+      emit(
+        PersonalExpenseCategoryError(
+          e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -38,18 +42,25 @@ class PersonalExpenseCategoryBloc
       currentList = (state as PersonalExpenseCategoryLoaded).categories;
     }
     try {
-      final newCategory = await repository.addCategory(event.category, event.userId);
+      final newCategory = await repository.addCategory(
+        event.category,
+        event.userId,
+      );
       final updatedCategories = await repository.getCategories(event.userId);
-      emit(PersonalExpenseCategoryLoaded(
-        categories: updatedCategories,
-        newlyAddedCategory: newCategory,
-        message: 'Category added successfully',
-      ));
+      emit(
+        PersonalExpenseCategoryLoaded(
+          categories: updatedCategories,
+          newlyAddedCategory: newCategory,
+          message: 'Category added successfully',
+        ),
+      );
     } catch (e) {
-      emit(PersonalExpenseCategoryError(
-        e.toString().replaceAll('Exception: ', ''),
-        currentCategories: currentList,
-      ));
+      emit(
+        PersonalExpenseCategoryError(
+          e.toString().replaceAll('Exception: ', ''),
+          currentCategories: currentList,
+        ),
+      );
     }
   }
 
@@ -64,15 +75,19 @@ class PersonalExpenseCategoryBloc
     try {
       await repository.updateCategory(event.category, event.userId);
       final updatedCategories = await repository.getCategories(event.userId);
-      emit(PersonalExpenseCategoryLoaded(
-        categories: updatedCategories,
-        message: 'Category updated successfully',
-      ));
+      emit(
+        PersonalExpenseCategoryLoaded(
+          categories: updatedCategories,
+          message: 'Category updated successfully',
+        ),
+      );
     } catch (e) {
-      emit(PersonalExpenseCategoryError(
-        e.toString().replaceAll('Exception: ', ''),
-        currentCategories: currentList,
-      ));
+      emit(
+        PersonalExpenseCategoryError(
+          e.toString().replaceAll('Exception: ', ''),
+          currentCategories: currentList,
+        ),
+      );
     }
   }
 
@@ -91,24 +106,30 @@ class PersonalExpenseCategoryBloc
       );
 
       if (isUsed) {
-        emit(PersonalExpenseCategoryError(
-          'This category is currently used by existing expenses and cannot be deleted.',
-          currentCategories: currentList,
-        ));
+        emit(
+          PersonalExpenseCategoryError(
+            'This category is currently used by existing expenses and cannot be deleted.',
+            currentCategories: currentList,
+          ),
+        );
         return;
       }
 
       await repository.deleteCategory(event.category.id, event.userId);
       final updatedCategories = await repository.getCategories(event.userId);
-      emit(PersonalExpenseCategoryLoaded(
-        categories: updatedCategories,
-        message: 'Category deleted successfully',
-      ));
+      emit(
+        PersonalExpenseCategoryLoaded(
+          categories: updatedCategories,
+          message: 'Category deleted successfully',
+        ),
+      );
     } catch (e) {
-      emit(PersonalExpenseCategoryError(
-        e.toString().replaceAll('Exception: ', ''),
-        currentCategories: currentList,
-      ));
+      emit(
+        PersonalExpenseCategoryError(
+          e.toString().replaceAll('Exception: ', ''),
+          currentCategories: currentList,
+        ),
+      );
     }
   }
 }

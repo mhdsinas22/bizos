@@ -37,7 +37,12 @@ class FakeAuthRepository implements AuthRepository {
     String newPassword,
   ) async =>
       true;
+
+  @override
+  Future<UserModel> updateCurrency(String currencyCode) async =>
+      user.copyWith(currencyCode: currencyCode);
 }
+
 
 class FakeNotificationRepository implements NotificationRepository {
   @override

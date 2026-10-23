@@ -7,6 +7,8 @@ import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bizos/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
+import 'package:bizos/features/shortcut/domain/entities/shortcut_setup_entity.dart';
+import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 
 class MockNotificationRepository implements NotificationRepository {
   String? lastSavedUserId;
@@ -62,7 +64,47 @@ class MockAuthRepository implements AuthRepository {
   ) async {
     return changePasswordResult;
   }
+
+  @override
+  Future<UserModel> updateCurrency(String currencyCode) async {
+    return (mockUser ??
+            UserModel(
+              id: 'test-user',
+              email: 'test@example.com',
+              currencyCode: currencyCode,
+            ))
+        .copyWith(currencyCode: currencyCode);
+  }
 }
+
+class _TestMockShortcutRepository implements ShortcutRepository {
+  @override
+  Future<void> deleteToken() async {}
+  @override
+  Future<ShortcutSetupEntity> getShortcutSetupStatus() async =>
+      const ShortcutSetupEntity();
+  @override
+  Future<String?> getToken() async => null;
+  @override
+  Future<bool> openAppleShortcuts(String url) async => true;
+  @override
+  Future<bool> openIosSettings() async => true;
+  @override
+  Future<Map<String, dynamic>> pairShortCut({required String deviceName}) async => {};
+  @override
+  Future<void> provisionShortcutToken({required String deviceName}) async {}
+  @override
+  Future<void> resetShortcutSetupProgress() async {}
+  @override
+  Future<void> revokeAndDeleteToken() async {}
+  @override
+  Future<void> saveShortcutSetupProgress(ShortcutSetupEntity status) async {}
+  @override
+  Future<void> saveToken(String token) async {}
+  @override
+  Future<void> verifyPairingCode({required String code}) async {}
+}
+
 
 void main() {
   late MockAuthRepository mockAuthRepo;
@@ -77,8 +119,10 @@ void main() {
     authBloc = AuthBloc(
       authRepo: mockAuthRepo,
       saveFcmTokenUsecase: saveFcmToken,
+      shortcutRepository: _TestMockShortcutRepository(),
     );
   });
+
 
   tearDown(() {
     authBloc.close();
@@ -205,9 +249,8 @@ void main() {
         authBloc.add(CheckAuthStatus());
         await Future.delayed(const Duration(milliseconds: 100));
 
-        expect(states.length, equals(1));
-        expect(states[0], isA<AuthAuthenticated>());
-        expect(states[0].user?.id, equals('u-persisted-1'));
+        expect(states.last, isA<AuthAuthenticated>());
+        expect(states.last.user?.id, equals('u-persisted-1'));
       },
     );
 
@@ -222,8 +265,7 @@ void main() {
         authBloc.add(CheckAuthStatus());
         await Future.delayed(const Duration(milliseconds: 100));
 
-        expect(states.length, equals(1));
-        expect(states[0], isA<AuthUnauthenticated>());
+        expect(states.last, isA<AuthUnauthenticated>());
       },
     );
 

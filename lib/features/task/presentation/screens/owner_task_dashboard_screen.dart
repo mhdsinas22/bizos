@@ -74,6 +74,8 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final authState = context.watch<AuthBloc>().state;
     final user = authState.user;
 
@@ -160,9 +162,18 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
                       pinned: true,
                       delegate: _SliverPersistentHeaderDelegate(
                         TabBar(
-                          indicatorColor: AppTheme.primaryColor,
-                          labelColor: AppTheme.primaryColor,
-                          unselectedLabelColor: Colors.grey,
+                          indicatorColor: isDark
+                              ? AppTheme.primaryLightColor
+                              : AppTheme.primaryColor,
+                          labelColor: isDark
+                              ? AppTheme.primaryLightColor
+                              : AppTheme.primaryColor,
+                          unselectedLabelColor: isDark
+                              ? AppTheme.darkTextSecondary
+                              : AppTheme.lightTextSecondary,
+                          dividerColor: isDark
+                              ? AppTheme.darkBorder
+                              : AppTheme.lightBorder,
                           labelStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -173,6 +184,7 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
                             Tab(text: 'Staff Tasks'),
                           ],
                         ),
+                        backgroundColor: theme.scaffoldBackgroundColor,
                       ),
                     ),
                   ];
@@ -401,8 +413,9 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
 
 class _SliverPersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
+  final Color backgroundColor;
 
-  _SliverPersistentHeaderDelegate(this.tabBar);
+  _SliverPersistentHeaderDelegate(this.tabBar, {required this.backgroundColor});
 
   @override
   double get minExtent => tabBar.preferredSize.height;
@@ -416,12 +429,11 @@ class _SliverPersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final theme = Theme.of(context);
-    return Container(color: theme.scaffoldBackgroundColor, child: tabBar);
+    return Material(color: backgroundColor, child: tabBar);
   }
 
   @override
   bool shouldRebuild(covariant _SliverPersistentHeaderDelegate oldDelegate) {
-    return false;
+    return true;
   }
 }

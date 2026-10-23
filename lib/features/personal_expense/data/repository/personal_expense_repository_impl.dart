@@ -23,7 +23,10 @@ class PersonalExpenseRepositoryImpl implements PersonalExpenseRepository {
   }
 
   @override
-  Future<void> updateExpense(PersonalExpenseEntity expense, String userId) async {
+  Future<void> updateExpense(
+    PersonalExpenseEntity expense,
+    String userId,
+  ) async {
     final model = PersonalExpenseModel.fromEntity(expense);
     return remoteDataSource.updateExpense(model, userId);
   }
@@ -52,7 +55,8 @@ class PersonalExpenseRepositoryImpl implements PersonalExpenseRepository {
     final expenses = await getExpenses(userId);
     final Map<String, double> analytics = {};
     for (final expense in expenses) {
-      analytics[expense.category] = (analytics[expense.category] ?? 0.0) + expense.amount;
+      analytics[expense.category] =
+          (analytics[expense.category] ?? 0.0) + expense.amount;
     }
     return analytics;
   }
@@ -62,21 +66,27 @@ class PersonalExpenseRepositoryImpl implements PersonalExpenseRepository {
   // --------------------------------------------------------------------------
 
   @override
-  Future<List<PersonalExpenseCategoryEntity>> getCategories(String userId) async {
+  Future<List<PersonalExpenseCategoryEntity>> getCategories(
+    String userId,
+  ) async {
     final models = await remoteDataSource.getCategories(userId);
     return models.cast<PersonalExpenseCategoryEntity>();
   }
 
   @override
   Future<PersonalExpenseCategoryEntity> addCategory(
-      PersonalExpenseCategoryEntity category, String userId) async {
+    PersonalExpenseCategoryEntity category,
+    String userId,
+  ) async {
     final model = PersonalExpenseCategoryModel.fromEntity(category);
     return remoteDataSource.addCategory(model, userId);
   }
 
   @override
   Future<void> updateCategory(
-      PersonalExpenseCategoryEntity category, String userId) async {
+    PersonalExpenseCategoryEntity category,
+    String userId,
+  ) async {
     final model = PersonalExpenseCategoryModel.fromEntity(category);
     return remoteDataSource.updateCategory(model, userId);
   }

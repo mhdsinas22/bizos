@@ -33,7 +33,8 @@ class ExpenseFilterBar extends StatelessWidget {
               primary: AppTheme.primaryColor,
               onPrimary: Colors.white,
               surface: Theme.of(context).cardColor,
-              onSurface: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+              onSurface:
+                  Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
             ),
           ),
           child: child!,
@@ -72,9 +73,12 @@ class ExpenseFilterBar extends StatelessWidget {
           final isSelected = selectedFilter == type;
 
           String displayLabel = label;
-          if (type == 'custom' && customStartDate != null && customEndDate != null) {
+          if (type == 'custom' &&
+              customStartDate != null &&
+              customEndDate != null) {
             final format = DateFormat('MM/dd');
-            displayLabel = '${format.format(customStartDate!)} - ${format.format(customEndDate!)}';
+            displayLabel =
+                '${format.format(customStartDate!)} - ${format.format(customEndDate!)}';
           }
 
           return Padding(
@@ -91,7 +95,9 @@ class ExpenseFilterBar extends StatelessWidget {
               ),
               selected: isSelected,
               selectedColor: AppTheme.primaryColor,
-              backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+              backgroundColor: isDark
+                  ? AppTheme.darkSurface
+                  : AppTheme.lightSurface,
               onSelected: (selected) {
                 if (type == 'custom') {
                   _selectCustomRange(context);

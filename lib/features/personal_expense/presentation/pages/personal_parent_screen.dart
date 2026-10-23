@@ -6,6 +6,7 @@ import 'package:bizos/features/money_management/presentation/bloc/personal_money
 import 'package:bizos/features/money_management/presentation/pages/money_management_dashboard.dart';
 import 'package:bizos/features/task/presentation/screens/personal_todo_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PersonalParentScreen extends StatefulWidget {
@@ -43,12 +44,13 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
 
   void _onSegmentTapped(int index) {
     if (_selectedIndex == index) return;
+    HapticFeedback.lightImpact();
     setState(() {
       _selectedIndex = index;
     });
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 280),
       curve: Curves.easeInOutCubic,
     );
   }
@@ -60,44 +62,43 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
 
     return Column(
       children: [
-        // Top Apple-style Segmented Control Header with Quick Add action
+        // Top Pill-style Segmented Control Header
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           color: theme.scaffoldBackgroundColor,
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.grey.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildSegmentItem(
-                        0,
-                        'To-Do',
-                        Icons.check_circle_outline_rounded,
-                      ),
-                      _buildSegmentItem(
-                        1,
-                        'Expenses',
-                        Icons.receipt_long_rounded,
-                      ),
-                      _buildSegmentItem(
-                        2,
-                        'Money',
-                        Icons.account_balance_wallet_rounded,
-                      ),
-                    ],
-                  ),
-                ),
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.darkCard : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark ? AppTheme.darkBorder : const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
-            ],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                _buildSegmentItem(
+                  0,
+                  'To-Do',
+                  Icons.check_circle_outline_rounded,
+                ),
+                _buildSegmentItem(1, 'Expenses', Icons.receipt_long_rounded),
+                _buildSegmentItem(
+                  2,
+                  'Money',
+                  Icons.account_balance_wallet_rounded,
+                ),
+              ],
+            ),
           ),
         ),
 
@@ -106,9 +107,12 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
           child: PageView(
             controller: _pageController,
             onPageChanged: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
+              if (_selectedIndex != index) {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _selectedIndex = index;
+                });
+              }
             },
             physics: const BouncingScrollPhysics(),
             children: const [
@@ -126,50 +130,69 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
     final isSelected = _selectedIndex == index;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
 
     return Expanded(
       child: GestureDetector(
         onTap: () => _onSegmentTapped(index),
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOutCubic,
           decoration: BoxDecoration(
-            color: isSelected
-                ? (isDark ? const Color(0xFF2C2C2E) : Colors.white)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(17),
+            color: isSelected ? primaryColor : Colors.transparent,
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [
+                      primaryColor,
+                      Color.lerp(primaryColor, const Color(0xFF3730A3), 0.25) ??
+                          primaryColor,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(16),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.3 : 0.08,
-                      ),
-                      blurRadius: 6,
+                      color: primaryColor.withValues(alpha: 0.35),
+                      blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ]
                 : [],
           ),
+          alignment: Alignment.center,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                size: 16,
+                size: 19,
                 color: isSelected
-                    ? AppTheme.primaryColor
-                    : (isDark ? Colors.white60 : Colors.black54),
+                    ? Colors.white
+                    : (isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF334155)),
               ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? (isDark ? Colors.white : AppTheme.primaryColor)
-                      : (isDark ? Colors.white60 : Colors.black54),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    letterSpacing: -0.2,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF334155)),
+                  ),
                 ),
               ),
             ],

@@ -3,6 +3,7 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bizos/features/currency/presentation/bloc/currency_bloc.dart';
 import 'package:bizos/features/personal_expense/domain/entities/personal_expense_entity.dart';
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_bloc.dart';
 import 'package:bizos/features/personal_expense/presentation/bloc/personal_expense_state.dart';
@@ -73,7 +74,7 @@ class _ExportPersonalExpensePdfModalState
         final e = _customEndDate ?? now;
         return (
           DateTime(s.year, s.month, s.day),
-          DateTime(e.year, e.month, e.day, 23, 59, 59)
+          DateTime(e.year, e.month, e.day, 23, 59, 59),
         );
       default:
         return (DateTime(now.year, now.month, 1), now);
@@ -104,12 +105,16 @@ class _ExportPersonalExpensePdfModalState
     DateTime end,
   ) {
     return allExpenses.where((e) {
-      return e.expenseDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
+      return e.expenseDate.isAfter(
+            start.subtract(const Duration(seconds: 1)),
+          ) &&
           e.expenseDate.isBefore(end.add(const Duration(seconds: 1)));
     }).toList();
   }
 
-  Future<Uint8List?> _generatePdf(List<PersonalExpenseEntity> allExpenses) async {
+  Future<Uint8List?> _generatePdf(
+    List<PersonalExpenseEntity> allExpenses,
+  ) async {
     final (start, end) = _getDateRange();
     final filtered = _filterExpenses(allExpenses, start, end);
     final authState = context.read<AuthBloc>().state;
@@ -177,6 +182,7 @@ class _ExportPersonalExpensePdfModalState
 
   @override
   Widget build(BuildContext context) {
+    context.watch<CurrencyBloc>();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -282,8 +288,9 @@ class _ExportPersonalExpensePdfModalState
                       color: isSelected
                           ? AppTheme.primaryColor
                           : theme.textTheme.bodyMedium?.color,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   );
                 }).toList(),
@@ -333,9 +340,7 @@ class _ExportPersonalExpensePdfModalState
                     const SizedBox(height: 4),
                     Text(
                       '${DateFormat('dd MMM yyyy').format(start)} - ${DateFormat('dd MMM yyyy').format(end)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
                     ),
                   ],
                 ),

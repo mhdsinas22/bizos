@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/utils/responsive_breakpoints.dart';
 import 'package:bizos/core/widgets/voryn_bottom_nav_bar.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/business/presentation/screen/business_list_screen.dart';
 import 'package:bizos/features/dashboard/presentation/widgets/dashboard_app_bar.dart';
 import 'package:bizos/features/dashboard/presentation/widgets/dashboard_view.dart';
@@ -36,7 +35,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   Widget build(BuildContext context) {
     final authState = context.watch<AuthBloc>().state;
     if (authState.user == null) {
-      return const LoginScreen();
+      return const SizedBox.shrink();
     }
 
     final user = authState.user!;

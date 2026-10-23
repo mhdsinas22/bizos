@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTheme {
   // Brand Colors - Sleek Indigo SaaS Palette
@@ -46,6 +47,13 @@ class AppTheme {
         backgroundColor: lightSurface,
         elevation: 0,
         scrolledUnderElevation: 0.5,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+          systemNavigationBarColor: lightSurface,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
         iconTheme: IconThemeData(color: lightTextPrimary, size: 20),
         centerTitle: false,
         titleTextStyle: TextStyle(
@@ -148,6 +156,12 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: primaryColor,
+        unselectedLabelColor: lightTextSecondary,
+        indicatorColor: primaryColor,
+        dividerColor: lightBorder,
+      ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           color: lightTextPrimary,
@@ -210,6 +224,13 @@ class AppTheme {
         backgroundColor: darkBg,
         elevation: 0,
         scrolledUnderElevation: 0.5,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+          systemNavigationBarColor: darkBg,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
         iconTheme: IconThemeData(color: darkTextPrimary, size: 20),
         centerTitle: false,
         titleTextStyle: TextStyle(
@@ -314,6 +335,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: darkBorder, width: 1),
         ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: primaryLightColor,
+        unselectedLabelColor: darkTextSecondary,
+        indicatorColor: primaryLightColor,
+        dividerColor: darkBorder,
       ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(

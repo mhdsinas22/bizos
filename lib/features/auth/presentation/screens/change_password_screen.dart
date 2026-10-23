@@ -7,6 +7,7 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
+import 'package:bizos/bizos_app.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -61,7 +62,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
             );
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              MaterialPageRoute(builder: (_) => const AppStartupFlow()),
               (route) => false,
             );
           } else if (state is AuthError) {

@@ -21,12 +21,12 @@ class PersonalExpenseCategoryEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        ownerId,
-        name,
-        icon,
-        color,
-        isSystem,
-        createdAt,
-      ];
+    id,
+    ownerId,
+    name,
+    icon,
+    color,
+    isSystem,
+    createdAt,
+  ];
 }

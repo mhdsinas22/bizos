@@ -17,6 +17,7 @@ class UserModel extends UserEntity {
     List<String>? permissions,
     List<String>? customPermissions,
     super.businessPermissions = const {},
+    super.currencyCode = 'INR',
   }) : super(
          userid: userid ?? userId ?? '',
          customPermissions: customPermissions ?? permissions ?? const [],
@@ -38,6 +39,12 @@ class UserModel extends UserEntity {
       });
     }
 
+    final rawCurrency = json['currency_code'] ?? json['currencyCode'];
+    final currencyCode =
+        (rawCurrency != null && rawCurrency.toString().trim().isNotEmpty)
+        ? rawCurrency.toString().trim().toUpperCase()
+        : 'INR';
+
     return UserModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -50,6 +57,7 @@ class UserModel extends UserEntity {
       password: json['password']?.toString() ?? '',
       customPermissions: custPerms,
       businessPermissions: bizPerms,
+      currencyCode: currencyCode,
     );
   }
 
@@ -73,6 +81,7 @@ class UserModel extends UserEntity {
       'auth_user_id': authUserId,
       'customPermissions': customPermissions,
       'businessPermissions': businessPermissions,
+      'currency_code': currencyCode,
     };
     if (includePassword && password.isNotEmpty) {
       map['password'] = password;
@@ -97,6 +106,7 @@ class UserModel extends UserEntity {
     String? password,
     List<String>? customPermissions,
     Map<String, List<String>>? businessPermissions,
+    String? currencyCode,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -111,6 +121,7 @@ class UserModel extends UserEntity {
       password: password ?? this.password,
       customPermissions: customPermissions ?? this.customPermissions,
       businessPermissions: businessPermissions ?? this.businessPermissions,
+      currencyCode: currencyCode ?? this.currencyCode,
     );
   }
 }

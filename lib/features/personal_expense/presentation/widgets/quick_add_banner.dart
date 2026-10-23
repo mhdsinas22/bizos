@@ -6,10 +6,7 @@ import 'package:bizos/core/theme/app_theme.dart';
 class QuickAddBanner extends StatelessWidget {
   final VoidCallback onTap;
 
-  const QuickAddBanner({
-    super.key,
-    required this.onTap,
-  });
+  const QuickAddBanner({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +77,9 @@ class QuickAddBanner extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
