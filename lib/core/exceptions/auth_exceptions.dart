@@ -42,3 +42,9 @@ class NetworkException extends AppAuthException {
 class ServerException extends AppAuthException {
   ServerException([super.message = 'Something went wrong. Please try again.']);
 }
+
+class SessionExpiredException extends AppAuthException {
+  SessionExpiredException([
+    super.message = 'Your session has expired. Please log in again.',
+  ]);
+}

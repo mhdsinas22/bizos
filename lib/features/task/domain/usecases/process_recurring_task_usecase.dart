@@ -13,22 +13,33 @@ class ProcessRecurringTaskUseCase {
   /// and has an active recurring schedule (Daily, Weekly, Monthly, Yearly),
   /// calculates the next due date and generates the single next occurrence.
   Future<TaskModel?> execute(TaskModel task) async {
-    final statusStr = task.status;
-    final isFinalState = statusStr == 'Completed' ||
-        statusStr == 'Completed Late' ||
-        statusStr == 'Not Completed';
+    const finalStatuses = {'Completed', 'Completed Late', 'Not Completed'};
 
-    if (!isFinalState) return null;
+    if (!finalStatuses.contains(task.status.trim())) {
+      return null;
+    }
 
     final dbRepeat = TaskRepeatMapper.toDb(task.repeat);
     if (dbRepeat == TaskRepeatMapper.none) return null;
 
-    final nextDueDate = calculateNextDueDate(task.dueDate, dbRepeat);
+    final now = DateTime.now();
+    var nextDueDate = calculateNextDueDate(task.dueDate, dbRepeat);
+    while (!nextDueDate.isAfter(now)) {
+      final followingDate = calculateNextDueDate(nextDueDate, dbRepeat);
+      if (!followingDate.isAfter(nextDueDate)) {
+        throw StateError('Recurring task date did not advance');
+      }
+      nextDueDate = followingDate;
+    }
 
     final userId = task.createdBy.trim().isNotEmpty
-        ? task.createdBy
-        : task.assignedto;
-
+        ? task.createdBy.trim()
+        : task.assignedto.trim();
+    if (userId.isEmpty || userId == 'null') {
+      throw StateError(
+        'Cannot create recurring task: createdBy and assignedto are empty.',
+      );
+    }
     // Duplicate Prevention Check
     final exists = await repository.checkOccurrenceExists(
       title: task.title,
@@ -52,7 +63,10 @@ class ProcessRecurringTaskUseCase {
     return newTask;
   }
 
-  static DateTime calculateNextDueDate(DateTime currentDueDate, String repeatType) {
+  static DateTime calculateNextDueDate(
+    DateTime currentDueDate,
+    String repeatType,
+  ) {
     final cleanRepeat = TaskRepeatMapper.toDb(repeatType);
     switch (cleanRepeat) {
       case TaskRepeatMapper.daily:

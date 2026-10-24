@@ -19,10 +19,7 @@ abstract class MoneyManagementRemoteDatasource {
     MoneyTransactionModel transaction,
     bool isPersonal,
   );
-  Future<MoneyTransactionModel?> getTransactionById(
-    String id,
-    bool isPersonal,
-  );
+  Future<MoneyTransactionModel?> getTransactionById(String id, bool isPersonal);
   Future<MoneyTransactionModel?> deleteTransaction(String id, bool isPersonal);
 
   // History Methods
@@ -187,7 +184,10 @@ class MoneyManagementRemoteDatasourceImpl
           nameOnlyQuery = nameOnlyQuery.eq('business_id', businessId);
         }
 
-        final fallbackList = await nameOnlyQuery.order('created_at', ascending: false);
+        final fallbackList = await nameOnlyQuery.order(
+          'created_at',
+          ascending: false,
+        );
         if (fallbackList is List && fallbackList.isNotEmpty) {
           return MoneyTransactionModel.fromJson(fallbackList.first);
         }
@@ -219,9 +219,13 @@ class MoneyManagementRemoteDatasourceImpl
       if (existingParent != null) {
         // Customer already exists -> update existing parent and insert history record
         final double newTotalAmount =
-            ((existingParent.amount + transaction.amount) * 100).roundToDouble() / 100.0;
+            ((existingParent.amount + transaction.amount) * 100)
+                .roundToDouble() /
+            100.0;
         final double newPaidAmount =
-            ((existingParent.paidAmount + transaction.paidAmount) * 100).roundToDouble() / 100.0;
+            ((existingParent.paidAmount + transaction.paidAmount) * 100)
+                .roundToDouble() /
+            100.0;
         double newBalanceAmount = newTotalAmount - newPaidAmount;
         if (newBalanceAmount < 0) newBalanceAmount = 0.0;
         newBalanceAmount = (newBalanceAmount * 100).roundToDouble() / 100.0;
@@ -234,7 +238,9 @@ class MoneyManagementRemoteDatasourceImpl
           'status': newBalanceAmount > 0 ? 'Pending' : 'Completed',
         };
         if (transaction.dueDate != null) {
-          updateData['due_date'] = transaction.dueDate!.toUtc().toIso8601String();
+          updateData['due_date'] = transaction.dueDate!
+              .toUtc()
+              .toIso8601String();
         }
         if (transaction.phone.isNotEmpty && existingParent.phone.isEmpty) {
           updateData['phone'] = transaction.phone;
@@ -253,8 +259,8 @@ class MoneyManagementRemoteDatasourceImpl
           'notes': transaction.notes.isNotEmpty
               ? transaction.notes
               : (transaction.transactionType == 'receive'
-                  ? 'Receivable Added'
-                  : 'Debt Added'),
+                    ? 'Receivable Added'
+                    : 'Debt Added'),
           'created_at': DateTime.now().toUtc().toIso8601String(),
         };
         if (isPersonal && transaction.userId != null) {
@@ -320,8 +326,8 @@ class MoneyManagementRemoteDatasourceImpl
         'notes': createdTransaction.notes.isNotEmpty
             ? createdTransaction.notes
             : (createdTransaction.transactionType == 'receive'
-                ? 'Receivable Created'
-                : 'Debt Created'),
+                  ? 'Receivable Created'
+                  : 'Debt Created'),
         'created_at': DateTime.now().toUtc().toIso8601String(),
       };
       if (isPersonal && createdTransaction.userId != null) {
@@ -377,9 +383,12 @@ class MoneyManagementRemoteDatasourceImpl
       // STEP 2: IF EXISTING PARENT TRANSACTION EXISTS -> Update parent & insert history 'debt_added'
       if (activeParent != null) {
         final double newTotalAmount =
-            (activeParent.amount * 100 + debt.amount * 100).roundToDouble() / 100.0;
+            (activeParent.amount * 100 + debt.amount * 100).roundToDouble() /
+            100.0;
         final double newBalanceAmount =
-            (activeParent.balanceAmount * 100 + debt.amount * 100).roundToDouble() / 100.0;
+            (activeParent.balanceAmount * 100 + debt.amount * 100)
+                .roundToDouble() /
+            100.0;
 
         final updateData = <String, dynamic>{
           'amount': newTotalAmount,
@@ -440,7 +449,10 @@ class MoneyManagementRemoteDatasourceImpl
       } catch (e) {
         if (insertedId != null && insertedId.isNotEmpty) {
           try {
-            await supabaseClient.from(parentTable).delete().eq('id', insertedId);
+            await supabaseClient
+                .from(parentTable)
+                .delete()
+                .eq('id', insertedId);
           } catch (_) {}
         }
         rethrow;
@@ -942,9 +954,12 @@ class MoneyManagementRemoteDatasourceImpl
 
     double updatedTotalAmount;
     if (initialDebt > 0 || addedDebt > 0) {
-      updatedTotalAmount = ((initialDebt + addedDebt + netAdjustment) * 100).roundToDouble() / 100.0;
+      updatedTotalAmount =
+          ((initialDebt + addedDebt + netAdjustment) * 100).roundToDouble() /
+          100.0;
     } else {
-      updatedTotalAmount = ((parentModel.amount + netAdjustment) * 100).roundToDouble() / 100.0;
+      updatedTotalAmount =
+          ((parentModel.amount + netAdjustment) * 100).roundToDouble() / 100.0;
     }
 
     double balance = updatedTotalAmount - totalPaid;

@@ -10,4 +10,6 @@ abstract class AuthRepository {
     String newPassword,
   );
   Future<UserModel> updateCurrency(String currencyCode);
+  Stream<dynamic> get onAuthStateChange => const Stream.empty();
 }
+

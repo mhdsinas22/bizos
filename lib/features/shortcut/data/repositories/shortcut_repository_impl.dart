@@ -111,7 +111,6 @@ class ShortcutRepositoryImpl implements ShortcutRepository {
   @override
   Future<void> revokeAndDeleteToken() async {
     final token = await getToken();
-    AppLogger.info("TokenL-${token}");
     if (token == null || token.isEmpty) return;
 
     await shortcutRemoteDatasource.revokeShortcutToken(token: token);

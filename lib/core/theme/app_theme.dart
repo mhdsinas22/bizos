@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 class AppTheme {
   // Brand Colors - Sleek Indigo SaaS Palette
-  static const Color primaryColor = Color(0xFF4F46E5); // Indigo 600
+  static const Color primaryColor = Color(0xFF9acb4c); // Indigo 600
   static const Color primaryLightColor = Color(0xFF818CF8); // Indigo 400
   static const Color primaryDarkColor = Color(0xFF3730A3); // Indigo 800
   static const Color accentColor = Color(0xFF10B981); // Emerald 500

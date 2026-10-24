@@ -10,10 +10,13 @@ import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:bizos/core/utils/app_logger.dart';
-import 'package:bizos/features/auth/presentation/screens/staff_login_screen.dart';
+import 'package:bizos/bizos_app.dart';
+import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? sessionExpiredMessage;
+
+  const LoginScreen({super.key, this.sessionExpiredMessage});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -23,6 +26,27 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _hasNavigatedToDashboard = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.sessionExpiredMessage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.sessionExpiredMessage!),
+              backgroundColor: AppTheme.error,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -32,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submit() {
+    if (context.read<AuthBloc>().state.status == AuthStatus.loading) return;
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         LoginRequested(
@@ -80,16 +105,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
+        listenWhen: (previous, current) =>
+            previous.status != current.status || previous.user != current.user,
         listener: (context, state) {
           AppLogger.info('Current Status: ${state.status}');
           if (state.errorMessage != null) {
             AppLogger.error('Error Message: ${state.errorMessage}');
           }
 
-          if (state.status == AuthStatus.authenticated && state.user != null) {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
+          if (state.status == AuthStatus.authenticated &&
+              state.user != null &&
+              !_hasNavigatedToDashboard) {
+            _hasNavigatedToDashboard = true;
+            AppLogger.info('NAVIGATING TO MAIN DASHBOARD');
+            final navigator = appNavigatorKey.currentState ??
+                Navigator.of(context, rootNavigator: true);
+            navigator.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainDashboardScreen()),
+              (route) => false,
+            );
           }
 
           if (state.status == AuthStatus.error) {
@@ -237,35 +271,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       : null,
                                 ),
                                 const SizedBox(height: 24),
-                                 CustomButton(
+                                CustomButton(
                                   text: 'Sign In',
                                   onPressed: _submit,
                                   isLoading: state.status == AuthStatus.loading,
                                 ),
                                 const SizedBox(height: 12),
-                                OutlinedButton.icon(
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const StaffLoginScreen(),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.badge_outlined,
-                                    size: 18,
-                                  ),
-                                  label: const Text('Staff Portal Login'),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                           ),

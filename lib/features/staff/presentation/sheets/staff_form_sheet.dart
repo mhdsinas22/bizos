@@ -37,6 +37,8 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
   bool _canAddTasks = true;
   bool _canViewAccounts = false;
   bool _isSubmitting = false;
+  String? _errorMessage;
+  OverlayEntry? _floatingSnackBarEntry;
 
   List<String> selectedBusinessIds = [];
 
@@ -46,6 +48,10 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
     final authState = context.read<AuthBloc>().state;
     final currentUserId = authState.user?.id ?? '';
     context.read<BusinessBloc>().add(FetchBusinessesEvent(currentUserId));
+    _nameController.addListener(_clearErrorIfAny);
+    _emailController.addListener(_clearErrorIfAny);
+    _phoneController.addListener(_clearErrorIfAny);
+    _passwordController.addListener(_clearErrorIfAny);
     if (widget.staff != null) {
       _nameController.text = widget.staff!.name;
       _emailController.text = widget.staff!.email.isNotEmpty
@@ -57,6 +63,14 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
       _canAddTasks = widget.staff!.hasPermission('add_tasks');
       _canViewAccounts = widget.staff!.hasPermission('view_accounts');
       _loadAssignedBusinesses();
+    }
+  }
+
+  void _clearErrorIfAny() {
+    if (_errorMessage != null && mounted) {
+      setState(() {
+        _errorMessage = null;
+      });
     }
   }
 
@@ -76,11 +90,110 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
 
   @override
   void dispose() {
+    _dismissFloatingSnackBar();
+    _nameController.removeListener(_clearErrorIfAny);
+    _emailController.removeListener(_clearErrorIfAny);
+    _phoneController.removeListener(_clearErrorIfAny);
+    _passwordController.removeListener(_clearErrorIfAny);
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _dismissFloatingSnackBar() {
+    _floatingSnackBarEntry?.remove();
+    _floatingSnackBarEntry = null;
+  }
+
+  void _showFloatingSnackBar(
+    BuildContext context,
+    String message, {
+    bool isError = true,
+  }) {
+    _dismissFloatingSnackBar();
+
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
+
+    final bgColor = isError ? AppTheme.error : AppTheme.success;
+
+    _floatingSnackBarEntry = OverlayEntry(
+      builder: (ctx) => Positioned(
+        top: MediaQuery.of(ctx).padding.top + 16,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 250),
+            tween: Tween(begin: 0.0, end: 1.0),
+            curve: Curves.easeOutCubic,
+            builder: (ctx, value, child) => Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, (1 - value) * -16),
+                child: child,
+              ),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isError
+                        ? Icons.error_outline_rounded
+                        : Icons.check_circle_outline_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _dismissFloatingSnackBar,
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_floatingSnackBarEntry!);
+
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) {
+        _dismissFloatingSnackBar();
+      }
+    });
   }
 
   void _save() {
@@ -111,6 +224,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
 
       setState(() {
         _isSubmitting = true;
+        _errorMessage = null;
       });
 
       if (isEditing) {
@@ -135,9 +249,12 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
         if (!_isSubmitting) return;
 
         if (state is StaffLoaded) {
+          _dismissFloatingSnackBar();
           setState(() {
             _isSubmitting = false;
+            _errorMessage = null;
           });
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -146,6 +263,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
                     : 'Staff account created successfully',
               ),
               backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
             ),
           );
           widget.onSave();
@@ -153,7 +271,9 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
         } else if (state is StaffError) {
           setState(() {
             _isSubmitting = false;
+            _errorMessage = state.message;
           });
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -161,6 +281,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
               behavior: SnackBarBehavior.floating,
             ),
           );
+          _showFloatingSnackBar(context, state.message, isError: true);
         }
       },
       child: Container(
@@ -201,12 +322,64 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
                         icon: const Icon(Icons.close),
                         onPressed: _isSubmitting
                             ? null
-                            : () => Navigator.pop(context),
+                            : () {
+                                _dismissFloatingSnackBar();
+                                Navigator.pop(context);
+                              },
                       ),
                     ],
                   ),
                   const Divider(),
                   const SizedBox(height: 16),
+                  if (_errorMessage != null) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.error.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: AppTheme.error,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.error,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: AppTheme.error,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                _errorMessage = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   CustomTextField(
                     controller: _nameController,
                     label: 'Staff Name',
@@ -223,13 +396,13 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
                     hint: 'e.g. sarah@company.com',
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-                    readOnly: isEditing, // Cannot modify email once account is created
+                    readOnly:
+                        isEditing, // Cannot modify email once account is created
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
                         return 'Please enter staff email address';
                       }
-                      final emailRegex =
-                          RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$');
+                      final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$');
                       if (!emailRegex.hasMatch(val.trim())) {
                         return 'Please enter a valid email address';
                       }
@@ -249,15 +422,15 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
                     CustomTextField(
                       controller: _passwordController,
                       label: 'Password',
-                      hint: 'Minimum 6 characters',
+                      hint: 'Minimum 8 characters',
                       prefixIcon: Icons.lock_outline,
                       isPassword: true,
                       validator: (val) {
                         if (val == null || val.isEmpty) {
                           return 'Please enter a password';
                         }
-                        if (val.length < 6) {
-                          return 'Password must be at least 6 characters';
+                        if (val.length < 8) {
+                          return 'Password must be at least 8 characters';
                         }
                         return null;
                       },
@@ -276,7 +449,9 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
                       const SizedBox(height: 8),
                       BlocBuilder<BusinessBloc, BusinessState>(
                         builder: (context, state) {
-                          AppLogger.debug("Current State = ${state.runtimeType}");
+                          AppLogger.debug(
+                            "Current State = ${state.runtimeType}",
+                          );
                           if (state is BusinessError) {
                             return Text(
                               state.message,

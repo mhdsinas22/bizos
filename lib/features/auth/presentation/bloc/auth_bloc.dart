@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/features/notifications/domain/usecases/save_fcm_token.dart';
@@ -20,6 +21,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final ChangePasswordUseCase changePasswordUseCase;
   final ShortcutRepository shortcutRepository;
+  StreamSubscription<dynamic>? _authSubscription;
+  bool _isLoggingOut = false;
 
   AuthBloc({
     required this.authRepo,
@@ -33,8 +36,49 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginRequested>(_onLoginRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<CheckAuthStatus>(_onCheckAuthStatus);
+    on<RestoreUserSessionEvent>(_onRestoreUserSession);
     on<ChangePasswordEvent>(_onChangePassword);
     on<UpdateUserCurrencyEvent>(_onUpdateUserCurrency);
+
+    _listenToAuthStateChanges();
+  }
+
+  void _listenToAuthStateChanges() {
+    try {
+      _authSubscription = authRepo.onAuthStateChange.listen((data) {
+        try {
+          final dynamic event = data?.event ?? data;
+          AppLogger.info('AuthBloc: onAuthStateChange event received: $event');
+          final eventStr = event.toString();
+          if (eventStr.contains('signedOut')) {
+            if (!_isLoggingOut && state.status != AuthStatus.unauthenticated) {
+              add(LogoutRequested());
+            }
+          } else if (eventStr.contains('tokenRefreshed')) {
+            AppLogger.info('AuthBloc: Token refreshed in background.');
+          }
+        } catch (e) {
+          AppLogger.warning('Error in onAuthStateChange callback: $e');
+        }
+      });
+    } catch (e) {
+      AppLogger.warning('Could not subscribe to onAuthStateChange: $e');
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _authSubscription?.cancel();
+    return super.close();
+  }
+
+  void _onRestoreUserSession(
+    RestoreUserSessionEvent event,
+    Emitter<AuthState> emit,
+  ) {
+    CurrencyFormatter.setCurrency(event.user.currencyCode);
+    emit(AuthAuthenticated(event.user));
+    _saveFcmToken(event.user.id);
   }
 
   Future<void> _onLoginRequested(
@@ -75,12 +119,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    if (_isLoggingOut || state.status == AuthStatus.unauthenticated) {
+      return;
+    }
+    _isLoggingOut = true;
     emit(AuthLoading());
     try {
       await logoutUseCase.execute();
       emit(AuthUnauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));
+    } finally {
+      _isLoggingOut = false;
     }
   }
 
@@ -88,7 +138,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckAuthStatus event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    emit(AuthLoading(user: state.user));
     try {
       final user = await checkAuthStatusUseCase.execute();
       if (user != null) {
@@ -97,7 +147,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } else {
         emit(AuthUnauthenticated());
       }
+    } on SessionExpiredException catch (e) {
+      AppLogger.warning('Session expired: ${e.message}');
+      emit(AuthUnauthenticated(message: e.message));
+    } on NetworkException catch (e) {
+      AppLogger.warning(
+        'Network exception during CheckAuthStatus: ${e.message}',
+      );
+      if (state.user != null) {
+        emit(AuthAuthenticated(state.user!));
+      } else {
+        emit(AuthUnauthenticated());
+      }
     } catch (e) {
+      AppLogger.warning('CheckAuthStatus error: $e');
+      final err = e.toString().toLowerCase();
+      if (err.contains('socketexception') ||
+          err.contains('network') ||
+          err.contains('connection') ||
+          err.contains('timeout')) {
+        if (state.user != null) {
+          emit(AuthAuthenticated(state.user!));
+          return;
+        }
+      }
       emit(AuthUnauthenticated());
     }
   }
@@ -119,7 +192,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.newPassword,
       );
       if (success) {
-        await logoutUseCase.execute();
+        _isLoggingOut = true;
+        try {
+          await logoutUseCase.execute();
+        } finally {
+          _isLoggingOut = false;
+        }
         emit(AuthUnauthenticated());
       } else {
         emit(AuthError('Password change failed.', user: currentUser));

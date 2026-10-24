@@ -145,8 +145,8 @@ class PersonalTaskItem extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            constraints: const BoxConstraints(minHeight: 64, maxHeight: 76),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            constraints: const BoxConstraints(minHeight: 64),
             decoration: BoxDecoration(
               color: isNotCompleted
                   ? (isDark
@@ -179,7 +179,7 @@ class PersonalTaskItem extends StatelessWidget {
                     duration: const Duration(milliseconds: 250),
                     width: 24,
                     height: 24,
-                    margin: const EdgeInsets.only(right: 12),
+                    margin: const EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: isCompleted
@@ -213,6 +213,7 @@ class PersonalTaskItem extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         task.title,
@@ -231,39 +232,56 @@ class PersonalTaskItem extends StatelessWidget {
                               : (isDark ? Colors.white : Colors.black87),
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 3.5),
 
-                      // Badges Row
-                      Row(
+                      // Badges Wrap (Adapts seamlessly, never overflows)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 3,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           // Time Badge
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 12,
-                            color: isMissed
-                                ? const Color(0xFFEF4444)
-                                : (isDark ? Colors.white54 : Colors.black45),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            DateFormat.jm().format(task.dueDate),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isMissed
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                              color: isMissed
-                                  ? const Color(0xFFEF4444)
-                                  : (isDark ? Colors.white54 : Colors.black45),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                WidgetSpan(
+                                  alignment: PlaceholderAlignment.middle,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 3),
+                                    child: Icon(
+                                      Icons.access_time_rounded,
+                                      size: 11.5,
+                                      color: isMissed
+                                          ? const Color(0xFFEF4444)
+                                          : (isDark
+                                              ? Colors.white54
+                                              : Colors.black45),
+                                    ),
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: DateFormat.jm().format(task.dueDate),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: isMissed
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                    color: isMissed
+                                        ? const Color(0xFFEF4444)
+                                        : (isDark
+                                            ? Colors.white54
+                                            : Colors.black45),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
 
-                          // Missed Compact Badge
-                          if (isMissed) ...[
-                            const SizedBox(width: 8),
+                          // Missed / Overdue Compact Badge
+                          if (isMissed)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
+                                horizontal: 5,
                                 vertical: 1.5,
                               ),
                               decoration: BoxDecoration(
@@ -275,20 +293,18 @@ class PersonalTaskItem extends StatelessWidget {
                               child: const Text(
                                 'Overdue',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFFEF4444),
                                 ),
                               ),
                             ),
-                          ],
 
                           // Not Completed Final Badge
-                          if (isNotCompleted) ...[
-                            const SizedBox(width: 8),
+                          if (isNotCompleted)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
+                                horizontal: 5,
                                 vertical: 1.5,
                               ),
                               decoration: BoxDecoration(
@@ -303,46 +319,106 @@ class PersonalTaskItem extends StatelessWidget {
                                   width: 0.8,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(
-                                    Icons.cancel_rounded,
-                                    size: 10,
-                                    color: Color(0xFFEF4444),
+                              child: Text.rich(
+                                TextSpan(
+                                  children: const [
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.middle,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(right: 2.5),
+                                        child: Icon(
+                                          Icons.cancel_rounded,
+                                          size: 9.5,
+                                          color: Color(0xFFEF4444),
+                                        ),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'Not Completed',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFEF4444),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                          // Completed Late Final Badge
+                          if (task.isCompletedLate)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFF59E0B,
+                                ).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFF59E0B,
+                                  ).withValues(alpha: 0.25),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text.rich(
+                                TextSpan(
+                                  children: const [
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.middle,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(right: 2.5),
+                                        child: Icon(
+                                          Icons.schedule_rounded,
+                                          size: 9.5,
+                                          color: Color(0xFFF59E0B),
+                                        ),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'Completed Late',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFF59E0B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                          // Repeat Badge
+                          if (TaskRepeatMapper.isRepeating(task.repeat))
+                            Text.rich(
+                              TextSpan(
+                                children: [
+                                  const WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(right: 2.5),
+                                      child: Icon(
+                                        Icons.repeat_rounded,
+                                        size: 11.5,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
                                   ),
-                                  SizedBox(width: 3),
-                                  Text(
-                                    'Not Completed',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFEF4444),
+                                  TextSpan(
+                                    text: TaskRepeatMapper.toUi(task.repeat),
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryColor,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-
-                          // Repeat Badge
-                          if (TaskRepeatMapper.isRepeating(task.repeat)) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.repeat_rounded,
-                              size: 12,
-                              color: AppTheme.primaryColor,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              TaskRepeatMapper.toUi(task.repeat),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ],
@@ -352,10 +428,10 @@ class PersonalTaskItem extends StatelessWidget {
                 // Priority Chip
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: 7,
+                    vertical: 2.5,
                   ),
-                  margin: const EdgeInsets.only(right: 4),
+                  margin: const EdgeInsets.only(left: 4, right: 2),
                   decoration: BoxDecoration(
                     color: priorityColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
@@ -363,7 +439,7 @@ class PersonalTaskItem extends StatelessWidget {
                   child: Text(
                     task.priority,
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: priorityColor,
                     ),
@@ -378,7 +454,7 @@ class PersonalTaskItem extends StatelessWidget {
                     color: isDark ? Colors.white54 : Colors.black45,
                   ),
                   onPressed: onLongPress,
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(),
                   tooltip: 'Options',
                 ),

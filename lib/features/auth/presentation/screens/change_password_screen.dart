@@ -7,8 +7,8 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
 import 'package:bizos/core/widgets/glass_card.dart';
-import 'package:bizos/bizos_app.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
+import 'package:bizos/bizos_app.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -61,10 +61,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 behavior: SnackBarBehavior.floating,
               ),
             );
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const AppStartupFlow()),
-              (route) => false,
-            );
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              final navigator = appNavigatorKey.currentState ??
+                  Navigator.of(context, rootNavigator: true);
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            }
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

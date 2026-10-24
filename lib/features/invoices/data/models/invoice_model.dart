@@ -38,21 +38,40 @@ class InvoiceModel extends InvoiceEntity {
     List<InvoiceItemModel> itemList = [];
     if (json['invoice_items'] != null) {
       itemList = (json['invoice_items'] as List<dynamic>)
-          .map((item) => InvoiceItemModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => InvoiceItemModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     }
 
-    final customerData = json['customers'] is Map ? (json['customers'] as Map<String, dynamic>) : null;
+    final customerData = json['customers'] is Map
+        ? (json['customers'] as Map<String, dynamic>)
+        : null;
 
     return InvoiceModel(
       id: json['id'] as String? ?? '',
       businessId: json['business_id'] as String? ?? '',
       customerId: json['customer_id'] as String?,
-      customerNameSnapshot: customerData?['name'] as String? ?? json['customer_name_snapshot'] as String? ?? '',
-      customerPhoneSnapshot: customerData?['phone'] as String? ?? json['customer_phone_snapshot'] as String? ?? '',
-      customerEmailSnapshot: customerData?['email'] as String? ?? json['customer_email_snapshot'] as String? ?? '',
-      customerAddressSnapshot: customerData?['address'] as String? ?? json['customer_address_snapshot'] as String? ?? '',
-      customerGstinSnapshot: customerData?['gstin'] as String? ?? json['customer_gstin_snapshot'] as String? ?? '',
+      customerNameSnapshot:
+          customerData?['name'] as String? ??
+          json['customer_name_snapshot'] as String? ??
+          '',
+      customerPhoneSnapshot:
+          customerData?['phone'] as String? ??
+          json['customer_phone_snapshot'] as String? ??
+          '',
+      customerEmailSnapshot:
+          customerData?['email'] as String? ??
+          json['customer_email_snapshot'] as String? ??
+          '',
+      customerAddressSnapshot:
+          customerData?['address'] as String? ??
+          json['customer_address_snapshot'] as String? ??
+          '',
+      customerGstinSnapshot:
+          customerData?['gstin'] as String? ??
+          json['customer_gstin_snapshot'] as String? ??
+          '',
       invoiceNumber: json['invoice_number'] as String? ?? '',
       sequenceNumber: (json['sequence_number'] as num?)?.toInt() ?? 1,
       invoiceDate: json['invoice_date'] != null
@@ -62,12 +81,18 @@ class InvoiceModel extends InvoiceEntity {
           ? DateTime.parse(json['due_date'] as String).toLocal()
           : null,
       status: json['status'] as String? ?? 'draft',
-      paymentStatus: json['payment_status'] as String? ?? json['status'] as String? ?? 'unpaid',
+      paymentStatus:
+          json['payment_status'] as String? ??
+          json['status'] as String? ??
+          'unpaid',
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       discountType: json['discount_type'] as String? ?? 'flat',
       discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0.0,
       taxAmount: (json['tax_amount'] as num?)?.toDouble() ?? 0.0,
-      grandTotal: (json['total_amount'] as num?)?.toDouble() ?? (json['grand_total'] as num?)?.toDouble() ?? 0.0,
+      grandTotal:
+          (json['total_amount'] as num?)?.toDouble() ??
+          (json['grand_total'] as num?)?.toDouble() ??
+          0.0,
       paidAmount: (json['paid_amount'] as num?)?.toDouble() ?? 0.0,
       balanceAmount: (json['balance_amount'] as num?)?.toDouble() ?? 0.0,
       notes: json['notes'] as String? ?? '',
@@ -75,7 +100,9 @@ class InvoiceModel extends InvoiceEntity {
       templateSnapshot: json['template_snapshot'] is Map
           ? Map<String, dynamic>.from(json['template_snapshot'] as Map)
           : null,
-      createdByUserId: json['created_by'] as String? ?? json['created_by_user_id'] as String?,
+      createdByUserId:
+          json['created_by'] as String? ??
+          json['created_by_user_id'] as String?,
       createdByName: json['created_by_name'] as String?,
       items: itemList,
       createdAt: json['created_at'] != null
@@ -90,7 +117,9 @@ class InvoiceModel extends InvoiceEntity {
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
       'business_id': businessId,
-      'customer_id': (customerId != null && customerId!.isNotEmpty) ? customerId : null,
+      'customer_id': (customerId != null && customerId!.isNotEmpty)
+          ? customerId
+          : null,
       'invoice_number': invoiceNumber,
       'invoice_date': invoiceDate.toIso8601String().split('T')[0],
       'subtotal': subtotal,
@@ -152,10 +181,14 @@ class InvoiceModel extends InvoiceEntity {
       businessId: businessId ?? this.businessId,
       customerId: customerId ?? this.customerId,
       customerNameSnapshot: customerNameSnapshot ?? this.customerNameSnapshot,
-      customerPhoneSnapshot: customerPhoneSnapshot ?? this.customerPhoneSnapshot,
-      customerEmailSnapshot: customerEmailSnapshot ?? this.customerEmailSnapshot,
-      customerAddressSnapshot: customerAddressSnapshot ?? this.customerAddressSnapshot,
-      customerGstinSnapshot: customerGstinSnapshot ?? this.customerGstinSnapshot,
+      customerPhoneSnapshot:
+          customerPhoneSnapshot ?? this.customerPhoneSnapshot,
+      customerEmailSnapshot:
+          customerEmailSnapshot ?? this.customerEmailSnapshot,
+      customerAddressSnapshot:
+          customerAddressSnapshot ?? this.customerAddressSnapshot,
+      customerGstinSnapshot:
+          customerGstinSnapshot ?? this.customerGstinSnapshot,
       invoiceNumber: invoiceNumber ?? this.invoiceNumber,
       sequenceNumber: sequenceNumber ?? this.sequenceNumber,
       invoiceDate: invoiceDate ?? this.invoiceDate,

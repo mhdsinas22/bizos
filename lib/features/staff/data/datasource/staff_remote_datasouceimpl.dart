@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/staff/data/datasource/staff_remote_datasource.dart';
@@ -9,6 +10,64 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
   final SupabaseClient supabaseClient;
 
   StaffRemoteDatasourceImpl({required this.supabaseClient});
+
+  static String extractErrorMessage(dynamic details, [String? fallback]) {
+    if (details == null) {
+      return fallback ?? 'Staff account creation failed.';
+    }
+
+    if (details is Map) {
+      final err = details['error'];
+      if (err is String && err.trim().isNotEmpty) {
+        return _cleanErrorString(err);
+      }
+      if (err is Map) {
+        final nestedMsg =
+            err['message'] ?? err['msg'] ?? err['error_description'];
+        if (nestedMsg is String && nestedMsg.trim().isNotEmpty) {
+          return _cleanErrorString(nestedMsg);
+        }
+      }
+
+      final msg = details['message'] ??
+          details['msg'] ??
+          details['details'] ??
+          details['error_description'];
+      if (msg is String && msg.trim().isNotEmpty) {
+        return _cleanErrorString(msg);
+      }
+
+      return details.toString();
+    }
+
+    if (details is String) {
+      final trimmed = details.trim();
+      if (trimmed.isEmpty) return fallback ?? 'Staff account creation failed.';
+
+      // Attempt parsing JSON string
+      if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+          (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+        try {
+          final decoded = jsonDecode(trimmed);
+          if (decoded is Map) {
+            return extractErrorMessage(decoded, fallback);
+          }
+        } catch (_) {}
+      }
+
+      return _cleanErrorString(trimmed);
+    }
+
+    return details.toString();
+  }
+
+  static String _cleanErrorString(String text) {
+    var cleaned = text.trim();
+    while (cleaned.startsWith('Exception: ')) {
+      cleaned = cleaned.substring(11).trim();
+    }
+    return cleaned;
+  }
 
   @override
   Future<List<UserModel>> getStaffList(String ownerId) async {
@@ -61,6 +120,7 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
     List<String> selectedBusinessIds,
   ) async {
     final cleanEmail = staff.email.trim().toLowerCase();
+    AppLogger.debug("Clean staff email: $cleanEmail");
     if (cleanEmail.isEmpty || !cleanEmail.contains('@')) {
       throw Exception('A valid staff email address is required.');
     }
@@ -88,29 +148,30 @@ class StaffRemoteDatasourceImpl implements StaffRemoteDatasource {
       if (response.status == 200 || response.status == 201) {
         final dynamic data = response.data;
         if (data is Map && data['error'] != null) {
-          throw Exception(data['error'].toString());
+          throw Exception(extractErrorMessage(data));
         }
         return;
       } else {
         final dynamic data = response.data;
-        final errorMsg = (data is Map && data['error'] != null)
-            ? data['error'].toString()
-            : 'Staff account creation failed (Status: ${response.status})';
+        final errorMsg = extractErrorMessage(
+          data,
+          'Staff account creation failed (Status: ${response.status})',
+        );
         throw Exception(errorMsg);
       }
     } on FunctionException catch (e) {
       AppLogger.error('Edge function error creating staff: ${e.details}');
-      final dynamic details = e.details;
-      if (details is Map && details['error'] != null) {
-        throw Exception(details['error'].toString());
-      }
-      if (details != null && details.toString().isNotEmpty) {
-        throw Exception(details.toString());
-      }
-      throw Exception('Staff account provisioning failed (status: ${e.status}).');
+      final fallback = e.reasonPhrase != null && e.reasonPhrase!.isNotEmpty
+          ? 'Staff creation failed: ${e.reasonPhrase} (Status: ${e.status})'
+          : 'Staff account provisioning failed (Status: ${e.status}).';
+      final cleanError = extractErrorMessage(e.details, fallback);
+      throw Exception(cleanError);
     } catch (e) {
       AppLogger.error('Error in createStaff: $e');
-      rethrow;
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception(_cleanErrorString(e.toString()));
     }
   }
 

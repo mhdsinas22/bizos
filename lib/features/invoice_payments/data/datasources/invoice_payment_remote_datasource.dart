@@ -5,16 +5,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 abstract class InvoicePaymentRemoteDatasource {
   Future<List<InvoicePaymentModel>> getPaymentsForInvoice(String invoiceId);
   Future<InvoicePaymentModel> recordPayment(InvoicePaymentModel payment);
-  Future<void> deletePayment(String paymentId, String invoiceId, String businessId);
+  Future<void> deletePayment(
+    String paymentId,
+    String invoiceId,
+    String businessId,
+  );
 }
 
-class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasource {
+class InvoicePaymentRemoteDatasourceImpl
+    implements InvoicePaymentRemoteDatasource {
   final SupabaseClient supabaseClient;
 
   InvoicePaymentRemoteDatasourceImpl({required this.supabaseClient});
 
   @override
-  Future<List<InvoicePaymentModel>> getPaymentsForInvoice(String invoiceId) async {
+  Future<List<InvoicePaymentModel>> getPaymentsForInvoice(
+    String invoiceId,
+  ) async {
     try {
       final response = await supabaseClient
           .from('invoice_payments')
@@ -23,7 +30,9 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
           .order('payment_date', ascending: false);
 
       return (response as List<dynamic>)
-          .map((row) => InvoicePaymentModel.fromJson(row as Map<String, dynamic>))
+          .map(
+            (row) => InvoicePaymentModel.fromJson(row as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       throw ServerException('Failed to fetch invoice payments: $e');
@@ -40,22 +49,32 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
           .eq('id', payment.invoiceId)
           .single();
 
-      final grandTotal = (invoiceRes['total_amount'] as num?)?.toDouble() ?? (invoiceRes['grand_total'] as num?)?.toDouble() ?? 0.0;
-      final currentPaid = (invoiceRes['paid_amount'] as num?)?.toDouble() ?? 0.0;
-      final currentBalance = (invoiceRes['balance_amount'] as num?)?.toDouble() ?? grandTotal;
+      final grandTotal =
+          (invoiceRes['total_amount'] as num?)?.toDouble() ??
+          (invoiceRes['grand_total'] as num?)?.toDouble() ??
+          0.0;
+      final currentPaid =
+          (invoiceRes['paid_amount'] as num?)?.toDouble() ?? 0.0;
+      final currentBalance =
+          (invoiceRes['balance_amount'] as num?)?.toDouble() ?? grandTotal;
       final invNumber = invoiceRes['invoice_number'] as String? ?? '';
-      final customerName = invoiceRes['customer_name_snapshot'] as String? ?? '';
+      final customerName =
+          invoiceRes['customer_name_snapshot'] as String? ?? '';
 
       // Validate payment amount does not exceed current outstanding balance
       if (payment.amount <= 0) {
         throw Exception('Payment amount must be greater than 0');
       }
       if (payment.amount > (currentBalance + 0.01)) {
-        throw Exception('Payment amount (₹${payment.amount}) cannot exceed balance due (₹$currentBalance)');
+        throw Exception(
+          'Payment amount (₹${payment.amount}) cannot exceed balance due (₹$currentBalance)',
+        );
       }
 
       final newPaid = currentPaid + payment.amount;
-      final newBalance = (grandTotal - newPaid) > 0 ? (grandTotal - newPaid) : 0.0;
+      final newBalance = (grandTotal - newPaid) > 0
+          ? (grandTotal - newPaid)
+          : 0.0;
 
       final newStatus = newBalance <= 0
           ? 'paid'
@@ -95,12 +114,15 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
       final createdPayment = InvoicePaymentModel.fromJson(createdPaymentRes);
 
       // 4. Update Invoice status & paid/balance amounts
-      await supabaseClient.from('invoices').update({
-        'paid_amount': newPaid,
-        'balance_amount': newBalance,
-        'status': newStatus,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', payment.invoiceId);
+      await supabaseClient
+          .from('invoices')
+          .update({
+            'paid_amount': newPaid,
+            'balance_amount': newBalance,
+            'status': newStatus,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', payment.invoiceId);
 
       // 5. Sync Money Management receivable transaction & history
       await _syncMoneyManagementAfterPayment(
@@ -114,12 +136,18 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
 
       return createdPayment;
     } catch (e) {
-      throw ServerException('Failed to record payment: ${e.toString().replaceAll('Exception: ', '')}');
+      throw ServerException(
+        'Failed to record payment: ${e.toString().replaceAll('Exception: ', '')}',
+      );
     }
   }
 
   @override
-  Future<void> deletePayment(String paymentId, String invoiceId, String businessId) async {
+  Future<void> deletePayment(
+    String paymentId,
+    String invoiceId,
+    String businessId,
+  ) async {
     try {
       final paymentRes = await supabaseClient
           .from('invoice_payments')
@@ -136,7 +164,10 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
       }
 
       // Delete payment record
-      await supabaseClient.from('invoice_payments').delete().eq('id', paymentId);
+      await supabaseClient
+          .from('invoice_payments')
+          .delete()
+          .eq('id', paymentId);
 
       // Re-calculate invoice paid & balance amounts
       final invoiceRes = await supabaseClient
@@ -145,8 +176,12 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
           .eq('id', invoiceId)
           .single();
 
-      final grandTotal = (invoiceRes['total_amount'] as num?)?.toDouble() ?? (invoiceRes['grand_total'] as num?)?.toDouble() ?? 0.0;
-      final currentPaid = (invoiceRes['paid_amount'] as num?)?.toDouble() ?? 0.0;
+      final grandTotal =
+          (invoiceRes['total_amount'] as num?)?.toDouble() ??
+          (invoiceRes['grand_total'] as num?)?.toDouble() ??
+          0.0;
+      final currentPaid =
+          (invoiceRes['paid_amount'] as num?)?.toDouble() ?? 0.0;
 
       final newPaid = (currentPaid - amount) > 0 ? (currentPaid - amount) : 0.0;
       final newBalance = grandTotal - newPaid;
@@ -155,12 +190,15 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
           ? 'paid'
           : (newPaid > 0 ? 'partially_paid' : 'sent');
 
-      await supabaseClient.from('invoices').update({
-        'paid_amount': newPaid,
-        'balance_amount': newBalance,
-        'status': newStatus,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', invoiceId);
+      await supabaseClient
+          .from('invoices')
+          .update({
+            'paid_amount': newPaid,
+            'balance_amount': newBalance,
+            'status': newStatus,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', invoiceId);
     } catch (e) {
       throw ServerException('Failed to delete payment: $e');
     }
@@ -185,18 +223,22 @@ class InvoicePaymentRemoteDatasourceImpl implements InvoicePaymentRemoteDatasour
 
       if (existing != null) {
         final existingId = existing['id'] as String;
-        final currentPaid = (existing['paid_amount'] as num?)?.toDouble() ?? 0.0;
+        final currentPaid =
+            (existing['paid_amount'] as num?)?.toDouble() ?? 0.0;
         final updatedPaid = currentPaid + paymentAmount;
         final statusStr = newBalance <= 0
             ? 'Completed'
             : (updatedPaid > 0 ? 'Partial' : 'Pending');
 
-        await supabaseClient.from('business_money_transactions').update({
-          'paid_amount': updatedPaid,
-          'balance_amount': newBalance,
-          'status': statusStr,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', existingId);
+        await supabaseClient
+            .from('business_money_transactions')
+            .update({
+              'paid_amount': updatedPaid,
+              'balance_amount': newBalance,
+              'status': statusStr,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', existingId);
 
         // Record history event in business_money_transaction_history
         await supabaseClient.from('business_money_transaction_history').insert({

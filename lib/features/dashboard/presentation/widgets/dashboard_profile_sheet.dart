@@ -1,4 +1,3 @@
-import 'package:bizos/bizos_app.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/features/currency/presentation/pages/currency_settings_page.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
+import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bizos/features/auth/presentation/screens/change_password_screen.dart';
 
 /// Modal bottom sheet displaying authenticated user profile details,
@@ -186,9 +186,13 @@ class DashboardProfileSheet extends StatelessWidget {
                 ),
               ),
               onTap: () {
+                final authBloc = context.read<AuthBloc>();
+                if (authBloc.state.status == AuthStatus.loading ||
+                    authBloc.state.status == AuthStatus.unauthenticated) {
+                  return;
+                }
                 Navigator.pop(context);
-                appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
-                context.read<AuthBloc>().add(LogoutEvent());
+                authBloc.add(LogoutEvent());
               },
             ),
             const SizedBox(height: 8),

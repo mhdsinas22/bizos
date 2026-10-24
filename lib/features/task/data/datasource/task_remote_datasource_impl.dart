@@ -95,24 +95,62 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
 
   @override
   Future<List<TaskModel>> getPersonalTasks(String userId) async {
-    if (userId.trim().isEmpty) return [];
-    try {
-      final response = await supabaseClient
-          .from('tasks')
-          .select()
-          .or('task_type.eq.personal,business_id.is.null')
-          .or('created_by.eq.$userId,assigned_to.eq.$userId');
-      return response.map((row) => _fromRow(row)).toList();
-    } catch (e) {
-      final response = await supabaseClient
-          .from('tasks')
-          .select()
-          .or('created_by.eq.$userId,assigned_to.eq.$userId');
+    final id = userId.trim();
 
-      final list = response.map((row) => _fromRow(row)).toList();
-      return list
-          .where((t) => t.isPersonal || t.businessId.trim().isEmpty)
-          .toList();
+    if (id.isEmpty) {
+      AppLogger.warning('getPersonalTasks: userId is empty');
+      return [];
+    }
+
+    const pageSize = 500;
+    var from = 0;
+    final allRows = <Map<String, dynamic>>[];
+
+    try {
+      while (true) {
+        final response = await supabaseClient
+            .from('tasks')
+            .select()
+            .or('task_type.eq.personal,business_id.is.null')
+            .or('created_by.eq.$id,assigned_to.eq.$id')
+            .order('due_date', ascending: true)
+            .order('id', ascending: true)
+            .range(from, from + pageSize - 1);
+
+        final rows = List<Map<String, dynamic>>.from(response);
+
+        allRows.addAll(rows);
+
+        AppLogger.warning(
+          'Personal tasks page: from=$from, '
+          'received=${rows.length}, total=${allRows.length}',
+        );
+
+        if (rows.length < pageSize) break;
+
+        from += pageSize;
+      }
+
+      final tasks = allRows.map(_fromRow).toList();
+
+      final today = DateTime.now();
+      final todayCount = tasks.where((task) {
+        return task.dueDate.year == today.year &&
+            task.dueDate.month == today.month &&
+            task.dueDate.day == today.day;
+      }).length;
+
+      AppLogger.warning(
+        'Personal tasks fetched=${tasks.length}, '
+        'userId=$id, todayTasks=$todayCount',
+      );
+
+      return tasks;
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to fetch personal tasks for $id: $e\n$stackTrace',
+      );
+      rethrow;
     }
   }
 
@@ -285,9 +323,9 @@ class TaskRemoteDatasourceImpl implements TaskRemoteDatasource {
           .limit(1);
 
       return (response as List).isNotEmpty;
-    } catch (e) {
-      AppLogger.error("Error checking occurrence exists: $e");
-      return false;
+    } catch (e, stackTrace) {
+      AppLogger.error("Error checking occurrence exists: $e\n$stackTrace");
+      rethrow;
     }
   }
 

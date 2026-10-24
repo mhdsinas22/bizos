@@ -1,3 +1,4 @@
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bizos/core/theme/app_theme.dart';
@@ -120,7 +121,7 @@ void main() {
       );
 
       for (var err in errors) {
-        print('RENDERFLEX ERROR: ${err.toString()}');
+        AppLogger.error('RENDERFLEX ERROR: ${err.toString()}');
       }
 
       FlutterError.onError = oldOnError;

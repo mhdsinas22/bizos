@@ -24,6 +24,7 @@ class PersonalTaskBloc extends Bloc<PersonalTaskEvent, PersonalTaskState> {
       emit(PersonalTaskLoading());
       try {
         final tasks = await taskRepository.getPersonalTasks(event.userId);
+
         final userIds = tasks
             .expand((t) => [t.assignedto, t.createdBy])
             .where((id) => id.isNotEmpty)
@@ -49,10 +50,17 @@ class PersonalTaskBloc extends Bloc<PersonalTaskEvent, PersonalTaskState> {
     on<UpdatePersonalTaskEvent>((event, emit) async {
       emit(PersonalTaskLoading());
       try {
+        final userId = event.task.createdBy.trim().isNotEmpty
+            ? event.task.createdBy.trim()
+            : event.task.assignedto.trim();
+
         await taskRepository.updateTask(event.task);
         await _handleRecurringTask(event.task);
-        add(FetchPersonalTasksEvent(event.task.createdBy));
+        if (userId.isNotEmpty && userId != 'null') {
+          add(FetchPersonalTasksEvent(userId));
+        }
       } catch (e) {
+        AppLogger.error("Error updating personal task: $e");
         emit(PersonalTaskError(e.toString()));
       }
     });

@@ -84,8 +84,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         }
       } catch (e) {
         AppLogger.warning(
-          "Direct profile lookup by auth_user_id failed (check RLS): $e",
+          "Direct profile lookup by auth_user_id failed: $e",
         );
+        final errStr = e.toString().toLowerCase();
+        if (errStr.contains('socketexception') ||
+            errStr.contains('clientexception') ||
+            errStr.contains('failed host lookup') ||
+            errStr.contains('network') ||
+            errStr.contains('connection') ||
+            errStr.contains('timeout')) {
+          rethrow;
+        }
       }
 
       // Secondary fallback strategy: RPC get_my_profile (if backend deployed security-definer helper)
@@ -98,8 +107,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           if (rpcResponse != null) {
             userMap = Map<String, dynamic>.from(rpcResponse);
           }
-        } catch (_) {
-          // RPC may not be present yet in backend
+        } catch (e) {
+          final errStr = e.toString().toLowerCase();
+          if (errStr.contains('socketexception') ||
+              errStr.contains('clientexception') ||
+              errStr.contains('failed host lookup') ||
+              errStr.contains('network') ||
+              errStr.contains('connection') ||
+              errStr.contains('timeout')) {
+            rethrow;
+          }
         }
       }
 
@@ -118,7 +135,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           errorStr.contains('clientexception') ||
           errorStr.contains('failed host lookup') ||
           errorStr.contains('network') ||
-          errorStr.contains('connection')) {
+          errorStr.contains('connection') ||
+          errorStr.contains('timeout')) {
         throw NetworkException();
       }
       throw ServerException();
@@ -308,4 +326,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       rethrow;
     }
   }
+
+  @override
+  Future<AuthResponse> refreshSession() async {
+    try {
+      final response = await supabase.auth.refreshSession();
+      AppLogger.info("Supabase session refreshed successfully.");
+      return response;
+    } on AuthException catch (e) {
+      AppLogger.error("Supabase refreshSession AuthException: ${e.message}");
+      throw AppAuthException(e.message);
+    } catch (e) {
+      AppLogger.error("Supabase refreshSession error: $e");
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('socketexception') ||
+          errorStr.contains('clientexception') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('network') ||
+          errorStr.contains('connection') ||
+          errorStr.contains('timeout')) {
+        throw NetworkException();
+      }
+      throw ServerException();
+    }
+  }
+
+  @override
+  Stream<AuthState> get onAuthStateChange => supabase.auth.onAuthStateChange;
 }
+

@@ -29,6 +29,9 @@ class MockAuthRepository implements AuthRepository {
   bool changePasswordResult = true;
 
   @override
+  Stream<dynamic> get onAuthStateChange => const Stream.empty();
+
+  @override
   Future<UserModel> login(String email, String password) async {
     lastLoginEmail = email;
     lastLoginPassword = password;

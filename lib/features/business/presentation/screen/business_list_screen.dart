@@ -301,7 +301,7 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
                       ),
                     ),
                   )
-                  .then((_) {
+                  .then((context) {
                     if (!mounted) return;
                     final authState = context.read<AuthBloc>().state;
                     if (authState is Authenticated) {

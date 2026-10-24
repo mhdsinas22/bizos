@@ -94,6 +94,30 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
     });
   }
 
+  bool refreshSessionCalled = false;
+  AuthResponse? mockRefreshResponse;
+
+  @override
+  Stream<AuthState> get onAuthStateChange => const Stream.empty();
+
+  @override
+  Future<AuthResponse> refreshSession() async {
+    refreshSessionCalled = true;
+    return mockRefreshResponse ??
+        AuthResponse(
+          session: mockSession,
+          user:
+              mockAuthUser ??
+              const User(
+                id: 'mock-auth-uid-1',
+                appMetadata: {},
+                userMetadata: {},
+                aud: 'authenticated',
+                createdAt: '2026-01-01',
+              ),
+        );
+  }
+
   @override
   Future<bool> changePassword(
     String userId,

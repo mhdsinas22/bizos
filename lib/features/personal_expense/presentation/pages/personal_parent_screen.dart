@@ -137,8 +137,8 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
         onTap: () => _onSegmentTapped(index),
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOutCubic,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeIn,
           decoration: BoxDecoration(
             color: isSelected ? primaryColor : Colors.transparent,
             gradient: isSelected

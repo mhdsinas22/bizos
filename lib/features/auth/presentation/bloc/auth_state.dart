@@ -27,7 +27,8 @@ class AuthAuthenticated extends AuthState {
 }
 
 class AuthUnauthenticated extends AuthState {
-  AuthUnauthenticated() : super(status: AuthStatus.unauthenticated);
+  AuthUnauthenticated({String? message})
+      : super(status: AuthStatus.unauthenticated, errorMessage: message);
 }
 
 class AuthError extends AuthState {

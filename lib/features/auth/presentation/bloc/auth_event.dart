@@ -1,3 +1,5 @@
+import 'package:bizos/features/auth/data/models/user_model.dart';
+
 abstract class AuthEvent {}
 
 class LoginRequested extends AuthEvent {
@@ -14,6 +16,11 @@ class LoginRequested extends AuthEvent {
 class LogoutRequested extends AuthEvent {}
 
 class CheckAuthStatus extends AuthEvent {}
+
+class RestoreUserSessionEvent extends AuthEvent {
+  final UserModel user;
+  RestoreUserSessionEvent(this.user);
+}
 
 // Backward compatibility classes
 class LoginEvent extends LoginRequested {

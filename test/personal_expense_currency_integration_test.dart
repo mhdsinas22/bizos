@@ -25,6 +25,9 @@ class _MockAuthRepo implements AuthRepository {
   UserModel user = UserModel(id: 'test-user', email: 'test@bizos.com');
 
   @override
+  Stream<dynamic> get onAuthStateChange => const Stream.empty();
+
+  @override
   Future<UserModel?> checkAuthStatus() async => user;
 
   @override

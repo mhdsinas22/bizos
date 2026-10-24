@@ -200,10 +200,12 @@ class MoneyManagementDashboard extends StatelessWidget {
         ? BlocBuilder<BusinessMoneyManagementBloc, MoneyManagementState>(
             buildWhen: (previous, current) {
               if (previous.runtimeType != current.runtimeType) return true;
-              if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+              if (previous is TransactionsLoaded &&
+                  current is TransactionsLoaded) {
                 return previous.totalPendingPay != current.totalPendingPay ||
                     previous.pendingPayCount != current.pendingPayCount ||
-                    previous.totalPendingReceive != current.totalPendingReceive ||
+                    previous.totalPendingReceive !=
+                        current.totalPendingReceive ||
                     previous.pendingReceiveCount != current.pendingReceiveCount;
               }
               return true;
@@ -213,10 +215,12 @@ class MoneyManagementDashboard extends StatelessWidget {
         : BlocBuilder<PersonalMoneyManagementBloc, MoneyManagementState>(
             buildWhen: (previous, current) {
               if (previous.runtimeType != current.runtimeType) return true;
-              if (previous is TransactionsLoaded && current is TransactionsLoaded) {
+              if (previous is TransactionsLoaded &&
+                  current is TransactionsLoaded) {
                 return previous.totalPendingPay != current.totalPendingPay ||
                     previous.pendingPayCount != current.pendingPayCount ||
-                    previous.totalPendingReceive != current.totalPendingReceive ||
+                    previous.totalPendingReceive !=
+                        current.totalPendingReceive ||
                     previous.pendingReceiveCount != current.pendingReceiveCount;
               }
               return true;

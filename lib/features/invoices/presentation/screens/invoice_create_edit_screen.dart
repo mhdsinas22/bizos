@@ -346,34 +346,71 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
         children: [
           // Step 1: Select Customer & Invoice Number
           GlassCard(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '1. Customer & Metadata',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    const Expanded(
+                      child: Text(
+                        '1. Customer & Metadata',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                     ),
-                    TextButton.icon(
-                      onPressed: () {
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
                         showDialog(
                           context: context,
                           builder: (_) =>
                               CustomerFormDialog(businessId: widget.businessId),
                         );
                       },
-                      icon: const Icon(Icons.person_add_outlined, size: 16),
-                      label: const Text('New Customer'),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(
+                              alpha: 0.25,
+                            ),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.person_add_rounded,
+                              size: 14,
+                              color: AppTheme.primaryColor,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'New',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 BlocBuilder<CustomerBloc, CustomerState>(
                   builder: (context, state) {
@@ -404,11 +441,16 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
 
                     return DropdownButtonFormField<CustomerEntity>(
                       initialValue: selectedVal,
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: 'Select Customer *',
-                        prefixIcon: const Icon(Icons.person_outline),
+                        prefixIcon: const Icon(Icons.person_outline_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
                         ),
                       ),
                       items: displayCustomers.map((c) {
@@ -416,6 +458,8 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                           value: c,
                           child: Text(
                             '${c.name} ${c.phone.isNotEmpty ? "(${c.phone})" : ""}',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         );
                       }).toList(),
@@ -430,15 +474,20 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                 const SizedBox(height: 14),
 
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: TextFormField(
                         controller: _invoiceNumberController,
                         decoration: InputDecoration(
-                          labelText: 'Invoice Number *',
-                          prefixIcon: const Icon(Icons.tag),
+                          labelText: 'Invoice No. *',
+                          prefixIcon: const Icon(Icons.tag_rounded),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
                           ),
                         ),
                         validator: (val) {
@@ -449,19 +498,9 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text(
-                          'Invoice Date',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        subtitle: Text(
-                          '${_invoiceDate.day}/${_invoiceDate.month}/${_invoiceDate.year}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        trailing: const Icon(Icons.calendar_today, size: 18),
+                      child: InkWell(
                         onTap: () async {
                           final p = await showDatePicker(
                             context: context,
@@ -473,6 +512,33 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                           );
                           if (p != null) setState(() => _invoiceDate = p);
                         },
+                        borderRadius: BorderRadius.circular(12),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Invoice Date *',
+                            suffixIcon: const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 18,
+                              color: AppTheme.primaryColor,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                          ),
+                          child: Text(
+                            '${_invoiceDate.day.toString().padLeft(2, '0')}/${_invoiceDate.month.toString().padLeft(2, '0')}/${_invoiceDate.year}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -484,27 +550,26 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
 
           // Step 2: Add Line Items
           GlassCard(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '2. Products & Services',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    const Expanded(
+                      child: Text(
+                        '2. Products & Services',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     PopupMenuButton<ProductServiceEntity>(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
-                      ),
-                      icon: const Icon(
-                        Icons.add_shopping_cart,
-                        color: AppTheme.primaryColor,
                       ),
                       tooltip: 'Add Item from Catalog',
                       itemBuilder: (context) {
@@ -533,8 +598,11 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                                   size: 16,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
-                                  '${item.name} (${CurrencyFormatter.format(item.price)})',
+                                Expanded(
+                                  child: Text(
+                                    '${item.name} (${CurrencyFormatter.format(item.price)})',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),
@@ -542,25 +610,131 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                         }).toList();
                       },
                       onSelected: _addItemFromCatalog,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(
+                              alpha: 0.25,
+                            ),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.add_shopping_cart_rounded,
+                              size: 14,
+                              color: AppTheme.primaryColor,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Add Item',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 if (_selectedItems.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'No items added yet. Click "+ Add Item from Catalog" above.',
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                  PopupMenuButton<ProductServiceEntity>(
+                    tooltip: 'Add Item from Catalog',
+                    itemBuilder: (context) {
+                      final state = context.read<ProductServiceBloc>().state;
+                      List<ProductServiceEntity> items = [];
+                      if (state is ProductServiceLoaded) {
+                        items = state.items;
+                      }
+                      if (items.isEmpty) {
+                        return [
+                          const PopupMenuItem(
+                            enabled: false,
+                            child: Text('No catalog items available'),
+                          ),
+                        ];
+                      }
+                      return items.map((item) {
+                        return PopupMenuItem(
+                          value: item,
+                          child: Row(
+                            children: [
+                              Icon(
+                                item.isService
+                                    ? Icons.build_outlined
+                                    : Icons.inventory_2_outlined,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${item.name} (${CurrencyFormatter.format(item.price)})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList();
+                    },
+                    onSelected: _addItemFromCatalog,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : Colors.grey.shade200,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.add_shopping_cart_rounded,
+                            size: 32,
+                            color: isDark
+                                ? Colors.white38
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'No items added yet',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tap here or "+ Add Item" above to add products',
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white54
+                                  : Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     ),
                   )
@@ -569,120 +743,221 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _selectedItems.length,
-                    separatorBuilder: (_, i) => const Divider(),
+                    separatorBuilder: (_, i) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final item = _selectedItems[index];
-                      return Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.itemName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '₹${item.unitPrice} / ${item.unit}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.03)
+                              : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white10
+                                : Colors.grey.shade200,
                           ),
-                          Expanded(
-                            flex: 2,
-                            child: Row(
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.remove_circle_outline,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    if (item.quantity > 1) {
-                                      setState(() {
-                                        final newQty = item.quantity - 1;
-                                        final newSub = newQty * item.unitPrice;
-                                        final newTax =
-                                            newSub * (item.taxRate / 100);
-                                        _selectedItems[index] =
-                                            InvoiceItemEntity(
-                                              id: item.id,
-                                              invoiceId: item.invoiceId,
-                                              productServiceId:
-                                                  item.productServiceId,
-                                              itemName: item.itemName,
-                                              description: item.description,
-                                              quantity: newQty,
-                                              unit: item.unit,
-                                              unitPrice: item.unitPrice,
-                                              taxRate: item.taxRate,
-                                              taxAmount: newTax,
-                                              lineTotal: newSub + newTax,
-                                            );
-                                      });
-                                    }
-                                  },
-                                ),
-                                Text(
-                                  '${item.quantity.toInt()}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Text(
+                                    item.itemName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.add_circle_outline,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
+                                InkWell(
+                                  onTap: () {
                                     setState(() {
-                                      final newQty = item.quantity + 1;
-                                      final newSub = newQty * item.unitPrice;
-                                      final newTax =
-                                          newSub * (item.taxRate / 100);
-                                      _selectedItems[index] = InvoiceItemEntity(
-                                        id: item.id,
-                                        invoiceId: item.invoiceId,
-                                        productServiceId: item.productServiceId,
-                                        itemName: item.itemName,
-                                        description: item.description,
-                                        quantity: newQty,
-                                        unit: item.unit,
-                                        unitPrice: item.unitPrice,
-                                        taxRate: item.taxRate,
-                                        taxAmount: newTax,
-                                        lineTotal: newSub + newTax,
-                                      );
+                                      _selectedItems.removeAt(index);
                                     });
                                   },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      color: AppTheme.error.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                      size: 18,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                          Text(
-                            CurrencyFormatter.format(item.lineTotal),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.close,
-                              color: AppTheme.error,
-                              size: 18,
+                            if (item.description.isNotEmpty) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                item.description,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.grey.shade600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.06)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.white12
+                                          : Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          if (item.quantity > 1) {
+                                            setState(() {
+                                              final newQty = item.quantity - 1;
+                                              final newSub =
+                                                  newQty * item.unitPrice;
+                                              final newTax =
+                                                  newSub * (item.taxRate / 100);
+                                              _selectedItems[index] =
+                                                  InvoiceItemEntity(
+                                                    id: item.id,
+                                                    invoiceId: item.invoiceId,
+                                                    productServiceId:
+                                                        item.productServiceId,
+                                                    itemName: item.itemName,
+                                                    description:
+                                                        item.description,
+                                                    quantity: newQty,
+                                                    unit: item.unit,
+                                                    unitPrice: item.unitPrice,
+                                                    taxRate: item.taxRate,
+                                                    taxAmount: newTax,
+                                                    lineTotal: newSub + newTax,
+                                                  );
+                                            });
+                                          }
+                                        },
+                                        borderRadius:
+                                            const BorderRadius.horizontal(
+                                              left: Radius.circular(8),
+                                            ),
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          child: Icon(Icons.remove, size: 14),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                        child: Text(
+                                          '${item.quantity.toInt()}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            final newQty = item.quantity + 1;
+                                            final newSub =
+                                                newQty * item.unitPrice;
+                                            final newTax =
+                                                newSub * (item.taxRate / 100);
+                                            _selectedItems[index] =
+                                                InvoiceItemEntity(
+                                                  id: item.id,
+                                                  invoiceId: item.invoiceId,
+                                                  productServiceId:
+                                                      item.productServiceId,
+                                                  itemName: item.itemName,
+                                                  description: item.description,
+                                                  quantity: newQty,
+                                                  unit: item.unit,
+                                                  unitPrice: item.unitPrice,
+                                                  taxRate: item.taxRate,
+                                                  taxAmount: newTax,
+                                                  lineTotal: newSub + newTax,
+                                                );
+                                          });
+                                        },
+                                        borderRadius:
+                                            const BorderRadius.horizontal(
+                                              right: Radius.circular(8),
+                                            ),
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          child: Icon(Icons.add, size: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerRight,
+                                        child: Text(
+                                          CurrencyFormatter.format(
+                                            item.lineTotal,
+                                          ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.5,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        '${CurrencyFormatter.format(item.unitPrice)} / ${item.unit}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? Colors.white54
+                                              : Colors.grey.shade600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _selectedItems.removeAt(index);
-                              });
-                            },
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -693,23 +968,43 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
 
           // Step 3: Totals & Initial Payment Calculation
           GlassCard(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   '3. Summary & Payment Terms',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    letterSpacing: -0.2,
+                  ),
                 ),
                 const SizedBox(height: 14),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Subtotal:'),
                     Text(
-                      CurrencyFormatter.format(_subtotal),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      'Subtotal:',
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          CurrencyFormatter.format(_subtotal),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14.5,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -718,18 +1013,35 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Tax Amount:'),
                     Text(
-                      CurrencyFormatter.format(_taxAmount),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      'Tax Amount:',
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          CurrencyFormatter.format(_taxAmount),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14.5,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 Row(
                   children: [
                     Expanded(
+                      flex: 3,
                       child: TextFormField(
                         controller: _discountController,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -742,53 +1054,106 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                           });
                         },
                         decoration: InputDecoration(
-                          labelText: 'Discount Amount',
+                          labelText: 'Discount',
+                          hintText: '0',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
-                    DropdownButton<String>(
-                      value: _discountType,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'flat',
-                          child: Text('Flat (₹)'),
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _discountType,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: 'Type',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 14,
+                          ),
                         ),
-                        DropdownMenuItem(
-                          value: 'percentage',
-                          child: Text('Percent (%)'),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 18,
                         ),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) setState(() => _discountType = val);
-                      },
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'flat',
+                            child: Text(
+                              'Flat (₹)',
+                              style: TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'percentage',
+                            child: Text(
+                              'Percent (%)',
+                              style: TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _discountType = val);
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),
-                const Divider(height: 24),
+                const SizedBox(height: 14),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Grand Total:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.2),
                     ),
-                    Text(
-                      CurrencyFormatter.format(_grandTotal),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: AppTheme.primaryColor,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Grand Total:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            CurrencyFormatter.format(_grandTotal),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 19,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 14),
 
@@ -798,10 +1163,15 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Optional Initial Payment Received (₹)',
+                    labelText: 'Initial Payment (₹)',
+                    hintText: '0',
                     prefixIcon: const Icon(Icons.payments_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
                     ),
                   ),
                 ),

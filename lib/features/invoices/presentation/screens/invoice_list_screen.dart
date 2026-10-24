@@ -67,12 +67,12 @@ class _InvoiceListScreenState extends State<InvoiceListScreen>
 
   void _fetchInvoices() {
     context.read<InvoiceBloc>().add(
-          FetchInvoicesEvent(
-            businessId: widget.businessId,
-            statusFilter: _selectedStatus,
-            searchQuery: _searchController.text.trim(),
-          ),
-        );
+      FetchInvoicesEvent(
+        businessId: widget.businessId,
+        statusFilter: _selectedStatus,
+        searchQuery: _searchController.text.trim(),
+      ),
+    );
   }
 
   void _onSearchChanged(String query) {
@@ -96,11 +96,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen>
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: widget.showAppBar
-          ? AppBar(
-              title: const Text('Invoices'),
-            )
-          : null,
+      appBar: widget.showAppBar ? AppBar(title: const Text('Invoices')) : null,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -171,7 +167,10 @@ class _InvoiceListScreenState extends State<InvoiceListScreen>
               indicatorColor: AppTheme.primaryColor,
               labelColor: AppTheme.primaryColor,
               unselectedLabelColor: Colors.grey,
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
               tabs: _statusTabs.map((t) => Tab(text: t['label'])).toList(),
             ),
             const SizedBox(height: 14),
@@ -181,14 +180,17 @@ class _InvoiceListScreenState extends State<InvoiceListScreen>
               child: BlocConsumer<InvoiceBloc, InvoiceState>(
                 listener: (context, state) {
                   if (state is InvoiceActionSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.message)),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(state.message)));
                   }
                 },
                 builder: (context, state) {
                   if (state is InvoiceLoading && state is! InvoiceLoaded) {
-                    return const SkeletonListLoader(itemCount: 6, itemHeight: 80);
+                    return const SkeletonListLoader(
+                      itemCount: 6,
+                      itemHeight: 80,
+                    );
                   } else if (state is InvoiceError) {
                     return ErrorStateWidget(
                       message: state.message,
@@ -238,7 +240,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen>
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: _getStatusColor(invoice.status).withValues(alpha: 0.12),
+          backgroundColor: _getStatusColor(
+            invoice.status,
+          ).withValues(alpha: 0.12),
           child: Icon(
             Icons.receipt_outlined,
             color: _getStatusColor(invoice.status),

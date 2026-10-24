@@ -1,4 +1,5 @@
 import 'package:bizos/core/di/injection.dart';
+import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/features/attachments/data/datasources/attachment_remote_datasource_impl.dart';
 import 'package:bizos/features/attachments/data/repositories/attachment_repository_impl.dart';
 import 'package:bizos/features/attachments/domain/repositories/attachment_repository.dart';
@@ -12,23 +13,18 @@ import 'package:bizos/features/customers/data/datasources/customer_remote_dataso
 import 'package:bizos/features/customers/data/repositories/customer_repository_impl.dart';
 import 'package:bizos/features/customers/domain/repositories/customer_repository.dart';
 import 'package:bizos/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart';
-
 import 'package:bizos/features/products_services/data/datasources/product_service_remote_datasource.dart';
 import 'package:bizos/features/products_services/data/repositories/product_service_repository_impl.dart';
 import 'package:bizos/features/products_services/domain/repositories/product_service_repository.dart';
 import 'package:bizos/features/products_services/presentation/bloc/product_service_bloc.dart';
-
 import 'package:bizos/features/invoice_settings/data/datasources/invoice_settings_remote_datasource.dart';
 import 'package:bizos/features/invoice_settings/data/repositories/invoice_settings_repository_impl.dart';
 import 'package:bizos/features/invoice_settings/domain/repositories/invoice_settings_repository.dart';
 import 'package:bizos/features/invoice_settings/presentation/bloc/invoice_settings_bloc.dart';
-
 import 'package:bizos/features/invoices/data/datasources/invoice_remote_datasource.dart';
 import 'package:bizos/features/invoices/data/repositories/invoice_repository_impl.dart';
 import 'package:bizos/features/invoices/domain/repositories/invoice_repository.dart';
 import 'package:bizos/features/invoices/presentation/bloc/invoice_bloc.dart';
-
 import 'package:bizos/features/invoice_payments/data/datasources/invoice_payment_remote_datasource.dart';
 import 'package:bizos/features/invoice_payments/data/repositories/invoice_payment_repository_impl.dart';
 import 'package:bizos/features/invoice_payments/domain/repositories/invoice_payment_repository.dart';
@@ -78,9 +74,6 @@ import 'package:bizos/features/reports/data/datasource/report_remote_datasourcei
 import 'package:bizos/features/reports/domain/repo/report_repository.dart';
 import 'package:bizos/features/reports/data/repo/report_repository_impl.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
-import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
-import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/business/bloc/business_bloc.dart';
 import 'package:bizos/features/staff/presentation/bloc/staff_bloc.dart';
 import 'package:bizos/features/personal_expense/data/datasource/personal_expense_remote_datasource.dart';
@@ -348,7 +341,7 @@ class BizosApp extends StatelessWidget {
               authRepo: context.read<AuthRepository>(),
               saveFcmTokenUsecase: saveFcmTokenUsecase,
               shortcutRepository: getIt<ShortcutRepository>(),
-            )..add(CheckAuthStatus()),
+            ),
           ),
           BlocProvider<BusinessBloc>(
             create: (context) =>
@@ -481,18 +474,45 @@ class AppStartupFlow extends StatefulWidget {
   State<AppStartupFlow> createState() => _AppStartupFlowState();
 }
 
-class _AppStartupFlowState extends State<AppStartupFlow> {
+class _AppStartupFlowState extends State<AppStartupFlow>
+    with WidgetsBindingObserver {
   static const MethodChannel _shortcutChannel = MethodChannel(
     ShortcutConstants.methodChannelName,
   );
 
-  bool _splashAnimationCompleted = false;
-  bool _initialAuthResolved = false;
-
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupShortcutBridgeListener();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAndRefreshSessionOnResume();
+    }
+  }
+
+  Future<void> _checkAndRefreshSessionOnResume() async {
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.isExpired) {
+        AppLogger.info(
+          'App resumed with expired session, proactively refreshing token.',
+        );
+        await Supabase.instance.client.auth.refreshSession();
+        AppLogger.info('Session successfully refreshed on resume.');
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to refresh session on app resume: $e');
+    }
   }
 
   void _setupShortcutBridgeListener() {
@@ -539,48 +559,6 @@ class _AppStartupFlowState extends State<AppStartupFlow> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
-      listenWhen: (previous, current) =>
-          previous.status != current.status &&
-          current.status != AuthStatus.loading,
-      listener: (context, state) {
-        if (!_initialAuthResolved) {
-          setState(() {
-            _initialAuthResolved = true;
-          });
-        }
-      },
-      builder: (context, state) {
-        if (!_initialAuthResolved && state.status != AuthStatus.loading) {
-          _initialAuthResolved = true;
-        }
-
-        // 1. Initial app launch: play coordinated splash animation
-        if (!_splashAnimationCompleted) {
-          return SplashScreen(
-            onAnimationComplete: () {
-              if (mounted) {
-                setState(() {
-                  _splashAnimationCompleted = true;
-                });
-              }
-            },
-          );
-        }
-
-        // 2. Initial splash finished, but INITIAL session restoration still in progress:
-        if (!_initialAuthResolved && state.status == AuthStatus.loading) {
-          return const SplashScreen(isWaitingForAuth: true);
-        }
-
-        // 3. User authenticated: display MainDashboardScreen
-        if (state.user != null || state.status == AuthStatus.authenticated) {
-          return const MainDashboardScreen();
-        }
-
-        // 4. User unauthenticated, expired, or logging in/out: display LoginScreen
-        return const LoginScreen();
-      },
-    );
+    return const SplashScreen();
   }
 }

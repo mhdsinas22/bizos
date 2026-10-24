@@ -13,12 +13,12 @@ class StaffBloc extends Bloc<StaffEvent, StaffState> {
         final list = await staffRepository.getStaffList(event.ownerId);
         emit(StaffLoaded(list));
       } catch (e) {
-        emit(StaffError(e.toString()));
+        emit(StaffError(_cleanErrorMessage(e)));
       }
     });
 
     on<CreateStaffEvent>((event, emit) async {
-      emit(StaffLoading());
+      final previousState = state;
       try {
         await staffRepository.createStaff(
           event.staff,
@@ -27,17 +27,28 @@ class StaffBloc extends Bloc<StaffEvent, StaffState> {
         );
         add(FetchStaffEvent(event.ownerId));
       } catch (e) {
-        emit(StaffError(e.toString()));
+        final cleanMsg = _cleanErrorMessage(e);
+        emit(StaffError(cleanMsg));
+        if (previousState is StaffLoaded) {
+          emit(previousState);
+        }
       }
     });
 
     on<UpdateStaffEvent>((event, emit) async {
-      emit(StaffLoading());
+      final previousState = state;
       try {
-        await staffRepository.updateStaff(event.staff, event.selectedBusinessIds);
+        await staffRepository.updateStaff(
+          event.staff,
+          event.selectedBusinessIds,
+        );
         add(FetchStaffEvent(event.ownerId));
       } catch (e) {
-        emit(StaffError(e.toString()));
+        final cleanMsg = _cleanErrorMessage(e);
+        emit(StaffError(cleanMsg));
+        if (previousState is StaffLoaded) {
+          emit(previousState);
+        }
       }
     });
 
@@ -45,21 +56,26 @@ class StaffBloc extends Bloc<StaffEvent, StaffState> {
       final currentState = state;
       if (currentState is StaffLoaded) {
         try {
-          final businesses = await staffRepository.getStaffBusinesses(event.staffId);
+          final businesses =
+              await staffRepository.getStaffBusinesses(event.staffId);
           emit(StaffLoaded(currentState.staffList, businesses));
         } catch (e) {
-          emit(StaffError(e.toString()));
+          emit(StaffError(_cleanErrorMessage(e)));
         }
       }
     });
 
     on<DeleteStaffEvent>((event, emit) async {
-      emit(StaffLoading());
+      final previousState = state;
       try {
         await staffRepository.deleteStaff(event.userId);
         add(FetchStaffEvent(event.ownerId));
       } catch (e) {
-        emit(StaffError(e.toString()));
+        final cleanMsg = _cleanErrorMessage(e);
+        emit(StaffError(cleanMsg));
+        if (previousState is StaffLoaded) {
+          emit(previousState);
+        }
       }
     });
 
@@ -69,8 +85,17 @@ class StaffBloc extends Bloc<StaffEvent, StaffState> {
         final list = await staffRepository.getStaffByBusiness(event.businessId);
         emit(StaffLoaded(list));
       } catch (e) {
-        emit(StaffError(e.toString()));
+        emit(StaffError(_cleanErrorMessage(e)));
       }
     });
   }
+
+  static String _cleanErrorMessage(dynamic error) {
+    var msg = error.toString().trim();
+    while (msg.startsWith('Exception: ')) {
+      msg = msg.substring(11).trim();
+    }
+    return msg;
+  }
 }
+

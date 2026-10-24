@@ -4,7 +4,10 @@ import 'package:bizos/features/invoices/data/models/invoice_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class InvoiceRemoteDatasource {
-  Future<Map<String, dynamic>> generateNextInvoiceNumber(String businessId, {String? prefix});
+  Future<Map<String, dynamic>> generateNextInvoiceNumber(
+    String businessId, {
+    String? prefix,
+  });
   Future<List<InvoiceModel>> getInvoices(
     String businessId, {
     String? statusFilter,
@@ -14,9 +17,19 @@ abstract class InvoiceRemoteDatasource {
     String? searchQuery,
   });
   Future<InvoiceModel> getInvoiceById(String id);
-  Future<InvoiceModel> createInvoice(InvoiceModel invoice, List<InvoiceItemModel> items);
-  Future<InvoiceModel> updateInvoice(InvoiceModel invoice, List<InvoiceItemModel> items);
-  Future<void> updateInvoiceStatus(String invoiceId, String status, String paymentStatus);
+  Future<InvoiceModel> createInvoice(
+    InvoiceModel invoice,
+    List<InvoiceItemModel> items,
+  );
+  Future<InvoiceModel> updateInvoice(
+    InvoiceModel invoice,
+    List<InvoiceItemModel> items,
+  );
+  Future<void> updateInvoiceStatus(
+    String invoiceId,
+    String status,
+    String paymentStatus,
+  );
   Future<void> deleteInvoice(String id);
 }
 
@@ -26,7 +39,10 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
   InvoiceRemoteDatasourceImpl({required this.supabaseClient});
 
   @override
-  Future<Map<String, dynamic>> generateNextInvoiceNumber(String businessId, {String? prefix}) async {
+  Future<Map<String, dynamic>> generateNextInvoiceNumber(
+    String businessId, {
+    String? prefix,
+  }) async {
     try {
       final pPrefix = prefix ?? 'INV-';
       final response = await supabaseClient.rpc(
@@ -52,10 +68,7 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
           : 1;
       final invNum = '$pPrefix${nextSeq.toString().padLeft(4, '0')}';
 
-      return {
-        'sequence_number': nextSeq,
-        'invoice_number': invNum,
-      };
+      return {'sequence_number': nextSeq, 'invoice_number': invNum};
     } catch (e) {
       // Safe fallback calculation
       return {
@@ -82,7 +95,9 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
           .select('*, invoice_items(*), customers(*)')
           .eq('business_id', businessId);
 
-      if (statusFilter != null && statusFilter.trim().isNotEmpty && statusFilter != 'all') {
+      if (statusFilter != null &&
+          statusFilter.trim().isNotEmpty &&
+          statusFilter != 'all') {
         final s = statusFilter.trim().toLowerCase();
         query = query.eq('status', s);
       }
@@ -92,10 +107,16 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
       }
 
       if (startDate != null) {
-        query = query.gte('invoice_date', startDate.toIso8601String().split('T')[0]);
+        query = query.gte(
+          'invoice_date',
+          startDate.toIso8601String().split('T')[0],
+        );
       }
       if (endDate != null) {
-        query = query.lte('invoice_date', endDate.toIso8601String().split('T')[0]);
+        query = query.lte(
+          'invoice_date',
+          endDate.toIso8601String().split('T')[0],
+        );
       }
 
       if (searchQuery != null && searchQuery.trim().isNotEmpty) {
@@ -129,7 +150,10 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
   }
 
   @override
-  Future<InvoiceModel> createInvoice(InvoiceModel invoice, List<InvoiceItemModel> items) async {
+  Future<InvoiceModel> createInvoice(
+    InvoiceModel invoice,
+    List<InvoiceItemModel> items,
+  ) async {
     try {
       final invoiceData = invoice.toJson();
       final createdInvoice = await supabaseClient
@@ -142,12 +166,16 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
 
       // Insert line items
       if (items.isNotEmpty) {
-        final itemsData = items.map((i) => i.toJson(parentInvoiceId: invoiceId)).toList();
+        final itemsData = items
+            .map((i) => i.toJson(parentInvoiceId: invoiceId))
+            .toList();
         await supabaseClient.from('invoice_items').insert(itemsData);
       }
 
       // Sync customer receivable in business_money_transactions if outstanding > 0 & not draft/cancelled
-      if (invoice.balanceAmount > 0 && invoice.status != 'draft' && invoice.status != 'cancelled') {
+      if (invoice.balanceAmount > 0 &&
+          invoice.status != 'draft' &&
+          invoice.status != 'cancelled') {
         await _syncMoneyToReceive(
           businessId: invoice.businessId,
           customerName: invoice.customerNameSnapshot,
@@ -167,7 +195,10 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
   }
 
   @override
-  Future<InvoiceModel> updateInvoice(InvoiceModel invoice, List<InvoiceItemModel> items) async {
+  Future<InvoiceModel> updateInvoice(
+    InvoiceModel invoice,
+    List<InvoiceItemModel> items,
+  ) async {
     try {
       final invoiceData = invoice.toJson();
       await supabaseClient
@@ -176,10 +207,15 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
           .eq('id', invoice.id);
 
       // Re-insert line items (delete old, insert new)
-      await supabaseClient.from('invoice_items').delete().eq('invoice_id', invoice.id);
+      await supabaseClient
+          .from('invoice_items')
+          .delete()
+          .eq('invoice_id', invoice.id);
 
       if (items.isNotEmpty) {
-        final itemsData = items.map((i) => i.toJson(parentInvoiceId: invoice.id)).toList();
+        final itemsData = items
+            .map((i) => i.toJson(parentInvoiceId: invoice.id))
+            .toList();
         await supabaseClient.from('invoice_items').insert(itemsData);
       }
 
@@ -204,12 +240,19 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
   }
 
   @override
-  Future<void> updateInvoiceStatus(String invoiceId, String status, String paymentStatus) async {
+  Future<void> updateInvoiceStatus(
+    String invoiceId,
+    String status,
+    String paymentStatus,
+  ) async {
     try {
-      await supabaseClient.from('invoices').update({
-        'status': status,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', invoiceId);
+      await supabaseClient
+          .from('invoices')
+          .update({
+            'status': status,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', invoiceId);
     } catch (e) {
       throw ServerException('Failed to update invoice status: $e');
     }
@@ -250,15 +293,18 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
 
       if (existing != null) {
         final existingId = existing['id'] as String;
-        await supabaseClient.from('business_money_transactions').update({
-          'amount': amount,
-          'paid_amount': paidAmount,
-          'balance_amount': balanceAmount,
-          'status': statusStr,
-          'notes': notes,
-          'due_date': dueDate?.toUtc().toIso8601String(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', existingId);
+        await supabaseClient
+            .from('business_money_transactions')
+            .update({
+              'amount': amount,
+              'paid_amount': paidAmount,
+              'balance_amount': balanceAmount,
+              'status': statusStr,
+              'notes': notes,
+              'due_date': dueDate?.toUtc().toIso8601String(),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', existingId);
       } else {
         await supabaseClient.from('business_money_transactions').insert({
           'business_id': businessId,

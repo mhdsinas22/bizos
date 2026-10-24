@@ -5,6 +5,10 @@ import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
+import 'package:bizos/features/business/data/models/business_model.dart';
+import 'package:bizos/features/business/domain/repo/business_repository.dart';
+import 'package:bizos/features/dashboard/data/datasource/dashboard_remote_datasource.dart';
+import 'package:bizos/features/dashboard/domain/repo/dashboard_repository.dart';
 import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart';
 import 'package:bizos/features/splash/presentation/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +43,31 @@ class MockStreamAuthBloc extends Fake implements AuthBloc {
   }
 }
 
+class FakeDashboardRepository extends Fake implements DashboardRepository {
+  @override
+  Future<DashboardData> getDashboardData(
+    String? businessId,
+    String? ownerId,
+  ) async {
+    return DashboardData(
+      totalBusinesses: 0,
+      totalIncome: 0.0,
+      totalExpense: 0.0,
+      totalProfit: 0.0,
+      pendingTasks: 0,
+      recentActivities: [],
+      monthlySummary: {},
+    );
+  }
+}
+
+class FakeBusinessRepository extends Fake implements BusinessRepository {
+  @override
+  Future<List<BusinessModel>> getBusinesses(String ownerId) async {
+    return [];
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -50,6 +79,26 @@ void main() {
     currencyCode: 'USD',
   );
 
+  Widget createTestApp({
+    required MockStreamAuthBloc authBloc,
+    required Widget child,
+  }) {
+    return BlocProvider<AuthBloc>.value(
+      value: authBloc,
+      child: MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider<DashboardRepository>.value(
+            value: FakeDashboardRepository(),
+          ),
+          RepositoryProvider<BusinessRepository>.value(
+            value: FakeBusinessRepository(),
+          ),
+        ],
+        child: MaterialApp(home: child),
+      ),
+    );
+  }
+
   group('Voryn Login -> Logout -> Re-Login Lifecycle Tests', () {
     testWidgets(
       'AppStartupFlow switches LoginScreen -> MainDashboard -> LoginScreen -> MainDashboard seamlessly',
@@ -57,18 +106,17 @@ void main() {
         final mockBloc = MockStreamAuthBloc(AuthUnauthenticated());
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: BlocProvider<AuthBloc>.value(
-              value: mockBloc,
-              child: const AppStartupFlow(),
-            ),
+          createTestApp(
+            authBloc: mockBloc,
+            child: const AppStartupFlow(),
           ),
         );
 
         // 1. Splash screen animation completes (1.4s)
         expect(find.byType(SplashScreen), findsOneWidget);
         await tester.pump(const Duration(milliseconds: 1450));
-        await tester.pump();
+        // Route transition (350ms)
+        await tester.pump(const Duration(milliseconds: 400));
 
         // 2. Unauthenticated user sees LoginScreen
         expect(find.byType(LoginScreen), findsOneWidget);
@@ -76,7 +124,7 @@ void main() {
 
         // 3. User logs in successfully
         mockBloc.emitState(AuthAuthenticated(testUser));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         // Should transition to MainDashboardScreen
         expect(find.byType(MainDashboardScreen), findsOneWidget);
@@ -90,7 +138,7 @@ void main() {
         expect(find.byType(SplashScreen), findsNothing);
 
         mockBloc.emitState(AuthUnauthenticated());
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         // User is back on LoginScreen
         expect(find.byType(LoginScreen), findsOneWidget);
@@ -106,7 +154,7 @@ void main() {
 
         // 6. Login succeeds: transitions immediately to MainDashboardScreen
         mockBloc.emitState(AuthAuthenticated(testUser));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.byType(MainDashboardScreen), findsOneWidget);
         expect(find.byType(LoginScreen), findsNothing);
@@ -119,11 +167,9 @@ void main() {
         final mockBloc = MockStreamAuthBloc(AuthUnauthenticated());
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: BlocProvider<AuthBloc>.value(
-              value: mockBloc,
-              child: const LoginScreen(),
-            ),
+          createTestApp(
+            authBloc: mockBloc,
+            child: const LoginScreen(),
           ),
         );
 
@@ -136,6 +182,37 @@ void main() {
 
         // Pushed/standalone LoginScreen navigates to MainDashboardScreen
         expect(find.byType(MainDashboardScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Duplicate logout events only push LoginScreen once without multiple screens on stack',
+      (tester) async {
+        final mockBloc = MockStreamAuthBloc(AuthAuthenticated(testUser));
+
+        await tester.pumpWidget(
+          createTestApp(
+            authBloc: mockBloc,
+            child: const MainDashboardScreen(),
+          ),
+        );
+
+        expect(find.byType(MainDashboardScreen), findsOneWidget);
+
+        // Simulate rapid duplicate logout emissions (stream signedOut + user event)
+        mockBloc.emitState(AuthLoading());
+        await tester.pump();
+
+        mockBloc.emitState(AuthUnauthenticated());
+        await tester.pump();
+
+        // Emit unauthenticated again immediately
+        mockBloc.emitState(AuthUnauthenticated());
+        await tester.pumpAndSettle();
+
+        // Exactly ONE LoginScreen must exist in the widget tree
+        expect(find.byType(LoginScreen), findsOneWidget);
+        expect(find.byType(MainDashboardScreen), findsNothing);
       },
     );
   });

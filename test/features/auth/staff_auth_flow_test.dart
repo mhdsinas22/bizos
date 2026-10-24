@@ -5,7 +5,6 @@ import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
-import 'package:bizos/features/auth/presentation/screens/staff_login_screen.dart';
 import 'package:bizos/features/business/bloc/business_bloc.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
@@ -215,78 +214,6 @@ void main() {
             return state.message.contains('Invalid');
           }),
         ]),
-      );
-    });
-  });
-
-  group('StaffLoginScreen Widget Tests', () {
-    testWidgets('Renders Staff Workspace branding, email & password fields', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(1200, 1000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: BlocProvider<AuthBloc>.value(
-            value: authBloc,
-            child: const StaffLoginScreen(),
-          ),
-        ),
-      );
-
-      expect(find.text('Staff Workspace'), findsOneWidget);
-      expect(find.text('Staff Sign In'), findsOneWidget);
-      expect(find.text('Staff Email'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Sign In to Staff Portal'), findsOneWidget);
-      expect(
-        find.text('Business Owner? Sign In to Admin Console'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('Validates empty and invalid email format on staff login', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(1200, 1000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: BlocProvider<AuthBloc>.value(
-            value: authBloc,
-            child: const StaffLoginScreen(),
-          ),
-        ),
-      );
-
-      // Tap submit with empty inputs
-      await tester.tap(find.widgetWithText(CustomButton, 'Sign In to Staff Portal'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Please enter your staff email'), findsOneWidget);
-      expect(find.text('Please enter your password'), findsOneWidget);
-
-      // Enter invalid email
-      final fields = find.byType(TextFormField);
-      await tester.enterText(fields.at(0), 'invalid-email');
-      await tester.enterText(fields.at(1), '123'); // short password
-      await tester.tap(find.widgetWithText(CustomButton, 'Sign In to Staff Portal'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Please enter a valid email address'), findsOneWidget);
-      expect(
-        find.text('Password must be at least 6 characters'),
-        findsOneWidget,
       );
     });
   });

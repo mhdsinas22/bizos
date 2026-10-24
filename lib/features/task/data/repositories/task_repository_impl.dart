@@ -33,7 +33,10 @@ class TaskRepositoryImpl implements TaskRepository {
     required bool isOwner,
   }) async {
     try {
-      return await taskRemoteDatasource.getAllTasks(userId: userId, isOwner: isOwner);
+      return await taskRemoteDatasource.getAllTasks(
+        userId: userId,
+        isOwner: isOwner,
+      );
     } catch (e) {
       AppLogger.error("Error loading all tasks: $e");
       rethrow;
@@ -166,9 +169,11 @@ class TaskRepositoryImpl implements TaskRepository {
         userId: userId,
         dueDate: dueDate,
       );
-    } catch (e) {
-      AppLogger.error("Error checking occurrence in repository: $e");
-      return false;
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        "Error checking occurrence in repository: $e\n$stackTrace",
+      );
+      rethrow;
     }
   }
 }

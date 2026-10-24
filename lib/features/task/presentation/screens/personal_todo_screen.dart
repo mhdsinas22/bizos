@@ -55,6 +55,26 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
       if (user != null) {
         context.read<PersonalTaskBloc>().add(FetchPersonalTasksEvent(user.id));
       }
+      _scrollToSelectedDate();
+    });
+  }
+
+  void _scrollToSelectedDate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_dateStripController.hasClients) return;
+      final selectedDayIndex = _selectedDate.difference(_weekStartDate).inDays;
+      if (selectedDayIndex >= 0 && selectedDayIndex < 7) {
+        final targetOffset = (selectedDayIndex * 60.0) - 80.0;
+        final clampedOffset = targetOffset.clamp(
+          0.0,
+          _dateStripController.position.maxScrollExtent,
+        );
+        _dateStripController.animateTo(
+          clampedOffset,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
+      }
     });
   }
 
@@ -80,12 +100,14 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
     setState(() {
       _weekStartDate = _weekStartDate.subtract(const Duration(days: 7));
     });
+    _scrollToSelectedDate();
   }
 
   void _nextWeek() {
     setState(() {
       _weekStartDate = _weekStartDate.add(const Duration(days: 7));
     });
+    _scrollToSelectedDate();
   }
 
   void _openCreateTaskSheet(String userId) {
@@ -401,6 +423,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                               setState(() {
                                 _selectedDate = date;
                               });
+                              _scrollToSelectedDate();
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
@@ -575,10 +598,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                     }
 
                     return ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
                       physics: const BouncingScrollPhysics(),
                       itemCount: filteredTasks.length,
                       separatorBuilder: (_, e) => const SizedBox(height: 8),
@@ -589,13 +609,23 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
                           key: ValueKey(task.id),
                           task: task,
                           onToggleComplete: (val) {
+                            final isCompleted = val ?? false;
+                            final now = DateTime.now();
+                            final isLate =
+                                isCompleted &&
+                                now.isAfter(
+                                  task.dueDate.add(Duration(minutes: 30)),
+                                );
                             final updated = task.copyWith(
-                              isCompleted: val ?? false,
-                              status: (val ?? false) ? 'Completed' : 'Pending',
-                              completedAt: (val ?? false)
-                                  ? DateTime.now()
-                                  : null,
+                              isCompleted: isCompleted,
+                              status: !isCompleted
+                                  ? "Pending"
+                                  : isLate
+                                  ? "Completed Late"
+                                  : "Completed",
+                              completedAt: isCompleted ? now : null,
                             );
+
                             context.read<PersonalTaskBloc>().add(
                               UpdatePersonalTaskEvent(updated),
                             );

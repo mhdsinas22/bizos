@@ -46,6 +46,7 @@ class _TimelineBottomSheetWidgetState extends State<TimelineBottomSheetWidget> {
         'Method: ${widget.historyItem.paymentMethod ?? 'N/A'}\n'
         'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(widget.historyItem.createdAt.toLocal())}\n'
         'Description: $eventDesc';
+    // ignore: deprecated_member_use
     Share.share(text);
   }
 

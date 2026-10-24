@@ -36,9 +36,8 @@ class TransactionsLoaded extends MoneyManagementState {
       .fold(0.0, (sum, t) => sum + t.balanceAmount);
 
   // Total Pending Records count to Pay
-  int get pendingPayCount => payTransactions
-      .where((t) => t.status.toLowerCase() == 'pending')
-      .length;
+  int get pendingPayCount =>
+      payTransactions.where((t) => t.status.toLowerCase() == 'pending').length;
 
   // Total Pending Records count to Receive
   int get pendingReceiveCount => receiveTransactions
@@ -47,9 +46,14 @@ class TransactionsLoaded extends MoneyManagementState {
 
   @override
   List<Object?> get props => [
-        transactions,
-        transactions.map((t) => '${t.id}_${t.amount}_${t.paidAmount}_${t.balanceAmount}_${t.status}').join(','),
-      ];
+    transactions,
+    transactions
+        .map(
+          (t) =>
+              '${t.id}_${t.amount}_${t.paidAmount}_${t.balanceAmount}_${t.status}',
+        )
+        .join(','),
+  ];
 }
 
 class TransactionsError extends MoneyManagementState {

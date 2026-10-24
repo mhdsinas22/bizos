@@ -38,4 +38,11 @@ abstract class AuthRemoteDataSource {
     required String userId,
     required String currencyCode,
   });
+
+  // Supabase Auth session refresh
+  Future<AuthResponse> refreshSession();
+
+  // Supabase Auth state change stream
+  Stream<AuthState> get onAuthStateChange;
 }
+
