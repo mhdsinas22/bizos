@@ -414,15 +414,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       chipColor = Colors.red;
       label = 'OVERDUE';
     } else {
-      chipColor = Colors.blue;
+      chipColor = AppTheme.primaryColor;
       label = 'SENT';
     }
 
     return Chip(
       label: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: (chipColor == AppTheme.primaryColor)
+              ? AppTheme.primaryOnColor
+              : Colors.white,
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),

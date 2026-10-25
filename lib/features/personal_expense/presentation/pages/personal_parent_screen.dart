@@ -145,7 +145,7 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
                 ? LinearGradient(
                     colors: [
                       primaryColor,
-                      Color.lerp(primaryColor, const Color(0xFF3730A3), 0.25) ??
+                      Color.lerp(primaryColor, AppTheme.primaryDarkColor, 0.25) ??
                           primaryColor,
                     ],
                     begin: Alignment.topLeft,
@@ -172,7 +172,7 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
                 icon,
                 size: 19,
                 color: isSelected
-                    ? Colors.white
+                    ? AppTheme.primaryOnColor
                     : (isDark
                           ? const Color(0xFF94A3B8)
                           : const Color(0xFF334155)),
@@ -188,7 +188,7 @@ class _PersonalParentScreenState extends State<PersonalParentScreen> {
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                     letterSpacing: -0.2,
                     color: isSelected
-                        ? Colors.white
+                        ? AppTheme.primaryOnColor
                         : (isDark
                               ? const Color(0xFF94A3B8)
                               : const Color(0xFF334155)),

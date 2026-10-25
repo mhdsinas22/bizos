@@ -120,7 +120,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
         icon: const Icon(Icons.add),
         label: const Text('Add Expense'),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryOnColor,
       ),
       body: BlocListener<PersonalExpenseBloc, PersonalExpenseState>(
         listener: (context, state) {

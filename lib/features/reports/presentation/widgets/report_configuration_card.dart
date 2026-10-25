@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 
 /// Configuration controls for the Reports screen matching the reference UI.
@@ -71,16 +72,14 @@ class ReportConfigurationCard extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF28254E)
-                            : const Color(0xFFEDE9FE),
+                        color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.storefront_rounded,
                         color: isDark
-                            ? const Color(0xFFA5B4FC)
-                            : const Color(0xFF6366F1),
+                            ? AppTheme.primaryLightColor
+                            : AppTheme.primaryDarkColor,
                         size: 19,
                       ),
                     ),
@@ -151,8 +150,8 @@ class ReportConfigurationCard extends StatelessWidget {
                                       fontWeight: FontWeight.w800,
                                       fontSize: 15,
                                       color: isDark
-                                          ? const Color(0xFFA5B4FC)
-                                          : const Color(0xFF6366F1),
+                                          ? AppTheme.primaryLightColor
+                                          : AppTheme.primaryDarkColor,
                                     ),
                                   ),
                                 ),
@@ -188,9 +187,9 @@ class ReportConfigurationCard extends StatelessWidget {
                                 ),
                               ),
                               if (isSelected)
-                                const Icon(
+                                Icon(
                                   Icons.check_circle_rounded,
-                                  color: Color(0xFF6366F1),
+                                  color: AppTheme.primaryColor,
                                   size: 20,
                                 ),
                             ],
@@ -250,16 +249,14 @@ class ReportConfigurationCard extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF28254E)
-                            : const Color(0xFFEDE9FE),
+                        color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.description_rounded,
                         color: isDark
-                            ? const Color(0xFFA5B4FC)
-                            : const Color(0xFF6366F1),
+                            ? AppTheme.primaryLightColor
+                            : AppTheme.primaryDarkColor,
                         size: 19,
                       ),
                     ),
@@ -317,17 +314,15 @@ class ReportConfigurationCard extends StatelessWidget {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF161F30)
-                                      : const Color(0xFFEDE9FE),
+                                  color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
                                   icon,
                                   size: 18,
                                   color: isDark
-                                      ? const Color(0xFFA5B4FC)
-                                      : const Color(0xFF6366F1),
+                                      ? AppTheme.primaryLightColor
+                                      : AppTheme.primaryDarkColor,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -344,9 +339,9 @@ class ReportConfigurationCard extends StatelessWidget {
                                 ),
                               ),
                               if (isSelected)
-                                const Icon(
+                                Icon(
                                   Icons.check_circle_rounded,
-                                  color: Color(0xFF6366F1),
+                                  color: AppTheme.primaryColor,
                                   size: 20,
                                 ),
                             ],
@@ -425,10 +420,10 @@ class ReportConfigurationCard extends StatelessWidget {
     final borderColor = isDark
         ? const Color(0xFF1E283D)
         : const Color(0xFFE2E8F0);
-    final iconBg = isDark ? const Color(0xFF28254E) : const Color(0xFFEDE9FE);
+    final iconBg = AppTheme.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12);
     final iconColor = isDark
-        ? const Color(0xFFA5B4FC)
-        : const Color(0xFF6366F1);
+        ? AppTheme.primaryLightColor
+        : AppTheme.primaryDarkColor;
     final labelColor = isDark
         ? const Color(0xFF94A3B8)
         : const Color(0xFF64748B);

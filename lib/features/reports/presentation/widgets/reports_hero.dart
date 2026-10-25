@@ -1,14 +1,13 @@
+import 'package:bizos/core/constants/app_images.dart';
 import 'package:flutter/material.dart';
+import 'package:bizos/core/theme/app_theme.dart';
 
 /// Hero banner for the Reporting Console matching the Voryn ERP design reference.
 /// Features a soft lavender gradient, clean typography, and a 3D report illustration.
 class ReportsHero extends StatelessWidget {
   final VoidCallback? onTap;
 
-  const ReportsHero({
-    super.key,
-    this.onTap,
-  });
+  const ReportsHero({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +36,9 @@ class ReportsHero extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFFF1F5FF),
-                  Color(0xFFEBF1FF),
-                  Color(0xFFF9FAFD),
+                  Color(0xFFF0FFE9),
+                  Color(0xFFE5F8D9),
+                  Color(0xFFF3FAF0),
                 ],
               ),
         border: Border.all(
@@ -108,16 +107,16 @@ class ReportsHero extends StatelessWidget {
                   width: imgWidth,
                   height: imgHeight,
                   child: Image.asset(
-                    'assets/icon/reports_3d.png',
+                    AppImages.greenreports3d,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => Image.asset(
                       'assets/png/ChatGPT Image Sep 30, 2026, 11_45_21 AM.png',
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Center(
+                      errorBuilder: (context, error, stackTrace) => Center(
                         child: Icon(
                           Icons.analytics_rounded,
                           size: 42,
-                          color: Color(0xFF818CF8),
+                          color: AppTheme.primaryColor,
                         ),
                       ),
                     ),

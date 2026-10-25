@@ -197,7 +197,7 @@ class _PersonalToDoScreenState extends State<PersonalToDoScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openCreateTaskSheet(user.id),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryOnColor,
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add, size: 22),

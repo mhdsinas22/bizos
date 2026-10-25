@@ -586,7 +586,7 @@ class BusinessAnalyticsEngine {
       hColor = PdfColor.fromHex('#16A34A');
     } else if (hScore >= 75) {
       hStatus = 'GOOD';
-      hColor = PdfColor.fromHex('#4F46E5');
+      hColor = PdfColor.fromHex('#9ACB4C');
     } else if (hScore >= 50) {
       hStatus = 'AVERAGE';
       hColor = PdfColor.fromHex('#D97706');

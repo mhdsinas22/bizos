@@ -764,7 +764,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: color,
-                        foregroundColor: Colors.white,
+                        foregroundColor: color == AppTheme.primaryColor ? AppTheme.primaryOnColor : Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),

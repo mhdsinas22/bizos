@@ -325,11 +325,11 @@ class _ThisMonthSectionState extends State<ThisMonthSection> {
               trendPct: widget.hasFinancialAccess ? profitDiffPct : null,
               isProfit: true,
               icon: Icons.bar_chart_rounded,
-              themeColor: const Color(0xFF818CF8),
-              darkBg: const Color(0xFF181533),
-              lightBg: const Color(0xFFF5F3FF),
-              darkBorder: const Color(0xFF818CF8).withValues(alpha: 0.28),
-              lightBorder: const Color(0xFFDDD6FE),
+              themeColor: AppTheme.primaryColor,
+              darkBg: const Color(0xFF131A10),
+              lightBg: const Color(0xFFF7FAF2),
+              darkBorder: AppTheme.primaryColor.withValues(alpha: 0.28),
+              lightBorder: const Color(0xFFD6E8B7),
             );
 
             if (isSmall) {

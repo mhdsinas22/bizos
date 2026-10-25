@@ -1,4 +1,6 @@
+import 'package:bizos/core/constants/app_images.dart';
 import 'package:flutter/material.dart';
+import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/features/business/presentation/widgets/business_metric_item.dart';
 
@@ -48,15 +50,13 @@ class BusinessOverviewCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFFF1F5FF),
-                  Color(0xFFEBF1FF),
-                  Color(0xFFF9FAFD),
+                  Color(0xFFF0FFE9),
+                  Color(0xFFE5F8D9),
+                  Color(0xFFF3FAF0),
                 ],
               ),
         border: Border.all(
-          color: isDark
-              ? const Color(0xFF2E3856)
-              : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2E3856) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -85,7 +85,10 @@ class BusinessOverviewCard extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                        colors: [
+                          AppTheme.primaryColor,
+                          AppTheme.primaryDarkColor,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -94,7 +97,7 @@ class BusinessOverviewCard extends StatelessWidget {
                     child: const Center(
                       child: Icon(
                         Icons.bar_chart_rounded,
-                        color: Colors.white,
+                        color: AppTheme.primaryOnColor,
                         size: 26,
                       ),
                     ),
@@ -158,19 +161,20 @@ class BusinessOverviewCard extends StatelessWidget {
                       return Padding(
                         padding: const EdgeInsets.only(left: 4),
                         child: Image.asset(
-                          'assets/icon/store_3d.png',
+                          AppImages.store3Dimage,
                           height: imgHeight,
                           width: imgWidth,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => SizedBox(
-                            height: imgHeight,
-                            width: imgWidth,
-                            child: const Icon(
-                              Icons.storefront_rounded,
-                              size: 36,
-                              color: Color(0xFF818CF8),
-                            ),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              SizedBox(
+                                height: imgHeight,
+                                width: imgWidth,
+                                child: const Icon(
+                                  Icons.storefront_rounded,
+                                  size: 36,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
                         ),
                       );
                     },
@@ -234,7 +238,8 @@ class BusinessOverviewCard extends StatelessWidget {
                       label: 'Total Expenses',
                       value: CurrencyFormatter.format(totalExpenses),
                       trend: totalExpenses > 0 ? '+8%' : null,
-                      isPositiveTrend: true, // Upward arrow as in reference image
+                      isPositiveTrend:
+                          true, // Upward arrow as in reference image
                       trendColor: isDark
                           ? const Color(0xFFF87171)
                           : const Color(0xFFEF4444),
@@ -258,8 +263,12 @@ class BusinessOverviewCard extends StatelessWidget {
                       trend: netProfit >= 0 ? '+18%' : '-5%',
                       isPositiveTrend: netProfit >= 0,
                       trendColor: netProfit >= 0
-                          ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
-                          : (isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444)),
+                          ? (isDark
+                                ? const Color(0xFF34D399)
+                                : const Color(0xFF059669))
+                          : (isDark
+                                ? const Color(0xFFF87171)
+                                : const Color(0xFFEF4444)),
                       onTap: onProfitTap,
                     ),
                   ),
@@ -278,7 +287,8 @@ class BusinessOverviewCard extends StatelessWidget {
                       label: 'Total Invoices',
                       value: '$totalInvoices',
                       trend: totalInvoices > 0 ? '+2' : null,
-                      isPositiveTrend: false, // Downward arrow as in reference image
+                      isPositiveTrend:
+                          false, // Downward arrow as in reference image
                       trendColor: isDark
                           ? const Color(0xFF60A5FA)
                           : const Color(0xFF2563EB),
@@ -305,4 +315,3 @@ class BusinessOverviewCard extends StatelessWidget {
     );
   }
 }
-

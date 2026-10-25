@@ -265,7 +265,7 @@ class _ManageCategoriesBottomSheetState
                   label: Text('Add New $typeLabel Category'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.primaryOnColor,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

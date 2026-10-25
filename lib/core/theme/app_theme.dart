@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppTheme {
-  // Brand Colors - Sleek Indigo SaaS Palette
-  static const Color primaryColor = Color(0xFF4F46E5); // Indigo 600
-  static const Color primaryLightColor = Color(0xFF818CF8); // Indigo 400
-  static const Color primaryDarkColor = Color(0xFF3730A3); // Indigo 800
+  // Brand Colors - Vibrant Neo-SaaS Lime Palette
+  static const Color primaryColor = Color(0xFF9ACB4C); // Voryn Brand Lime
+  static const Color primaryLightColor = Color(0xFFB8E36A); // Vibrant Lime tint 400
+  static const Color primaryDarkColor = Color(0xFF6B942B); // Deep Olive/Forest 800
+  static const Color primaryOnColor = Colors.white; // Pure white font & icons on brand green
   static const Color accentColor = Color(0xFF10B981); // Emerald 500
 
   // Light Palette
@@ -38,10 +39,13 @@ class AppTheme {
       scaffoldBackgroundColor: lightBg,
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
+        onPrimary: primaryOnColor,
         secondary: accentColor,
+        onSecondary: Colors.white,
         surface: lightSurface,
         onSurface: lightTextPrimary,
         error: error,
+        onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: lightSurface,
@@ -75,7 +79,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          foregroundColor: primaryOnColor,
           elevation: 0,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -84,14 +88,19 @@ class AppTheme {
           ),
           textStyle: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
           ),
         ),
       ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryColor,
+        foregroundColor: primaryOnColor,
+        elevation: 3,
+      ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor,
+          foregroundColor: primaryDarkColor,
           side: const BorderSide(color: lightBorder, width: 1.2),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
@@ -215,10 +224,13 @@ class AppTheme {
       scaffoldBackgroundColor: darkBg,
       colorScheme: const ColorScheme.dark(
         primary: primaryColor,
+        onPrimary: primaryOnColor,
         secondary: accentColor,
+        onSecondary: Colors.white,
         surface: darkSurface,
         onSurface: darkTextPrimary,
         error: error,
+        onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: darkBg,
@@ -252,7 +264,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          foregroundColor: primaryOnColor,
           elevation: 0,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -261,10 +273,15 @@ class AppTheme {
           ),
           textStyle: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
           ),
         ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryColor,
+        foregroundColor: primaryOnColor,
+        elevation: 3,
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(

@@ -517,7 +517,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
               onPressed: () => _saveSettings(settingsId),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryOnColor,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 elevation: 4,
               ),

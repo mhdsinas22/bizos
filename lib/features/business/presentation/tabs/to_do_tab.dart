@@ -158,7 +158,7 @@ class _ToDoTabState extends State<ToDoTab> {
               icon: const Icon(Icons.add),
               label: const Text('Add Task'),
               backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.primaryOnColor,
             )
           : null,
       body: Column(

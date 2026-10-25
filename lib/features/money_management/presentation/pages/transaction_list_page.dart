@@ -701,7 +701,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
           ),
         ),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryOnColor,
         icon: const Icon(Icons.add),
         label: Text(
           TransactionEventMapper.getAddTransactionLabel(

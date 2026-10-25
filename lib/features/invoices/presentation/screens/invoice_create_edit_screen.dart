@@ -1188,7 +1188,7 @@ class _InvoiceCreateEditScreenState extends State<InvoiceCreateEditScreen> {
               onPressed: _submitInvoice,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryOnColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bizos/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 /// Data class representing a report generated during the session.
@@ -43,10 +44,10 @@ class RecentReportsSection extends StatelessWidget {
     final borderColor = isDark
         ? const Color(0xFF1E283D)
         : const Color(0xFFE2E8F0);
-    final iconBg = isDark ? const Color(0xFF28254E) : const Color(0xFFEDE9FE);
+    final iconBg = AppTheme.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12);
     final iconColor = isDark
-        ? const Color(0xFFA5B4FC)
-        : const Color(0xFF6366F1);
+        ? AppTheme.primaryLightColor
+        : AppTheme.primaryDarkColor;
     final labelColor = isDark
         ? const Color(0xFF94A3B8)
         : const Color(0xFF64748B);

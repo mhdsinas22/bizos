@@ -586,7 +586,7 @@ class _QuickExpenseFormState extends State<QuickExpenseForm> {
             height: 50,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                colors: [AppTheme.primaryColor, AppTheme.primaryDarkColor],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -611,7 +611,7 @@ class _QuickExpenseFormState extends State<QuickExpenseForm> {
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.2,
-                            color: Colors.white,
+                            color: AppTheme.primaryOnColor,
                           ),
                         )
                       : const Text(
@@ -619,7 +619,7 @@ class _QuickExpenseFormState extends State<QuickExpenseForm> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: AppTheme.primaryOnColor,
                             letterSpacing: -0.2,
                           ),
                         ),

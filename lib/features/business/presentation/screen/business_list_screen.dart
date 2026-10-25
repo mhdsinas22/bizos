@@ -122,7 +122,7 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
                   ),
                 ),
                 backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryOnColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

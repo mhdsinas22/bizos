@@ -1,3 +1,4 @@
+import 'package:bizos/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 
@@ -58,34 +59,20 @@ class BusinessHeader extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              gradient: isDark
-                  ? const LinearGradient(
-                      colors: [Color(0xFF28254E), Color(0xFF1E1E38)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : const LinearGradient(
-                      colors: [Color(0xFFEDE9FE), Color(0xFFDDD6FE)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0xFF3F3D6E)
-                    : const Color(0xFFC4B5FD),
-                width: 1,
+              gradient: const LinearGradient(
+                colors: [AppTheme.primaryColor, AppTheme.primaryDarkColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
               child: Text(
                 initial,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? const Color(0xFFA5B4FC)
-                      : const Color(0xFF6366F1),
+                  color: Colors.white,
                 ),
               ),
             ),

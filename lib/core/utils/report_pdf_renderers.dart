@@ -5,8 +5,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class ReportPdfRenderers {
-  static final primaryColor = PdfColor.fromHex('#4F46E5');
-  static final primaryLight = PdfColor.fromHex('#EEF2FF');
+  static final primaryColor = PdfColor.fromHex('#9ACB4C');
+  static final primaryLight = PdfColor.fromHex('#F4F9EC');
   static final secondaryDark = PdfColor.fromHex('#1E293B');
   static final textDark = PdfColor.fromHex('#0F172A');
   static final textGrey = PdfColor.fromHex('#64748B');

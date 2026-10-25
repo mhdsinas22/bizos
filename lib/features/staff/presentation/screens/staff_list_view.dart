@@ -56,7 +56,7 @@ class _StaffListViewState extends State<StaffListView> {
         icon: const Icon(Icons.person_add),
         label: const Text('Add Staff'),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryOnColor,
       ),
       body: BlocBuilder<StaffBloc, StaffState>(
         builder: (context, state) {

@@ -78,8 +78,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     try {
       final authState = context.read<AuthBloc>().state;
-      final userName =
-          authState is Authenticated ? authState.user.name : 'Business Owner';
+      final userName = authState is Authenticated
+          ? authState.user.name
+          : 'Business Owner';
       final reportRepo = context.read<ReportRepository>();
 
       final incomes = await reportRepo.getIncomeReportData(
@@ -92,8 +93,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         startDate: _startDate,
         endDate: _endDate,
       );
-      final allTasks =
-          await reportRepo.getTaskReportData(_selectedBusiness!.id);
+      final allTasks = await reportRepo.getTaskReportData(
+        _selectedBusiness!.id,
+      );
 
       final filteredTasks = allTasks.where((t) {
         if (_startDate != null && t.dueDate.isBefore(_startDate!)) return false;
@@ -102,19 +104,22 @@ class _ReportsScreenState extends State<ReportsScreen> {
       }).toList();
 
       final now = DateTime.now();
-      final start = _startDate ??
+      final start =
+          _startDate ??
           (incomes.isNotEmpty || expenses.isNotEmpty
               ? (incomes
-                  .map((i) => i.date)
-                  .followedBy(expenses.map((e) => e.date))
-                  .reduce((a, b) => a.isBefore(b) ? a : b))
+                    .map((i) => i.date)
+                    .followedBy(expenses.map((e) => e.date))
+                    .reduce((a, b) => a.isBefore(b) ? a : b))
               : DateTime(now.year, 1, 1));
       final end = _endDate ?? now;
 
-      final allIncomes =
-          await reportRepo.getIncomeReportData(_selectedBusiness!.id);
-      final allExpenses =
-          await reportRepo.getExpenseReportData(_selectedBusiness!.id);
+      final allIncomes = await reportRepo.getIncomeReportData(
+        _selectedBusiness!.id,
+      );
+      final allExpenses = await reportRepo.getExpenseReportData(
+        _selectedBusiness!.id,
+      );
 
       final analyticsData = await BusinessAnalyticsEngine.compute(
         incomes: incomes,
@@ -150,16 +155,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
       // Add to recent reports log for quick access
       if (mounted) {
-        final formattedType = _reportType.endsWith('Statement') ||
-                _reportType.endsWith('Report')
+        final formattedType =
+            _reportType.endsWith('Statement') || _reportType.endsWith('Report')
             ? _reportType
             : '$_reportType Statement';
 
         setState(() {
-          _recentReports.removeWhere((r) =>
-              r.reportType == formattedType &&
-              r.businessName == _selectedBusiness!.name &&
-              r.dateRange == _filterLabel);
+          _recentReports.removeWhere(
+            (r) =>
+                r.reportType == formattedType &&
+                r.businessName == _selectedBusiness!.name &&
+                r.dateRange == _filterLabel,
+          );
 
           _recentReports.insert(
             0,
@@ -167,9 +174,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               id: DateTime.now().millisecondsSinceEpoch.toString(),
               reportType: formattedType,
               businessName: _selectedBusiness!.name,
-              dateRange: _filterLabel == 'All Time'
-                  ? 'All Time'
-                  : _filterLabel,
+              dateRange: _filterLabel == 'All Time' ? 'All Time' : _filterLabel,
               generatedAt: DateTime.now(),
             ),
           );
@@ -202,8 +207,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final nowStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0B0F19) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? const Color(0xFF0B0F19)
+          : const Color(0xFFF8FAFC),
       body: BlocBuilder<BusinessBloc, BusinessState>(
         builder: (context, state) {
           List<BusinessModel> businesses = [];
@@ -247,8 +253,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.symmetric(
-              horizontal:
-                  MediaQuery.sizeOf(context).width > 600 ? 24.0 : 16.0,
+              horizontal: MediaQuery.sizeOf(context).width > 600 ? 24.0 : 16.0,
               vertical: 12.0,
             ),
             child: Center(
@@ -287,15 +292,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     // 3. Report Details Card
                     ReportDetailsCard(
                       businessName: _selectedBusiness?.name ?? '',
-                      reportType: _reportType.endsWith('Statement') ||
+                      reportType:
+                          _reportType.endsWith('Statement') ||
                               _reportType.endsWith('Report')
                           ? _reportType
                           : '$_reportType Statement',
                       dateRange: _filterLabel == 'All Time'
                           ? 'All Recorded Historical Transactions'
                           : _filterLabel,
-                      generatedBy:
-                          user.name.isNotEmpty ? user.name : 'Business Owner',
+                      generatedBy: user.name.isNotEmpty
+                          ? user.name
+                          : 'Business Owner',
                       generatedAt: nowStr,
                       fileFormat: 'PDF',
                       isExporting: _isExporting,

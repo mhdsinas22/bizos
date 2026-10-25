@@ -95,7 +95,7 @@ class _OwnerTaskDashboardScreenState extends State<OwnerTaskDashboardScreen> {
           icon: const Icon(Icons.add),
           label: const Text('Create Task'),
           backgroundColor: AppTheme.primaryColor,
-          foregroundColor: Colors.white,
+          foregroundColor: AppTheme.primaryOnColor,
         ),
         body: BlocBuilder<BusinessTaskBloc, BusinessTaskState>(
           builder: (context, state) {

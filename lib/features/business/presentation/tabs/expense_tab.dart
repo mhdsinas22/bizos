@@ -166,7 +166,7 @@ class _ExpenseTabState extends State<ExpenseTab> {
         icon: const Icon(Icons.add),
         label: const Text('Add Expense'),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryOnColor,
       ),
       body: Column(
         children: [

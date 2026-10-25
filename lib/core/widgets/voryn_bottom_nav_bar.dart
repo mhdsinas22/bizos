@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:bizos/core/theme/app_theme.dart';
+import 'package:flutter/services.dart';
 
 class VorynNavDestination {
   final String label;
@@ -81,7 +82,10 @@ class VorynBottomNavBar extends StatelessWidget {
               return Expanded(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => onDestinationSelected(index),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onDestinationSelected(index);
+                  },
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -96,8 +100,12 @@ class VorynBottomNavBar extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? (isDark
-                                  ? AppTheme.primaryColor.withValues(alpha: 0.25)
-                                  : const Color(0xFFEDE9FE))
+                                    ? AppTheme.primaryColor.withValues(
+                                        alpha: 0.25,
+                                      )
+                                    : AppTheme.primaryColor.withValues(
+                                        alpha: 0.15,
+                                      ))
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -112,8 +120,9 @@ class VorynBottomNavBar extends StatelessWidget {
                         dest.label,
                         style: TextStyle(
                           fontSize: destinations.length > 4 ? 9.5 : 10.5,
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                           color: isSelected ? primaryColor : inactiveColor,
                           letterSpacing: destinations.length > 4 ? -0.4 : -0.2,
                         ),

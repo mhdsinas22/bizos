@@ -189,7 +189,7 @@ class _CurrencySettingsPageState extends State<CurrencySettingsPage> {
                                 primary,
                                 Color.lerp(
                                       primary,
-                                      const Color(0xFF3730A3),
+                                      AppTheme.primaryDarkColor,
                                       0.25,
                                     ) ??
                                     primary,
@@ -210,7 +210,7 @@ class _CurrencySettingsPageState extends State<CurrencySettingsPage> {
                           child: Text(
                             selected.symbol,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.primaryOnColor,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),

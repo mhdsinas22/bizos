@@ -1,14 +1,13 @@
+import 'package:bizos/core/constants/app_images.dart';
 import 'package:flutter/material.dart';
+import 'package:bizos/core/theme/app_theme.dart';
 
 /// Hero / Welcome banner for the Voryn ERP Dashboard.
 /// Displays authenticated user name, overview subtitle, and 3D store illustration.
 class DashboardHeroCard extends StatelessWidget {
   final String userName;
 
-  const DashboardHeroCard({
-    super.key,
-    required this.userName,
-  });
+  const DashboardHeroCard({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -25,22 +24,16 @@ class DashboardHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : const Color(0xFFDDD6FE).withValues(alpha: 0.7),
+              ? AppTheme.primaryColor.withValues(alpha: 0.15)
+              : AppTheme.primaryColor.withValues(alpha: 0.25),
           width: 1,
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [
-                  Color(0xFF181B34),
-                  Color(0xFF111425),
-                ]
-              : const [
-                  Color(0xFFF6F4FE),
-                  Color(0xFFEDE9FE),
-                ],
+              ? const [Color(0xFF131A10), Color(0xFF0F160E)]
+              : const [Color(0xFFF7FAF2), Color(0xFFEFF5E6)],
         ),
       ),
       padding: EdgeInsets.symmetric(
@@ -90,7 +83,7 @@ class DashboardHeroCard extends StatelessWidget {
               maxHeight: isMobile ? 100 : 125,
             ),
             child: Image.asset(
-              'assets/icon/store_3d.png',
+              AppImages.store3Dimage,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) =>
                   const SizedBox.shrink(),

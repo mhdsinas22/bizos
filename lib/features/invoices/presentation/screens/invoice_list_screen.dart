@@ -140,7 +140,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen>
                   onPressed: _openCreateInvoiceScreen,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.primaryOnColor,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 14,
@@ -149,10 +149,10 @@ class _InvoiceListScreenState extends State<InvoiceListScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  icon: const Icon(Icons.post_add_outlined, size: 18),
+                  icon: const Icon(Icons.post_add_outlined, size: 18, color: AppTheme.primaryOnColor),
                   label: const Text(
                     'Create Invoice',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryOnColor),
                   ),
                 ),
               ],

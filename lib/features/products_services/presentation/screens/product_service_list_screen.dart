@@ -141,7 +141,7 @@ class _ProductServiceListScreenState extends State<ProductServiceListScreen>
                   onPressed: _openAddDialog,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.primaryOnColor,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -151,10 +151,10 @@ class _ProductServiceListScreenState extends State<ProductServiceListScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  icon: const Icon(Icons.add_rounded, size: 19),
+                  icon: const Icon(Icons.add_rounded, size: 19, color: AppTheme.primaryOnColor),
                   label: const Text(
                     'Add Item',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.primaryOnColor),
                   ),
                 ),
               ],

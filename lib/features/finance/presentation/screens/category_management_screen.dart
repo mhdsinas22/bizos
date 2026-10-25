@@ -187,7 +187,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen>
         icon: const Icon(Icons.add),
         label: Text('Add ${_currentType == CategoryType.income ? 'Income' : 'Expense'} Category'),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryOnColor,
       ),
       body: BlocConsumer<CategoryBloc, CategoryState>(
         listener: (context, state) {

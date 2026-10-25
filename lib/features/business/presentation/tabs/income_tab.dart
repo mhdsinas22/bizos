@@ -166,7 +166,7 @@ class _IncomeTabState extends State<IncomeTab> {
         icon: const Icon(Icons.add),
         label: const Text('Add Income'),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryOnColor,
       ),
       body: Column(
         children: [

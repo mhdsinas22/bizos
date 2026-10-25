@@ -9,4 +9,8 @@ class AppImages {
       "assets/icon/voryn_gradient_v_transparent.png";
   static const String vorynGradientLogoOriginal =
       "assets/icon/Polished Gradient V Logo.png";
+  static const String store3Dimage =
+      "assets/icon/Charming Green Shop With Trees and Clouds.png";
+  static const String greenreports3d =
+      "assets/icon/3D Green Analytics Dashboard Cluster.png";
 }

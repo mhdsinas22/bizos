@@ -116,7 +116,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                   onPressed: _openAddCustomerDialog,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.primaryOnColor,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 14,
@@ -125,10 +125,10 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  icon: const Icon(Icons.person_add_outlined, size: 18),
+                  icon: const Icon(Icons.person_add_outlined, size: 18, color: AppTheme.primaryOnColor),
                   label: const Text(
                     'Add Customer',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryOnColor),
                   ),
                 ),
               ],

@@ -29,7 +29,7 @@ class InvoiceSettingsEntity extends Equatable {
     this.gstin = '',
     this.logoUrl = '',
     this.template = 'modern',
-    this.primaryColor = '#2563EB',
+    this.primaryColor = '#9ACB4C',
     this.invoicePrefix = 'INV-',
     this.showLogo = true,
     this.showTax = true,

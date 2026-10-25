@@ -81,7 +81,7 @@ class QuickAddPhoneHero extends StatelessWidget {
                     // Floating Expense Card 2: Car Fuel ₹2,500
                     _buildFloatingMiniCard(
                       icon: Icons.directions_car_rounded,
-                      iconColor: const Color(0xFF4F46E5),
+                      iconColor: AppTheme.primaryDarkColor,
                       title: 'Car Fuel',
                       amount: '₹2,500',
                       isDark: isDark,
@@ -110,7 +110,7 @@ class QuickAddPhoneHero extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF4338CA)],
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDarkColor],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -130,7 +130,7 @@ class QuickAddPhoneHero extends StatelessWidget {
                 child: const Center(
                   child: Icon(
                     Icons.bolt_rounded,
-                    color: Colors.white,
+                    color: AppTheme.primaryOnColor,
                     size: 32,
                   ),
                 ),

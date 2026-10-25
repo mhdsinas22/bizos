@@ -190,7 +190,7 @@ class ShortcutInstructionCard extends StatelessWidget {
             ),
             _buildSettingsRow(
               icon: Icons.accessibility_new_rounded,
-              iconBg: const Color(0xFF4F46E5),
+              iconBg: AppTheme.primaryDarkColor,
               title: 'Accessibility',
               isHighlighted: true,
               isDark: isDark,
@@ -258,7 +258,7 @@ class ShortcutInstructionCard extends StatelessWidget {
             ),
             _buildSettingsRow(
               icon: Icons.touch_app_rounded,
-              iconBg: const Color(0xFF4F46E5),
+              iconBg: AppTheme.primaryDarkColor,
               title: 'Touch',
               isHighlighted: true,
               isDark: isDark,

@@ -972,7 +972,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
       height: 52,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          colors: [AppTheme.primaryColor, AppTheme.primaryDarkColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -995,7 +995,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) ...[
-                  Icon(icon, color: Colors.white, size: 18),
+                  Icon(icon, color: AppTheme.primaryOnColor, size: 18),
                   const SizedBox(width: 8),
                 ],
                 Text(
@@ -1003,7 +1003,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppTheme.primaryOnColor,
                     letterSpacing: -0.2,
                   ),
                 ),
