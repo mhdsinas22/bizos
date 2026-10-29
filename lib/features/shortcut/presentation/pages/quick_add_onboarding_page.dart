@@ -180,7 +180,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Add expenses in seconds without opening Voryn.',
+          'Add expenses in seconds without opening Haptic.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
@@ -228,7 +228,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
                   const SizedBox(width: 10),
                   const Expanded(
                     child: Text(
-                      'Use Back Tap, Siri or Shortcuts to quickly add expenses to Voryn.',
+                      'Use Back Tap, Siri or Shortcuts to quickly add expenses to Haptic.',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -261,7 +261,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
   }
 
   // ==========================================
-  // STEP 2: Add Voryn Shortcut to your library
+  // STEP 2: Add Haptic Shortcut to your library
   // ==========================================
   Widget _buildStep2AddShortcut(
     BuildContext context,
@@ -272,7 +272,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          'Add Voryn Shortcut to your library',
+          'Add Haptic Shortcut to your library',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -281,7 +281,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Tap the button below to add the Voryn Quick Add shortcut to your Shortcuts app.',
+          'Tap the button below to add the Haptic Quick Add shortcut to your Shortcuts app.',
           style: TextStyle(
             fontSize: 14,
             color: isDark
@@ -336,7 +336,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Voryn',
+                  'Haptic',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
@@ -395,7 +395,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                "This will open the Apple Shortcuts app. After adding, you'll return to Voryn automatically.",
+                "This will open the Apple Shortcuts app. After adding, you'll return to Haptic automatically.",
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.white54 : Colors.black45,
@@ -465,7 +465,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Voryn – Quick Add Expense',
+                'Haptic – Quick Add Expense',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
@@ -497,7 +497,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
                       ),
                       child: const Center(
                         child: Text(
-                          'V',
+                          'H',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -509,7 +509,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
-                        'Voryn\nQuick Add Expense',
+                        'Haptic\nQuick Add Expense',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -528,7 +528,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
               const SizedBox(height: 12),
               _buildShortcutDetailRow(
                 icon: Icons.graphic_eq_rounded,
-                text: 'Say "Hey Siri, add expense in Voryn" to run',
+                text: 'Say "Hey Siri, add expense in Haptic" to run',
                 isDark: isDark,
               ),
               const SizedBox(height: 8),
@@ -722,19 +722,19 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
   }
 
   // ==========================================
-  // STEP 8: Select Voryn Shortcut
+  // STEP 8: Select Haptic Shortcut
   // ==========================================
   Widget _buildStep8SelectShortcut(BuildContext context, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          'Select Voryn Shortcut',
+          'Select Haptic Shortcut',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          'Scroll down and select "Voryn – Quick Add Expense" from the list.',
+          'Scroll down and select "Haptic – Quick Add Expense" from the list.',
           style: TextStyle(
             fontSize: 14,
             color: isDark
@@ -749,7 +749,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
         const SizedBox(height: 24),
 
         _buildGradientButton(
-          label: "I've Selected Voryn",
+          label: "I've Selected Haptic",
           onPressed: () {
             context.read<ShortcutBloc>().add(const ConfirmBackTapConfigured());
             _nextStep(8);
@@ -777,7 +777,7 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Back on Voryn',
+          'Back on Haptic',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,
@@ -858,12 +858,12 @@ class _QuickAddOnboardingPageState extends State<QuickAddOnboardingPage> {
 
         const SizedBox(height: 28),
 
-        const SiriPhraseCard(phrase: 'Hey Siri, add expense in Voryn'),
+        const SiriPhraseCard(phrase: 'Hey Siri, add expense in Haptic'),
         const SizedBox(height: 12),
-        const SiriPhraseCard(phrase: 'Hey Siri, log expense in Voryn'),
+        const SiriPhraseCard(phrase: 'Hey Siri, log expense in Haptic'),
         const SizedBox(height: 12),
         const SiriPhraseCard(
-          phrase: 'Hey Siri, add ₹500 food expense in Voryn',
+          phrase: 'Hey Siri, add ₹500 food expense in Haptic',
         ),
 
         const SizedBox(height: 32),

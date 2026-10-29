@@ -20,7 +20,7 @@ class ShortcutRemoteDatasourceImpl implements ShortcutRemoteDatasource {
     try {
       final session = supabaseClient.auth.currentSession;
       if (session == null) {
-        throw Exception('Please login to Voryn first.');
+        throw Exception('Please login to Haptic first.');
       }
 
       final response = await supabaseClient.functions.invoke(
@@ -91,7 +91,7 @@ class ShortcutRemoteDatasourceImpl implements ShortcutRemoteDatasource {
     try {
       final session = supabaseClient.auth.currentSession;
       if (session == null) {
-        throw Exception('Please login to Voryn first.');
+        throw Exception('Please login to Haptic first.');
       }
 
       final response = await supabaseClient.functions.invoke(

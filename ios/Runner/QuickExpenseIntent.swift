@@ -281,10 +281,10 @@ private struct CategoryResponseItem: Decodable {
 // MARK: - Quick Expense Intent
 
 struct QuickExpenseIntent: AppIntent {
-    static var title: LocalizedStringResource = "Add Voryn Expenses"
+    static var title: LocalizedStringResource = "Add Haptic Expenses"
 
     static var description = IntentDescription(
-        "Add an expense to your Voryn account."
+        "Add an expense to your Haptic account."
     )
 
     @Parameter(
@@ -448,17 +448,17 @@ private enum ExpenseIntentError: LocalizedError, CustomLocalizedStringResourceCo
         case .invalidCategory:
             return "Please select a valid expense category."
         case .tokenNotFound:
-            return "Voryn is not connected. Please open Voryn and pair your device."
+            return "Haptic is not connected. Please open Haptic and pair your device."
         case .authenticationFailed:
-            return "Voryn authentication failed. Please open Voryn to re-pair."
+            return "Haptic authentication failed. Please open Haptic to re-pair."
         case .invalidResponse:
-            return "Voryn returned an invalid response. Please try again."
+            return "Haptic returned an invalid response. Please try again."
         case .categoryFetchFailed(let status):
-            return "Unable to load categories from Voryn (Status: \(status))."
+            return "Unable to load categories from Haptic (Status: \(status))."
         case .serverFailed(let status):
-            return "Unable to save expense. Voryn server status: \(status)."
+            return "Unable to save expense. Haptic server status: \(status)."
         case .noCategoriesFound:
-            return "No expense categories found. Please create categories in Voryn first."
+            return "No expense categories found. Please create categories in Haptic first."
         case .networkError(let message):
             return "Network error: \(message)"
         }

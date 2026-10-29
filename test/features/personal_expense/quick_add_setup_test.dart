@@ -111,7 +111,7 @@ void main() {
         // Verify sign-in prompt message appears
         expect(
           find.text(
-            'Please sign in to your Voryn account to pair your device.',
+            'Please sign in to your Haptic account to pair your device.',
           ),
           findsOneWidget,
         );
@@ -163,7 +163,7 @@ void main() {
         expect(find.text('Pairing Succeeded'), findsOneWidget);
         expect(
           find.text(
-            'Your device "$testDevice" was successfully paired with your Voryn account.',
+            'Your device "$testDevice" was successfully paired with your Haptic account.',
           ),
           findsOneWidget,
         );
@@ -175,7 +175,7 @@ void main() {
         // Verify security warning text
         expect(
           find.text(
-            'Security Warning: This token is secret and grants direct access to record expenses on your Voryn account. Do not share it with anyone.',
+            'Security Warning: This token is secret and grants direct access to record expenses on your Haptic account. Do not share it with anyone.',
           ),
           findsOneWidget,
         );

@@ -10,6 +10,7 @@ import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
+import 'package:bizos/features/auth/presentation/screens/auth_onboarding_screen.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_screen.dart';
 import 'package:flutter/material.dart';
@@ -229,10 +230,12 @@ class _SplashScreenState extends State<SplashScreen>
         ),
       );
     } else {
+      final Widget targetScreen = _sessionExpiredMessage != null
+          ? LoginScreen(sessionExpiredMessage: _sessionExpiredMessage)
+          : const AuthOnboardingScreen();
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (_, animation, secondaryAnimation) =>
-              LoginScreen(sessionExpiredMessage: _sessionExpiredMessage),
+          pageBuilder: (_, animation, secondaryAnimation) => targetScreen,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
@@ -267,7 +270,7 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 170,
                 height: 170,
                 child: Image.asset(
-                  AppImages.vorynGradientLogo,
+                  AppImages.hapticGradientLogo,
                   fit: BoxFit.contain,
                   filterQuality: FilterQuality.high,
                   errorBuilder: (context, error, stackTrace) {

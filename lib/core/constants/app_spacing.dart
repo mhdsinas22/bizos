@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Standardized spacing system tokens for Voryn ERP
+/// Standardized spacing system tokens for Haptic ERP
 class AppSpacing {
   static const double xs = 8.0;
   static const double sm = 12.0;

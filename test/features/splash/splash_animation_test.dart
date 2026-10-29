@@ -4,7 +4,7 @@ import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
-import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
+import 'package:bizos/features/auth/presentation/screens/auth_onboarding_screen.dart';
 import 'package:bizos/features/splash/presentation/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -177,7 +177,7 @@ void main() {
     );
 
     testWidgets(
-      'Standalone mode: Navigates to LoginScreen when unauthenticated',
+      'Standalone mode: Navigates to AuthOnboardingScreen when unauthenticated',
       (tester) async {
         final fakeBloc = FakeAuthBloc(AuthUnauthenticated());
 
@@ -195,7 +195,7 @@ void main() {
         // Complete 350ms route transition
         await tester.pump(const Duration(milliseconds: 400));
 
-        expect(find.byType(LoginScreen), findsOneWidget);
+        expect(find.byType(AuthOnboardingScreen), findsOneWidget);
         expect(find.byType(SplashScreen), findsNothing);
       },
     );

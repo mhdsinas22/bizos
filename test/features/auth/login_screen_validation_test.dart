@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bizos/core/config/auth_config.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
+import 'package:bizos/features/auth/presentation/screens/google_registration_screen.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
@@ -51,7 +53,7 @@ void main() {
         await tester.pumpWidget(createTestApp(const LoginScreen(), fakeBloc));
 
         // Verify branding is intact
-        expect(find.text('Voryn ERP'), findsOneWidget);
+        expect(find.text('Haptic'), findsOneWidget);
         expect(find.text('Sign In'), findsNWidgets(2));
         expect(find.text('Email'), findsOneWidget);
         expect(find.text('Enter your email'), findsOneWidget);
@@ -149,6 +151,108 @@ void main() {
 
         expect(find.text('Please enter your User ID'), findsOneWidget);
         expect(fakeBloc.events.isEmpty, isTrue);
+      },
+    );
+  });
+
+  group('GoogleRegistrationScreen UI and Validation Tests', () {
+    testWidgets(
+      'Prefills Full Name and read-only Email Address from GoogleRegistrationInfo',
+      (WidgetTester tester) async {
+        final fakeBloc = FakeAuthBloc(
+          GoogleRegistrationRequired(
+            authUserId: 'google-uid-123',
+            email: 'newowner@gmail.com',
+            suggestedName: 'Arjun Sharma',
+          ),
+        );
+
+        await tester.pumpWidget(
+          createTestApp(
+            const GoogleRegistrationScreen(
+              registrationInfo: GoogleRegistrationInfo(
+                authUserId: 'google-uid-123',
+                email: 'newowner@gmail.com',
+                suggestedName: 'Arjun Sharma',
+              ),
+            ),
+            fakeBloc,
+          ),
+        );
+
+        expect(find.text('Complete Registration'), findsNWidgets(2));
+        expect(find.text('Arjun Sharma'), findsOneWidget);
+        expect(find.text('newowner@gmail.com'), findsOneWidget);
+
+        final customFields = tester
+            .widgetList<CustomTextField>(find.byType(CustomTextField))
+            .toList();
+        expect(customFields[0].readOnly, isFalse);
+        expect(customFields[1].readOnly, isTrue);
+        expect(customFields[2].readOnly, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Validates empty Full Name, invalid Phone Number, and dispatches CompleteGoogleRegistrationRequested on valid input',
+      (WidgetTester tester) async {
+        final fakeBloc = FakeAuthBloc(
+          GoogleRegistrationRequired(
+            authUserId: 'google-uid-123',
+            email: 'newowner@gmail.com',
+            suggestedName: '',
+          ),
+        );
+
+        await tester.pumpWidget(
+          createTestApp(
+            const GoogleRegistrationScreen(
+              registrationInfo: GoogleRegistrationInfo(
+                authUserId: 'google-uid-123',
+                email: 'newowner@gmail.com',
+                suggestedName: '',
+              ),
+            ),
+            fakeBloc,
+          ),
+        );
+
+        // Tap Complete Registration with empty name and phone
+        final submitButton = find.byType(CustomButton);
+        await tester.ensureVisible(submitButton);
+        await tester.tap(submitButton);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Please enter your full name'), findsOneWidget);
+        expect(find.text('Please enter your phone number'), findsOneWidget);
+        expect(fakeBloc.events.isEmpty, isTrue);
+
+        // Enter valid name and invalid short phone
+        final textFields = find.byType(TextFormField);
+        await tester.enterText(textFields.at(0), 'Arjun Sharma');
+        await tester.enterText(textFields.at(2), '12345');
+
+        await tester.ensureVisible(submitButton);
+        await tester.tap(submitButton);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Phone number must be between 7 and 15 digits'),
+          findsOneWidget,
+        );
+        expect(fakeBloc.events.isEmpty, isTrue);
+
+        // Enter valid phone and submit
+        await tester.enterText(textFields.at(2), '+91 9876543210');
+        await tester.ensureVisible(submitButton);
+        await tester.tap(submitButton);
+        await tester.pumpAndSettle();
+
+        expect(fakeBloc.events.length, equals(1));
+        final event =
+            fakeBloc.events.first as CompleteGoogleRegistrationRequested;
+        expect(event.name, equals('Arjun Sharma'));
+        expect(event.phone, equals('+91 9876543210'));
       },
     );
   });

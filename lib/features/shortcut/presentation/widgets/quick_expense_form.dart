@@ -293,7 +293,7 @@ class _QuickExpenseFormState extends State<QuickExpenseForm> {
                     ),
                     child: const Center(
                       child: Text(
-                        'V',
+                        'H',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
@@ -304,7 +304,7 @@ class _QuickExpenseFormState extends State<QuickExpenseForm> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Voryn',
+                    'Haptic',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

@@ -4,10 +4,18 @@ import 'package:bizos/core/config/auth_config.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:bizos/core/widgets/custom_button.dart';
 import 'package:bizos/core/widgets/custom_text_field.dart';
-import 'package:bizos/core/widgets/glass_card.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
+import 'package:bizos/features/auth/presentation/screens/auth_onboarding_screen.dart';
+import 'package:bizos/features/auth/presentation/screens/create_account_screen.dart';
+import 'package:bizos/features/auth/presentation/screens/google_registration_screen.dart';
+import 'package:bizos/features/auth/presentation/screens/reset_password_screen.dart';
+import 'package:bizos/features/auth/presentation/widgets/auth_background_scaffold.dart';
+import 'package:bizos/features/auth/presentation/widgets/auth_brand_header.dart';
+import 'package:bizos/features/auth/presentation/widgets/auth_divider.dart';
+import 'package:bizos/features/auth/presentation/widgets/google_auth_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:bizos/core/utils/app_logger.dart';
 import 'package:bizos/bizos_app.dart';
@@ -15,8 +23,13 @@ import 'package:bizos/features/dashboard/presentation/screens/main_dashboard_scr
 
 class LoginScreen extends StatefulWidget {
   final String? sessionExpiredMessage;
+  final bool showDirectSignIn;
 
-  const LoginScreen({super.key, this.sessionExpiredMessage});
+  const LoginScreen({
+    super.key,
+    this.sessionExpiredMessage,
+    this.showDirectSignIn = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -27,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _hasNavigatedToDashboard = false;
+  bool _isNavigatingToGoogleRegistration = false;
 
   @override
   void initState() {
@@ -67,6 +81,56 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _handleBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, animation, secondaryAnimation) =>
+              const AuthOnboardingScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 280),
+        ),
+      );
+    }
+  }
+
+  void _navigateToForgotPassword() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, animation, secondaryAnimation) =>
+            ResetPasswordScreen(initialEmail: _emailController.text.trim()),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 280),
+      ),
+    );
+  }
+
+  void _navigateToCreateAccount() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, animation, secondaryAnimation) =>
+            const CreateAccountScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 280),
+      ),
+    );
+  }
+
+  void _handleGoogleContinue() {
+    if (context.read<AuthBloc>().state.status == AuthStatus.loading) {
+      return;
+    }
+    context.read<AuthBloc>().add(GoogleSignInRequested());
+  }
+
   Future<void> _showContactOwnerDialog() async {
     if (!mounted) return;
     showDialog(
@@ -101,224 +165,276 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listenWhen: (previous, current) =>
-            previous.status != current.status || previous.user != current.user,
-        listener: (context, state) {
-          AppLogger.info('Current Status: ${state.status}');
-          if (state.errorMessage != null) {
-            AppLogger.error('Error Message: ${state.errorMessage}');
-          }
+    return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          previous.runtimeType != current.runtimeType ||
+          previous.status != current.status ||
+          previous.user != current.user,
+      listener: (context, state) {
+        final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
+        if (!isCurrentRoute) return;
 
-          if (state.status == AuthStatus.authenticated &&
-              state.user != null &&
-              !_hasNavigatedToDashboard) {
-            _hasNavigatedToDashboard = true;
-            AppLogger.info('NAVIGATING TO MAIN DASHBOARD');
-            final navigator = appNavigatorKey.currentState ??
-                Navigator.of(context, rootNavigator: true);
-            navigator.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const MainDashboardScreen()),
-              (route) => false,
-            );
-          }
+        AppLogger.info('Current Status: ${state.status}');
+        if (state.errorMessage != null) {
+          AppLogger.error('Error Message: ${state.errorMessage}');
+        }
 
-          if (state.status == AuthStatus.error) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? 'Authentication failed'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-
-            if (state is AuthError && state.isContactOwnerRequired) {
-              Future.delayed(const Duration(milliseconds: 300), () {
-                if (mounted) _showContactOwnerDialog();
+        if (state is GoogleRegistrationRequired &&
+            !_isNavigatingToGoogleRegistration) {
+          _isNavigatingToGoogleRegistration = true;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          Navigator.of(context)
+              .push(
+                PageRouteBuilder(
+                  pageBuilder: (_, animation, secondaryAnimation) =>
+                      GoogleRegistrationScreen(
+                        registrationInfo: GoogleRegistrationInfo(
+                          authUserId: state.authUserId,
+                          email: state.email,
+                          suggestedName: state.suggestedName,
+                        ),
+                      ),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                  transitionDuration: const Duration(milliseconds: 280),
+                ),
+              )
+              .whenComplete(() {
+                if (mounted) {
+                  _isNavigatingToGoogleRegistration = false;
+                }
               });
-            }
-          }
-        },
-        builder: (context, state) {
-          return Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: SafeArea(
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 450),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // App Logo/Branding
-                        Center(
-                          child: Container(
-                            height: 64,
-                            width: 64,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  AppTheme.primaryColor,
-                                  AppTheme.primaryLightColor,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.business_center,
-                              color: Colors.white,
-                              size: 36,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Voryn ERP',
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Professional Enterprise Management Console',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.7),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
+          return;
+        }
 
-                        // Login Card
-                        GlassCard(
-                          padding: const EdgeInsets.all(24),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(
-                                  'Sign In',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Access your workspace using secure credentials',
-                                  style: theme.textTheme.labelLarge,
-                                ),
-                                const SizedBox(height: 24),
-                                Builder(
-                                  builder: (context) {
-                                    final isSupabaseAuth =
-                                        AuthConfig.useSupabaseAuth;
-                                    return CustomTextField(
-                                      controller: _emailController,
-                                      label: isSupabaseAuth
-                                          ? 'Email'
-                                          : 'User ID',
-                                      hint: isSupabaseAuth
-                                          ? 'Enter your email'
-                                          : 'Enter your User ID',
-                                      prefixIcon: isSupabaseAuth
-                                          ? Icons.email_outlined
-                                          : Icons.person_outline,
-                                      keyboardType: isSupabaseAuth
-                                          ? TextInputType.emailAddress
-                                          : TextInputType.text,
-                                      validator: (val) {
-                                        if (val == null || val.trim().isEmpty) {
-                                          return isSupabaseAuth
-                                              ? 'Please enter your email'
-                                              : 'Please enter your User ID';
-                                        }
-                                        if (isSupabaseAuth) {
-                                          final emailRegex = RegExp(
-                                            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                                          );
-                                          if (!emailRegex.hasMatch(
-                                            val.trim(),
-                                          )) {
-                                            return 'Please enter a valid email address';
-                                          }
-                                        }
-                                        return null;
-                                      },
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                CustomTextField(
-                                  controller: _passwordController,
-                                  label: 'Password',
-                                  hint: '••••••••',
-                                  prefixIcon: Icons.lock_outline,
-                                  isPassword: true,
-                                  validator: (val) => val == null || val.isEmpty
-                                      ? 'Please enter your password'
-                                      : null,
-                                ),
-                                const SizedBox(height: 24),
-                                CustomButton(
-                                  text: 'Sign In',
-                                  onPressed: _submit,
-                                  isLoading: state.status == AuthStatus.loading,
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withValues(alpha: 0.7),
-                            ),
-                            children: [
-                              const TextSpan(
-                                text:
-                                    "Need Access for Voryn ERP software ? Contact ",
-                              ),
-                              WidgetSpan(
-                                child: GestureDetector(
-                                  onTap: makePhoneCall,
-                                  child: Text(
-                                    "9048551457",
-                                    style: TextStyle(
-                                      color: theme.colorScheme.primary,
-                                      decoration: TextDecoration.underline,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+        if (state.status == AuthStatus.authenticated &&
+            state.user != null &&
+            !_hasNavigatedToDashboard) {
+          _hasNavigatedToDashboard = true;
+          AppLogger.info('NAVIGATING TO MAIN DASHBOARD');
+          final navigator =
+              appNavigatorKey.currentState ??
+              Navigator.of(context, rootNavigator: true);
+          navigator.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainDashboardScreen()),
+            (route) => false,
+          );
+        }
+
+        if (state.status == AuthStatus.error) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? 'Authentication failed'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+
+          if (state is AuthError && state.isContactOwnerRequired) {
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) _showContactOwnerDialog();
+            });
+          }
+        }
+      },
+      builder: (context, state) {
+        return AuthBackgroundScaffold(
+          showBackButton: true,
+          onBackPressed: _handleBack,
+          topWaveOnLeft: false,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20.0,
+            vertical: 8.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AuthBrandHeader(
+                logoSize: 70,
+                brandFontSize: 27,
+                subtitle: 'Professional Enterprise Management Console',
+              ),
+              const SizedBox(height: 22),
+
+              // Sign In Card Container matching mockup
+              Container(
+                padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppTheme.darkSurface.withValues(alpha: 0.92)
+                      : Colors.white.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: isDark
+                        ? AppTheme.darkBorder
+                        : Colors.white.withValues(alpha: 0.95),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black.withValues(alpha: 0.3)
+                          : const Color(0xFF0F172A).withValues(alpha: 0.04),
+                      blurRadius: 28,
+                      offset: const Offset(0, 10),
                     ),
+                  ],
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Sign In',
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: isDark
+                              ? AppTheme.darkTextPrimary
+                              : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Access your workspace using your credentials.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: isDark
+                              ? AppTheme.darkTextSecondary
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Builder(
+                        builder: (context) {
+                          final isSupabaseAuth = AuthConfig.useSupabaseAuth;
+                          return CustomTextField(
+                            controller: _emailController,
+                            label: isSupabaseAuth ? 'Email' : 'User ID',
+                            hint: isSupabaseAuth
+                                ? 'Enter your email'
+                                : 'Enter your User ID',
+                            prefixIcon: isSupabaseAuth
+                                ? Icons.mail_outline_rounded
+                                : Icons.person_outline_rounded,
+                            keyboardType: isSupabaseAuth
+                                ? TextInputType.emailAddress
+                                : TextInputType.text,
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return isSupabaseAuth
+                                    ? 'Please enter your email'
+                                    : 'Please enter your User ID';
+                              }
+                              if (isSupabaseAuth) {
+                                final emailRegex = RegExp(
+                                  r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                                );
+                                if (!emailRegex.hasMatch(val.trim())) {
+                                  return 'Please enter a valid email address';
+                                }
+                              }
+                              return null;
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hint: 'Enter your password',
+                        prefixIcon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                        validator: (val) => val == null || val.isEmpty
+                            ? 'Please enter your password'
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: _navigateToForgotPassword,
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 4),
+                            child: Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF5A9416),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      CustomButton(
+                        text: 'Sign In',
+                        height: 52,
+                        borderRadius: 28,
+                        useGradient: false,
+                        onPressed: _submit,
+                        isLoading: state.status == AuthStatus.loading,
+                      ),
+                      const SizedBox(height: 18),
+                      const AuthDivider(text: 'or continue with'),
+                      const SizedBox(height: 18),
+                      GoogleAuthButton(
+                        variant: GoogleAuthButtonVariant.whiteElevated,
+                        text: 'Continue with Google',
+                        height: 50,
+                        onPressed: _handleGoogleContinue,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              "Don't have an account? ",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark
+                                    ? AppTheme.darkTextSecondary
+                                    : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: _navigateToCreateAccount,
+                            child: const Text(
+                              'Create Account',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF5A9416),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
     );
   }
 }

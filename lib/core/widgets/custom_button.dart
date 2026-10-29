@@ -11,6 +11,7 @@ class CustomButton extends StatefulWidget {
   final double? width;
   final double height;
   final double borderRadius;
+  final bool useGradient;
 
   const CustomButton({
     super.key,
@@ -23,6 +24,7 @@ class CustomButton extends StatefulWidget {
     this.width,
     this.height = 48.0,
     this.borderRadius = 16.0,
+    this.useGradient = false,
   });
 
   @override
@@ -132,15 +134,39 @@ class _CustomButtonState extends State<CustomButton>
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, childWidget) {
+          final showGradient =
+              widget.useGradient && !widget.isSecondary && !widget.isGhost;
           return Transform.scale(
             scale: _scaleAnimation.value,
-            child: SizedBox(
+            child: Container(
               width: widget.width ?? double.infinity,
               height: widget.height,
+              decoration: showGradient
+                  ? BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF7CB832),
+                          Color(0xFF5A9416),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(widget.borderRadius),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF639E1F).withValues(alpha: 0.28),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    )
+                  : null,
               child: ElevatedButton(
                 onPressed: widget.isLoading ? null : widget.onPressed,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: bgColor,
+                  backgroundColor: showGradient ? Colors.transparent : bgColor,
+                  disabledBackgroundColor:
+                      showGradient ? Colors.transparent : null,
                   foregroundColor: fgColor,
                   elevation: 0,
                   shadowColor: Colors.transparent,

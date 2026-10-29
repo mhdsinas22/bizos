@@ -19,7 +19,7 @@ class _BrandColorPickerWidgetState extends State<BrandColorPickerWidget> {
   String? _hexErrorText;
 
   final List<String> _suggestedColors = const [
-    '#9ACB4C', // Voryn Lime
+    '#9ACB4C', // Haptic Lime
     '#2563EB', // Royal Blue
     '#7C3AED', // Violet
     '#059669', // Emerald

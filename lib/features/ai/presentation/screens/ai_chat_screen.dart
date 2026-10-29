@@ -54,7 +54,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _messages.add(
       ChatMessage(
         id: 'welcome',
-        text: 'Hello! I am Voryn AI, your business intelligence assistant. Ask me anything about expenses, staff, tasks, or business performance across your enterprise.',
+        text: 'Hello! I am Haptic AI, your business intelligence assistant. Ask me anything about expenses, staff, tasks, or business performance across your enterprise.',
         sender: MessageSender.ai,
         timestamp: DateTime.now(),
       ),
@@ -118,7 +118,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Voryn AI',
+              'Haptic AI',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -144,7 +144,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 _messages.add(
                   ChatMessage(
                     id: 'welcome',
-                    text: 'Hello! I am Voryn AI, your business intelligence assistant. Ask me anything about expenses, staff, tasks, or business performance across your enterprise.',
+                    text: 'Hello! I am Haptic AI, your business intelligence assistant. Ask me anything about expenses, staff, tasks, or business performance across your enterprise.',
                     sender: MessageSender.ai,
                     timestamp: DateTime.now(),
                   ),
@@ -231,7 +231,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            'Welcome to Voryn AI',
+            'Welcome to Haptic AI',
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,

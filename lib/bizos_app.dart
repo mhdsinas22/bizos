@@ -450,7 +450,7 @@ class BizosApp extends StatelessWidget {
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, themeState) {
             return MaterialApp(
-              title: 'Voryn ERP',
+              title: 'Haptic',
               navigatorKey: appNavigatorKey,
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,

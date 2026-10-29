@@ -1,7 +1,7 @@
 class ShortcutConstants {
-  static const String shortcutName = 'Voryn – Quick Add Expense';
+  static const String shortcutName = 'Haptic – Quick Add Expense';
   static const String officialShortcutUrl =
-      'https://www.icloud.com/shortcuts/d42ffdb54ff047a4a1371df09a751d2e';
+      'https://www.icloud.com/shortcuts/404d75a3a4ce4912bf02fd9750ba3aca';
 
   static const String deepLinkScheme = 'voryn';
   static const String deepLinkHostQuickAdd = 'quick-add';
@@ -51,8 +51,8 @@ class ShortcutConstants {
 
   // Siri Example Phrases
   static const List<String> siriPhrases = [
-    'Hey Siri, add expense in Voryn',
-    'Hey Siri, log expense in Voryn',
-    'Hey Siri, add ₹500 food expense in Voryn',
+    'Hey Siri, add expense in Haptic',
+    'Hey Siri, log expense in Haptic',
+    'Hey Siri, add ₹500 food expense in Haptic',
   ];
 }

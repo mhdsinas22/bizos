@@ -1,3 +1,5 @@
+import 'package:bizos/features/auth/data/models/user_model.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class AuthRemoteDataSource {
@@ -38,11 +40,15 @@ abstract class AuthRemoteDataSource {
     required String userId,
     required String currencyCode,
   });
-
+  Future<UserModel?> signInWithGoogle();
+  Future<UserModel> completeGoogleRegistration({
+    required String name,
+    required String phone,
+  });
+  Future<GoogleRegistrationInfo?> getGoogleRegistrationInfo();
   // Supabase Auth session refresh
   Future<AuthResponse> refreshSession();
 
   // Supabase Auth state change stream
   Stream<AuthState> get onAuthStateChange;
 }
-

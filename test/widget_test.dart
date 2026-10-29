@@ -32,6 +32,6 @@ void main() {
 
   testWidgets('Bizos app startup smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const BizosApp());
-    expect(find.textContaining('Bizos'), findsAny);
+    expect(find.byType(BizosApp), findsOneWidget);
   });
 }

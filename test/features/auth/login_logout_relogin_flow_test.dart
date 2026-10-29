@@ -4,6 +4,7 @@ import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_state.dart';
+import 'package:bizos/features/auth/presentation/screens/auth_onboarding_screen.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
@@ -21,7 +22,7 @@ class MockStreamAuthBloc extends Fake implements AuthBloc {
   AuthState _state;
 
   MockStreamAuthBloc([AuthState? initialState])
-      : _state = initialState ?? AuthInitial();
+    : _state = initialState ?? AuthInitial();
 
   void emitState(AuthState state) {
     _state = state;
@@ -106,10 +107,7 @@ void main() {
         final mockBloc = MockStreamAuthBloc(AuthUnauthenticated());
 
         await tester.pumpWidget(
-          createTestApp(
-            authBloc: mockBloc,
-            child: const AppStartupFlow(),
-          ),
+          createTestApp(authBloc: mockBloc, child: const AppStartupFlow()),
         );
 
         // 1. Splash screen animation completes (1.4s)
@@ -118,8 +116,8 @@ void main() {
         // Route transition (350ms)
         await tester.pump(const Duration(milliseconds: 400));
 
-        // 2. Unauthenticated user sees LoginScreen
-        expect(find.byType(LoginScreen), findsOneWidget);
+        // 2. Unauthenticated user sees AuthOnboardingScreen
+        expect(find.byType(AuthOnboardingScreen), findsOneWidget);
         expect(find.byType(SplashScreen), findsNothing);
 
         // 3. User logs in successfully
@@ -167,10 +165,7 @@ void main() {
         final mockBloc = MockStreamAuthBloc(AuthUnauthenticated());
 
         await tester.pumpWidget(
-          createTestApp(
-            authBloc: mockBloc,
-            child: const LoginScreen(),
-          ),
+          createTestApp(authBloc: mockBloc, child: const LoginScreen()),
         );
 
         expect(find.byType(LoginScreen), findsOneWidget);
@@ -191,10 +186,7 @@ void main() {
         final mockBloc = MockStreamAuthBloc(AuthAuthenticated(testUser));
 
         await tester.pumpWidget(
-          createTestApp(
-            authBloc: mockBloc,
-            child: const MainDashboardScreen(),
-          ),
+          createTestApp(authBloc: mockBloc, child: const MainDashboardScreen()),
         );
 
         expect(find.byType(MainDashboardScreen), findsOneWidget);

@@ -37,7 +37,7 @@ class ShareTransactionStatementUseCase {
   Future<String> generateStatementText({
     required MoneyTransactionEntity transaction,
     required bool isPersonal,
-    String appName = 'VORYN',
+    String appName = 'HAPTIC',
   }) async {
     // Fetch full transaction history sorted from oldest to newest (ascending: true)
     final history = await repository.getTransactionHistory(

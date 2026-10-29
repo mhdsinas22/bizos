@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
 import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
@@ -224,8 +225,12 @@ class AuthRepositoryImpl implements AuthRepository {
       if (AuthConfig.useSupabaseAuth) {
         var session = authRemoteDataSource.currentSession;
 
-        AppLogger.info('CHECK AUTH STATUS - SESSION EXISTS: ${session != null}');
-        AppLogger.info('CHECK AUTH STATUS - SESSION EXPIRED: ${session?.isExpired}');
+        AppLogger.info(
+          'CHECK AUTH STATUS - SESSION EXISTS: ${session != null}',
+        );
+        AppLogger.info(
+          'CHECK AUTH STATUS - SESSION EXPIRED: ${session?.isExpired}',
+        );
 
         // 1. If there is no Supabase session
         if (session == null) {
@@ -245,14 +250,18 @@ class AuthRepositoryImpl implements AuthRepository {
           );
           try {
             final authResponse = await authRemoteDataSource.refreshSession();
-            session = authResponse.session ?? authRemoteDataSource.currentSession;
+            session =
+                authResponse.session ?? authRemoteDataSource.currentSession;
             AppLogger.info(
               'Session refreshed successfully. New session isExpired: ${session?.isExpired}',
             );
           } on AuthException catch (e) {
-            AppLogger.error('Session refresh failed with Supabase AuthException: ${e.message}');
+            AppLogger.error(
+              'Session refresh failed with Supabase AuthException: ${e.message}',
+            );
             final msg = e.message.toLowerCase();
-            final isPermanent = msg.contains('invalid') ||
+            final isPermanent =
+                msg.contains('invalid') ||
                 msg.contains('revoked') ||
                 msg.contains('expired') ||
                 msg.contains('grant') ||
@@ -270,9 +279,12 @@ class AuthRepositoryImpl implements AuthRepository {
               'Your session has expired. Please log in again.',
             );
           } on AppAuthException catch (e) {
-            AppLogger.error('Session refresh failed with AuthException: ${e.message}');
+            AppLogger.error(
+              'Session refresh failed with AuthException: ${e.message}',
+            );
             final msg = e.message.toLowerCase();
-            final isPermanent = msg.contains('invalid') ||
+            final isPermanent =
+                msg.contains('invalid') ||
                 msg.contains('revoked') ||
                 msg.contains('expired') ||
                 msg.contains('grant') ||
@@ -292,7 +304,8 @@ class AuthRepositoryImpl implements AuthRepository {
             );
           } catch (e) {
             final errStr = e.toString().toLowerCase();
-            final isPermanent = errStr.contains('invalid_grant') ||
+            final isPermanent =
+                errStr.contains('invalid_grant') ||
                 errStr.contains('refresh token') ||
                 errStr.contains('revoked') ||
                 errStr.contains('session expired');
@@ -451,5 +464,72 @@ class AuthRepositoryImpl implements AuthRepository {
       jsonEncode(updated.toJson(includePassword: false)),
     );
     return updated;
+  }
+
+  @override
+  Future<UserModel?> signInWithGoogle() async {
+    try {
+      final userModel = await authRemoteDataSource.signInWithGoogle();
+      if (userModel != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          _userKey,
+          jsonEncode(userModel.toJson(includePassword: false)),
+        );
+      }
+      return userModel;
+    } on AppAuthException {
+      rethrow;
+    } on SocketException {
+      throw NetworkException();
+    } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('socketexception') ||
+          errorStr.contains('clientexception') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('connection') ||
+          errorStr.contains('network')) {
+        throw NetworkException();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<UserModel> completeGoogleRegistration({
+    required String name,
+    required String phone,
+  }) async {
+    try {
+      final userModel = await authRemoteDataSource.completeGoogleRegistration(
+        name: name,
+        phone: phone,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _userKey,
+        jsonEncode(userModel.toJson(includePassword: false)),
+      );
+      return userModel;
+    } on AppAuthException {
+      rethrow;
+    } on SocketException {
+      throw NetworkException();
+    } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('socketexception') ||
+          errorStr.contains('clientexception') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('connection') ||
+          errorStr.contains('network')) {
+        throw NetworkException();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<GoogleRegistrationInfo?> getGoogleRegistrationInfo() {
+    return authRemoteDataSource.getGoogleRegistrationInfo();
   }
 }

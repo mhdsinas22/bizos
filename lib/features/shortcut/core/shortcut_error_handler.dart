@@ -18,7 +18,7 @@ class InvalidCategoryFailure extends ShortcutFailure {
 }
 
 class AuthenticationRequiredFailure extends ShortcutFailure {
-  const AuthenticationRequiredFailure([super.message = 'You must be signed in to Voryn to add an expense.']);
+  const AuthenticationRequiredFailure([super.message = 'You must be signed in to Haptic to add an expense.']);
 }
 
 class DuplicateSubmissionFailure extends ShortcutFailure {

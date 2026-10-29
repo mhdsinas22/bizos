@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bizos/core/exceptions/auth_exceptions.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
@@ -27,6 +28,11 @@ class MockAuthRepository implements AuthRepository {
   UserModel? mockCheckAuthUser;
   bool logoutCalled = false;
   bool changePasswordResult = true;
+  UserModel? mockGoogleUser;
+  GoogleRegistrationInfo? mockGoogleRegistrationInfo;
+  UserModel? mockRegisteredGoogleUser;
+  String? lastRegisteredName;
+  String? lastRegisteredPhone;
 
   @override
   Stream<dynamic> get onAuthStateChange => const Stream.empty();
@@ -78,6 +84,42 @@ class MockAuthRepository implements AuthRepository {
             ))
         .copyWith(currencyCode: currencyCode);
   }
+
+  @override
+  Future<UserModel?> signInWithGoogle() async {
+    if (loginException != null) {
+      throw loginException!;
+    }
+    return mockGoogleUser;
+  }
+
+  @override
+  Future<GoogleRegistrationInfo?> getGoogleRegistrationInfo() async {
+    return mockGoogleRegistrationInfo;
+  }
+
+  @override
+  Future<UserModel> completeGoogleRegistration({
+    required String name,
+    required String phone,
+  }) async {
+    if (loginException != null) {
+      throw loginException!;
+    }
+    lastRegisteredName = name;
+    lastRegisteredPhone = phone;
+    return mockRegisteredGoogleUser ??
+        UserModel(
+          id: 'new-google-user-id',
+          name: name,
+          email: mockGoogleRegistrationInfo?.email ?? 'newuser@gmail.com',
+          phone: phone,
+          role: 'owner',
+          authUserId:
+              mockGoogleRegistrationInfo?.authUserId ?? 'google-auth-uid-1',
+          currencyCode: 'INR',
+        );
+  }
 }
 
 class _TestMockShortcutRepository implements ShortcutRepository {
@@ -93,7 +135,9 @@ class _TestMockShortcutRepository implements ShortcutRepository {
   @override
   Future<bool> openIosSettings() async => true;
   @override
-  Future<Map<String, dynamic>> pairShortCut({required String deviceName}) async => {};
+  Future<Map<String, dynamic>> pairShortCut({
+    required String deviceName,
+  }) async => {};
   @override
   Future<void> provisionShortcutToken({required String deviceName}) async {}
   @override
@@ -107,7 +151,6 @@ class _TestMockShortcutRepository implements ShortcutRepository {
   @override
   Future<void> verifyPairingCode({required String code}) async {}
 }
-
 
 void main() {
   late MockAuthRepository mockAuthRepo;
@@ -125,7 +168,6 @@ void main() {
       shortcutRepository: _TestMockShortcutRepository(),
     );
   });
-
 
   tearDown(() {
     authBloc.close();
@@ -313,6 +355,97 @@ void main() {
 
         expect(states.any((s) => s is AuthUnauthenticated), isTrue);
         expect(mockAuthRepo.logoutCalled, isTrue);
+      },
+    );
+
+    test(
+      'GoogleSignInRequested logs in existing Google user immediately and saves FCM token',
+      () async {
+        mockAuthRepo.mockGoogleUser = UserModel(
+          id: 'existing-google-user-123',
+          name: 'Existing Google Owner',
+          email: 'existing@gmail.com',
+          phone: '9876543210',
+          role: 'owner',
+          authUserId: 'google-auth-uuid-123',
+          currencyCode: 'INR',
+        );
+
+        final states = <AuthState>[];
+        authBloc.stream.listen(states.add);
+
+        authBloc.add(GoogleSignInRequested());
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        expect(states.length, equals(2));
+        expect(states[0], isA<AuthLoading>());
+        expect(states[1], isA<AuthAuthenticated>());
+        final authState = states[1] as AuthAuthenticated;
+        expect(authState.user.id, equals('existing-google-user-123'));
+        expect(
+          mockNotificationRepo.lastSavedUserId,
+          equals('existing-google-user-123'),
+        );
+      },
+    );
+
+    test(
+      'GoogleSignInRequested emits GoogleRegistrationRequired for new Google user',
+      () async {
+        mockAuthRepo.mockGoogleUser = null;
+        mockAuthRepo.mockGoogleRegistrationInfo = const GoogleRegistrationInfo(
+          authUserId: 'new-google-auth-uuid-999',
+          email: 'newowner@gmail.com',
+          suggestedName: 'New Google User',
+        );
+
+        final states = <AuthState>[];
+        authBloc.stream.listen(states.add);
+
+        authBloc.add(GoogleSignInRequested());
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        expect(states.length, equals(2));
+        expect(states[0], isA<AuthLoading>());
+        expect(states[1], isA<GoogleRegistrationRequired>());
+        final regState = states[1] as GoogleRegistrationRequired;
+        expect(regState.authUserId, equals('new-google-auth-uuid-999'));
+        expect(regState.email, equals('newowner@gmail.com'));
+        expect(regState.suggestedName, equals('New Google User'));
+      },
+    );
+
+    test(
+      'CompleteGoogleRegistrationRequested creates profile, emits AuthAuthenticated, and saves FCM token',
+      () async {
+        mockAuthRepo.mockGoogleRegistrationInfo = const GoogleRegistrationInfo(
+          authUserId: 'new-google-auth-uuid-999',
+          email: 'newowner@gmail.com',
+          suggestedName: 'New Google User',
+        );
+
+        final states = <AuthState>[];
+        authBloc.stream.listen(states.add);
+
+        authBloc.add(
+          CompleteGoogleRegistrationRequested(
+            name: 'Confirmed Name',
+            phone: '+91 9876543210',
+          ),
+        );
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        expect(states.length, equals(2));
+        expect(states[0], isA<AuthLoading>());
+        expect(states[1], isA<AuthAuthenticated>());
+        final authState = states[1] as AuthAuthenticated;
+        expect(authState.user.name, equals('Confirmed Name'));
+        expect(authState.user.phone, equals('+91 9876543210'));
+        expect(authState.user.role, equals('owner'));
+        expect(
+          mockNotificationRepo.lastSavedUserId,
+          equals('new-google-user-id'),
+        );
       },
     );
   });

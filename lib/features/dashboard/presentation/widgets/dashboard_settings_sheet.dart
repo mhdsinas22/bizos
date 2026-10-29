@@ -217,7 +217,7 @@ class DashboardSettingsSheet extends StatelessWidget {
                         ),
                       ),
                       title: const Text(
-                        'Voryn AI Assistant',
+                        'Haptic AI Assistant',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -295,7 +295,7 @@ class DashboardSettingsSheet extends StatelessWidget {
                         ),
                       ),
                       title: const Text(
-                        'About Voryn ERP',
+                        'About Haptic',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,

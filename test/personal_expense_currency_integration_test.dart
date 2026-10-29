@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bizos/core/utils/currency_formatter.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
@@ -48,6 +49,18 @@ class _MockAuthRepo implements AuthRepository {
     user = user.copyWith(currencyCode: currencyCode);
     return user;
   }
+
+  @override
+  Future<UserModel?> signInWithGoogle() async => user;
+
+  @override
+  Future<UserModel> completeGoogleRegistration({
+    required String name,
+    required String phone,
+  }) async => user.copyWith(name: name, phone: phone);
+
+  @override
+  Future<GoogleRegistrationInfo?> getGoogleRegistrationInfo() async => null;
 }
 
 class _MockAuthBloc extends Bloc<AuthEvent, AuthState> implements AuthBloc {

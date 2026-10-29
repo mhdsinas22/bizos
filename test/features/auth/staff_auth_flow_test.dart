@@ -133,45 +133,48 @@ void main() {
   });
 
   group('Staff Authentication Flow via Supabase Auth', () {
-    test('Staff login with valid email and password loads staff permissions', () async {
-      final staffUser = UserModel(
-        id: 'staff-uuid-123',
-        name: 'Alex Staff',
-        email: 'alex@company.com',
-        phone: '+1 555-0101',
-        role: 'Staff',
-        ownerId: 'owner-uuid-456',
-        authUserId: 'supabase-auth-uuid-789',
-        customPermissions: const ['view_tasks', 'add_tasks'],
-      );
-      mockAuthRepo.mockUser = staffUser;
-
-      authBloc.add(
-        LoginRequested(
+    test(
+      'Staff login with valid email and password loads staff permissions',
+      () async {
+        final staffUser = UserModel(
+          id: 'staff-uuid-123',
+          name: 'Alex Staff',
           email: 'alex@company.com',
-          password: 'SecretPassword123',
-        ),
-      );
+          phone: '+1 555-0101',
+          role: 'Staff',
+          ownerId: 'owner-uuid-456',
+          authUserId: 'supabase-auth-uuid-789',
+          customPermissions: const ['view_tasks', 'add_tasks'],
+        );
+        mockAuthRepo.mockUser = staffUser;
 
-      await expectLater(
-        authBloc.stream,
-        emitsInOrder([
-          isA<AuthLoading>(),
-          predicate<AuthAuthenticated>((state) {
-            final u = state.user;
-            return u.id == 'staff-uuid-123' &&
-                u.email == 'alex@company.com' &&
-                u.isStaff == true &&
-                u.isOwner == false &&
-                u.ownerId == 'owner-uuid-456' &&
-                u.authUserId == 'supabase-auth-uuid-789' &&
-                u.hasPermission('view_tasks') &&
-                u.hasPermission('add_tasks') &&
-                !u.hasPermission('view_accounts');
-          }),
-        ]),
-      );
-    });
+        authBloc.add(
+          LoginRequested(
+            email: 'alex@company.com',
+            password: 'SecretPassword123',
+          ),
+        );
+
+        await expectLater(
+          authBloc.stream,
+          emitsInOrder([
+            isA<AuthLoading>(),
+            predicate<AuthAuthenticated>((state) {
+              final u = state.user;
+              return u.id == 'staff-uuid-123' &&
+                  u.email == 'alex@company.com' &&
+                  u.isStaff == true &&
+                  u.isOwner == false &&
+                  u.ownerId == 'owner-uuid-456' &&
+                  u.authUserId == 'supabase-auth-uuid-789' &&
+                  u.hasPermission('view_tasks') &&
+                  u.hasPermission('add_tasks') &&
+                  !u.hasPermission('view_accounts');
+            }),
+          ]),
+        );
+      },
+    );
 
     test('Inactive staff account is blocked during authentication', () async {
       mockAuthRepo.errorToThrow = AccountInactiveException();
@@ -200,10 +203,7 @@ void main() {
       mockAuthRepo.errorToThrow = InvalidCredentialsException();
 
       authBloc.add(
-        LoginRequested(
-          email: 'alex@company.com',
-          password: 'WrongPassword',
-        ),
+        LoginRequested(email: 'alex@company.com', password: 'WrongPassword'),
       );
 
       await expectLater(
@@ -219,82 +219,84 @@ void main() {
   });
 
   group('StaffFormSheet Creation Tests', () {
-    testWidgets('Validates name, email, and 6-char password on staff creation', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(1200, 1200);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'Validates name, email, and 6-char password on staff creation',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      final fakeStaffRepo = FakeStaffRepository();
-      final staffBloc = StaffBloc(fakeStaffRepo);
-      final businessBloc = BusinessBloc(FakeBusinessRepository());
+        final fakeStaffRepo = FakeStaffRepository();
+        final staffBloc = StaffBloc(fakeStaffRepo);
+        final businessBloc = BusinessBloc(FakeBusinessRepository());
 
-      final loggedInOwner = UserModel(
-        id: 'owner-uuid-001',
-        name: 'Owner Boss',
-        email: 'owner@bizos.local',
-        role: 'Owner',
-      );
+        final loggedInOwner = UserModel(
+          id: 'owner-uuid-001',
+          name: 'Owner Boss',
+          email: 'owner@bizos.local',
+          role: 'Owner',
+        );
 
-      mockAuthRepo.mockUser = loggedInOwner;
-      authBloc.emit(AuthAuthenticated(loggedInOwner));
+        mockAuthRepo.mockUser = loggedInOwner;
+        authBloc.emit(AuthAuthenticated(loggedInOwner));
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MultiBlocProvider(
-            providers: [
-              BlocProvider<AuthBloc>.value(value: authBloc),
-              BlocProvider<StaffBloc>.value(value: staffBloc),
-              BlocProvider<BusinessBloc>.value(value: businessBloc),
-              RepositoryProvider<StaffRepository>.value(value: fakeStaffRepo),
-            ],
-            child: Scaffold(
-              body: StaffFormSheet(onSave: () {}),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MultiBlocProvider(
+              providers: [
+                BlocProvider<AuthBloc>.value(value: authBloc),
+                BlocProvider<StaffBloc>.value(value: staffBloc),
+                BlocProvider<BusinessBloc>.value(value: businessBloc),
+                RepositoryProvider<StaffRepository>.value(value: fakeStaffRepo),
+              ],
+              child: Scaffold(body: StaffFormSheet(onSave: () {})),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Staff Name'), findsOneWidget);
-      expect(find.text('Staff Email'), findsOneWidget);
-      expect(find.text('Phone Number (Optional)'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
+        expect(find.text('Staff Name'), findsOneWidget);
+        expect(find.text('Staff Email'), findsOneWidget);
+        expect(find.text('Phone Number (Optional)'), findsOneWidget);
+        expect(find.text('Password'), findsOneWidget);
 
-      // Tap create with empty fields
-      final submitButton = find.widgetWithText(CustomButton, 'Create Staff Account');
-      await tester.ensureVisible(submitButton);
-      await tester.tap(submitButton);
-      await tester.pumpAndSettle();
+        // Tap create with empty fields
+        final submitButton = find.widgetWithText(
+          CustomButton,
+          'Create Staff Account',
+        );
+        await tester.ensureVisible(submitButton);
+        await tester.tap(submitButton);
+        await tester.pumpAndSettle();
 
-      expect(find.text('Please enter a name'), findsOneWidget);
-      expect(find.text('Please enter staff email address'), findsOneWidget);
-      expect(find.text('Please enter a password'), findsOneWidget);
+        expect(find.text('Please enter a name'), findsOneWidget);
+        expect(find.text('Please enter staff email address'), findsOneWidget);
+        expect(find.text('Please enter a password'), findsOneWidget);
 
-      // Fill in valid details
-      final textFields = find.byType(TextFormField);
-      await tester.enterText(textFields.at(0), 'Alice Wonderland');
-      await tester.enterText(textFields.at(1), 'alice@company.com');
-      await tester.enterText(textFields.at(2), '+1 555-9988');
-      await tester.enterText(textFields.at(3), 'SecurePassword123');
+        // Fill in valid details
+        final textFields = find.byType(TextFormField);
+        await tester.enterText(textFields.at(0), 'Alice Wonderland');
+        await tester.enterText(textFields.at(1), 'alice@company.com');
+        await tester.enterText(textFields.at(2), '+1 555-9988');
+        await tester.enterText(textFields.at(3), 'SecurePassword123');
 
-      await tester.ensureVisible(submitButton);
-      await tester.tap(submitButton);
-      await tester.pump();
+        await tester.ensureVisible(submitButton);
+        await tester.tap(submitButton);
+        await tester.pump();
 
-      expect(fakeStaffRepo.createdStaff, isNotNull);
-      expect(fakeStaffRepo.createdStaff!.name, equals('Alice Wonderland'));
-      expect(fakeStaffRepo.createdStaff!.email, equals('alice@company.com'));
-      expect(fakeStaffRepo.createdStaff!.phone, equals('+1 555-9988'));
-      expect(fakeStaffRepo.createdStaff!.role, equals('Staff'));
-      expect(fakeStaffRepo.createdStaff!.ownerId, equals('owner-uuid-001'));
+        expect(fakeStaffRepo.createdStaff, isNotNull);
+        expect(fakeStaffRepo.createdStaff!.name, equals('Alice Wonderland'));
+        expect(fakeStaffRepo.createdStaff!.email, equals('alice@company.com'));
+        expect(fakeStaffRepo.createdStaff!.phone, equals('+1 555-9988'));
+        expect(fakeStaffRepo.createdStaff!.role, equals('Staff'));
+        expect(fakeStaffRepo.createdStaff!.ownerId, equals('owner-uuid-001'));
 
-      staffBloc.close();
-      businessBloc.close();
-    });
+        staffBloc.close();
+        businessBloc.close();
+      },
+    );
   });
 }

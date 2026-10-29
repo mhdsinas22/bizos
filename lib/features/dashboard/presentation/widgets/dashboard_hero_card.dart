@@ -2,7 +2,7 @@ import 'package:bizos/core/constants/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 
-/// Hero / Welcome banner for the Voryn ERP Dashboard.
+/// Hero / Welcome banner for the Haptic Dashboard.
 /// Displays authenticated user name, overview subtitle, and 3D store illustration.
 class DashboardHeroCard extends StatelessWidget {
   final String userName;

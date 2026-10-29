@@ -137,7 +137,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Generating Voryn PDF Statement...'),
+          content: Text('Generating Haptic PDF Statement...'),
           duration: Duration(seconds: 1),
         ),
       );
@@ -148,7 +148,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       );
 
       final filename =
-          'Voryn_Statement_${_currentTransaction.personName.replaceAll(' ', '_')}.pdf';
+          'Haptic_Statement_${_currentTransaction.personName.replaceAll(' ', '_')}.pdf';
 
       await TransactionStatementPdfGenerator.sharePdf(pdfBytes, filename);
     } catch (e) {
@@ -174,7 +174,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       );
 
       final filename =
-          'Voryn_Statement_${_currentTransaction.personName.replaceAll(' ', '_')}.pdf';
+          'Haptic_Statement_${_currentTransaction.personName.replaceAll(' ', '_')}.pdf';
 
       await TransactionStatementPdfGenerator.printPdf(pdfBytes, filename);
     } catch (e) {
@@ -218,7 +218,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
             const SizedBox(height: 12),
             ListTile(
               leading: const Icon(Icons.picture_as_pdf, color: Color(0xFF75B809)),
-              title: const Text('Share Voryn PDF Statement'),
+              title: const Text('Share Haptic PDF Statement'),
               subtitle: const Text('Export professional PDF for WhatsApp & Email'),
               onTap: () {
                 Navigator.pop(bottomSheetContext);
@@ -265,7 +265,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       final statementText = await useCase.generateStatementText(
         transaction: _currentTransaction,
         isPersonal: widget.isPersonal,
-        appName: 'VORYN',
+        appName: 'HAPTIC',
       );
 
       await SharePlus.instance.share(ShareParams(text: statementText));

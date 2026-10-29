@@ -3,10 +3,15 @@ import 'package:flutter/services.dart';
 
 class AppTheme {
   // Brand Colors - Vibrant Neo-SaaS Lime Palette
-  static const Color primaryColor = Color(0xFF9ACB4C); // Voryn Brand Lime
-  static const Color primaryLightColor = Color(0xFFB8E36A); // Vibrant Lime tint 400
-  static const Color primaryDarkColor = Color(0xFF6B942B); // Deep Olive/Forest 800
-  static const Color primaryOnColor = Colors.white; // Pure white font & icons on brand green
+  static const Color primaryColor = Color(0xFF9ACB4C); // Haptic Brand Lime
+  static const Color primaryLightColor = Color(
+    0xFFB8E36A,
+  ); // Vibrant Lime tint 400
+  static const Color primaryDarkColor = Color(
+    0xFF6B942B,
+  ); // Deep Olive/Forest 800
+  static const Color primaryOnColor =
+      Colors.white; // Pure white font & icons on brand green
   static const Color accentColor = Color(0xFF10B981); // Emerald 500
 
   // Light Palette

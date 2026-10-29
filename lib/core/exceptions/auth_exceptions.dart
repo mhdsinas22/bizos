@@ -48,3 +48,16 @@ class SessionExpiredException extends AppAuthException {
     super.message = 'Your session has expired. Please log in again.',
   ]);
 }
+
+class GoogleSignInCancelledException extends AppAuthException {
+  GoogleSignInCancelledException([
+    super.message = 'Google sign-in was cancelled.',
+  ]);
+}
+
+class DuplicateRegistrationException extends AppAuthException {
+  DuplicateRegistrationException([
+    super.message =
+        'An account with these details already exists. Please sign in instead.',
+  ]);
+}

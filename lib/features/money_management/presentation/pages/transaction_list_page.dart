@@ -130,7 +130,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
       final statementText = await useCase.generateStatementText(
         transaction: tx,
         isPersonal: widget.businessId == null,
-        appName: 'VORYN',
+        appName: 'HAPTIC',
       );
 
       // ignore: deprecated_member_use

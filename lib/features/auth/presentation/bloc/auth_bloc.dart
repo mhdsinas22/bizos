@@ -23,6 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ShortcutRepository shortcutRepository;
   StreamSubscription<dynamic>? _authSubscription;
   bool _isLoggingOut = false;
+  bool _isInGoogleAuthFlow = false;
 
   AuthBloc({
     required this.authRepo,
@@ -39,6 +40,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RestoreUserSessionEvent>(_onRestoreUserSession);
     on<ChangePasswordEvent>(_onChangePassword);
     on<UpdateUserCurrencyEvent>(_onUpdateUserCurrency);
+    on<GoogleSignInRequested>(_onGoogleSignInRequested);
+    on<CompleteGoogleRegistrationRequested>(
+      _onCompleteGoogleRegistrationRequested,
+    );
 
     _listenToAuthStateChanges();
   }
@@ -51,7 +56,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           AppLogger.info('AuthBloc: onAuthStateChange event received: $event');
           final eventStr = event.toString();
           if (eventStr.contains('signedOut')) {
-            if (!_isLoggingOut && state.status != AuthStatus.unauthenticated) {
+            if (!_isLoggingOut &&
+                !_isInGoogleAuthFlow &&
+                state is! GoogleRegistrationRequired &&
+                state.status != AuthStatus.unauthenticated) {
               add(LogoutRequested());
             }
           } else if (eventStr.contains('tokenRefreshed')) {
@@ -93,7 +101,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final token = await shortcutRepository.getToken();
         if (token == null || token.isEmpty) {
           await shortcutRepository.provisionShortcutToken(
-            deviceName: "Voryn Ios",
+            deviceName: "Haptic iOS",
           );
         }
       } catch (e) {
@@ -119,7 +127,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    if (_isLoggingOut || state.status == AuthStatus.unauthenticated) {
+    if (_isLoggingOut ||
+        (state.status == AuthStatus.unauthenticated &&
+            state is! GoogleRegistrationRequired)) {
       return;
     }
     _isLoggingOut = true;
@@ -231,6 +241,137 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AppLogger.info("✅ FCM Token saved successfully via AuthBloc");
     } catch (e) {
       AppLogger.error("❌ Failed to save FCM Token in AuthBloc: $e");
+    }
+  }
+
+  Future<void> _onGoogleSignInRequested(
+    GoogleSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    _isInGoogleAuthFlow = true;
+    emit(AuthLoading(user: state.user));
+    try {
+      final user = await authRepo.signInWithGoogle();
+      if (user != null) {
+        CurrencyFormatter.setCurrency(user.currencyCode);
+        await _provisionShortcutToken();
+        emit(AuthAuthenticated(user));
+        _saveFcmToken(user.id);
+        return;
+      }
+
+      final details = await authRepo.getGoogleRegistrationInfo();
+      if (details == null ||
+          details.authUserId.trim().isEmpty ||
+          details.email.trim().isEmpty) {
+        _isLoggingOut = true;
+        try {
+          await logoutUseCase.execute();
+        } finally {
+          _isLoggingOut = false;
+        }
+        emit(
+          AuthError(
+            'Unable to retrieve Google account details. Please try signing in again.',
+          ),
+        );
+        return;
+      }
+
+      emit(
+        GoogleRegistrationRequired(
+          authUserId: details.authUserId,
+          email: details.email,
+          suggestedName: details.suggestedName,
+        ),
+      );
+    } on GoogleSignInCancelledException catch (e) {
+      AppLogger.info('Google Sign-In cancelled by user.');
+      emit(AuthError(e.message));
+    } on AppAuthException catch (e) {
+      AppLogger.error('Google Sign-In AuthException: ${e.message}');
+      final requireContact =
+          e is AccountInactiveException || e is UserNotAuthorizedException;
+      emit(AuthError(e.message, isContactOwnerRequired: requireContact));
+    } catch (e, stackTrace) {
+      AppLogger.error('Google Sign-In Failed: $e\n$stackTrace');
+      final cleaned = e
+          .toString()
+          .replaceAll('Exception:', '')
+          .replaceAll('Exception', '')
+          .trim();
+      emit(
+        AuthError(
+          cleaned.isNotEmpty
+              ? cleaned
+              : 'Unable to sign in with Google. Please try again.',
+        ),
+      );
+    } finally {
+      _isInGoogleAuthFlow = false;
+    }
+  }
+
+  Future<void> _onCompleteGoogleRegistrationRequested(
+    CompleteGoogleRegistrationRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final trimmedName = event.name.trim();
+    final trimmedPhone = event.phone.trim();
+
+    if (trimmedName.isEmpty) {
+      emit(AuthError('Please enter your full name.'));
+      return;
+    }
+    if (trimmedPhone.isEmpty) {
+      emit(AuthError('Please enter your phone number.'));
+      return;
+    }
+
+    _isInGoogleAuthFlow = true;
+    emit(AuthLoading());
+    try {
+      final user = await authRepo.completeGoogleRegistration(
+        name: trimmedName,
+        phone: trimmedPhone,
+      );
+      CurrencyFormatter.setCurrency(user.currencyCode);
+      await _provisionShortcutToken();
+      emit(AuthAuthenticated(user));
+      _saveFcmToken(user.id);
+    } on AppAuthException catch (e) {
+      AppLogger.error('Google Registration AuthException: ${e.message}');
+      emit(AuthError(e.message));
+    } catch (e, stackTrace) {
+      AppLogger.error('Google Registration Failed: $e\n$stackTrace');
+      final cleaned = e
+          .toString()
+          .replaceAll('Exception:', '')
+          .replaceAll('Exception', '')
+          .trim();
+      emit(
+        AuthError(
+          cleaned.isNotEmpty
+              ? cleaned
+              : 'Failed to complete registration. Please try again.',
+        ),
+      );
+    } finally {
+      _isInGoogleAuthFlow = false;
+    }
+  }
+
+  Future<void> _provisionShortcutToken() async {
+    try {
+      final token = await shortcutRepository.getToken();
+
+      if (token == null || token.isEmpty) {
+        await shortcutRepository.provisionShortcutToken(
+          deviceName: 'Haptic iOS',
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Failed to provision shortcut token: $e');
     }
   }
 }

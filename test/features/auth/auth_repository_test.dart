@@ -5,7 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:bizos/core/config/auth_config.dart';
 import 'package:bizos/core/exceptions/auth_exceptions.dart';
 import 'package:bizos/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
 import 'package:bizos/features/shortcut/domain/entities/shortcut_setup_entity.dart';
 import 'package:bizos/features/shortcut/domain/repositories/shortcut_repository.dart';
 
@@ -136,6 +138,38 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
     required String userId,
     required String currencyCode,
   }) async {}
+
+  UserModel? mockGoogleUserModel;
+  GoogleRegistrationInfo? mockGoogleRegInfo;
+
+  @override
+  Future<UserModel?> signInWithGoogle() async {
+    if (signInThrowsNetwork) throw NetworkException();
+    return mockGoogleUserModel;
+  }
+
+  @override
+  Future<UserModel> completeGoogleRegistration({
+    required String name,
+    required String phone,
+  }) async {
+    if (signInThrowsNetwork) throw NetworkException();
+    return mockGoogleUserModel ??
+        UserModel(
+          id: 'google-profile-id-1',
+          name: name,
+          email: 'google@voryn.com',
+          phone: phone,
+          role: 'owner',
+          authUserId: 'mock-auth-uid-1',
+          currencyCode: 'INR',
+        );
+  }
+
+  @override
+  Future<GoogleRegistrationInfo?> getGoogleRegistrationInfo() async {
+    return mockGoogleRegInfo;
+  }
 }
 
 class _TestMockShortcutRepository implements ShortcutRepository {
@@ -151,7 +185,9 @@ class _TestMockShortcutRepository implements ShortcutRepository {
   @override
   Future<bool> openIosSettings() async => true;
   @override
-  Future<Map<String, dynamic>> pairShortCut({required String deviceName}) async => {};
+  Future<Map<String, dynamic>> pairShortCut({
+    required String deviceName,
+  }) async => {};
   @override
   Future<void> provisionShortcutToken({required String deviceName}) async {}
   @override
@@ -165,7 +201,6 @@ class _TestMockShortcutRepository implements ShortcutRepository {
   @override
   Future<void> verifyPairingCode({required String code}) async {}
 }
-
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -181,7 +216,6 @@ void main() {
       shortcutRepository: _TestMockShortcutRepository(),
     );
   });
-
 
   tearDown(() {
     AuthConfig.setUseSupabaseAuthForTesting(null);

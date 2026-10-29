@@ -28,7 +28,7 @@ class AuthAuthenticated extends AuthState {
 
 class AuthUnauthenticated extends AuthState {
   AuthUnauthenticated({String? message})
-      : super(status: AuthStatus.unauthenticated, errorMessage: message);
+    : super(status: AuthStatus.unauthenticated, errorMessage: message);
 }
 
 class AuthError extends AuthState {
@@ -37,6 +37,17 @@ class AuthError extends AuthState {
 
   AuthError(this.message, {this.isContactOwnerRequired = false, super.user})
     : super(status: AuthStatus.error, errorMessage: message);
+}
+
+class GoogleRegistrationRequired extends AuthState {
+  final String authUserId;
+  final String email;
+  final String suggestedName;
+  GoogleRegistrationRequired({
+    required this.authUserId,
+    required this.email,
+    required this.suggestedName,
+  }) : super(status: AuthStatus.unauthenticated);
 }
 
 // Backward compatibility type aliases

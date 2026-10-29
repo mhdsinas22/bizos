@@ -62,7 +62,7 @@ class _QuickAddSetupPageState extends State<QuickAddSetupPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Please sign in to your Voryn account to pair your device.',
+              'Please sign in to your Haptic account to pair your device.',
             ),
             backgroundColor: AppTheme.error,
             behavior: SnackBarBehavior.floating,
@@ -630,7 +630,7 @@ class _QuickAddSetupPageState extends State<QuickAddSetupPage> {
             stepNumber: '4',
             icon: Icons.check_circle_rounded,
             title: 'Expense Saved',
-            subtitle: 'Instantly recorded and synced to your Voryn account',
+            subtitle: 'Instantly recorded and synced to your Haptic account',
             isFirst: false,
             isLast: true,
           ),
@@ -683,7 +683,7 @@ class _QuickAddSetupPageState extends State<QuickAddSetupPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Set up once on your device. Every expense logged through the Shortcut is securely authenticated and automatically saved to your Voryn personal expense ledger in real time.',
+                  'Set up once on your device. Every expense logged through the Shortcut is securely authenticated and automatically saved to your Haptic personal expense ledger in real time.',
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.45,
@@ -847,7 +847,7 @@ class PairingSuccessDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your device "$deviceName" was successfully paired with your Voryn account.',
+              'Your device "$deviceName" was successfully paired with your Haptic account.',
               style: TextStyle(
                 fontSize: 14,
                 height: 1.45,
@@ -949,7 +949,7 @@ class PairingSuccessDialog extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Security Warning: This token is secret and grants direct access to record expenses on your Voryn account. Do not share it with anyone.',
+                      'Security Warning: This token is secret and grants direct access to record expenses on your Haptic account. Do not share it with anyone.',
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.4,

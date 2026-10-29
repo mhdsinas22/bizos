@@ -1,11 +1,11 @@
 {
-    "name": "bizos",
-    "short_name": "bizos",
+    "name": "Haptic ERP",
+    "short_name": "Haptic",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B0F17",
+    "theme_color": "#9ACB4C",
+    "description": "Grow your business with Haptic ERP.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

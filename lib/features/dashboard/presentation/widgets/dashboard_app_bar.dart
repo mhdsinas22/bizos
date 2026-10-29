@@ -4,7 +4,7 @@ import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/dashboard/presentation/widgets/dashboard_profile_sheet.dart';
 import 'package:bizos/features/dashboard/presentation/widgets/dashboard_settings_sheet.dart';
 
-/// Clean, responsive Top App Bar for the Voryn ERP Dashboard.
+/// Clean, responsive Top App Bar for the Haptic Dashboard.
 /// Displays app branding, role context, Settings button, and Profile button.
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserModel user;
@@ -46,7 +46,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Voryn ERP',
+                'Haptic',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 17,

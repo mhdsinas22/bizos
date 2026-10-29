@@ -1,5 +1,8 @@
 import 'package:bizos/core/config/auth_config.dart';
 import 'package:bizos/core/utils/app_logger.dart';
+import 'package:bizos/features/auth/data/models/user_model.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:bizos/core/exceptions/auth_exceptions.dart';
 import 'auth_remote_datasource.dart';
@@ -83,9 +86,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           userMap = Map<String, dynamic>.from(response);
         }
       } catch (e) {
-        AppLogger.warning(
-          "Direct profile lookup by auth_user_id failed: $e",
-        );
+        AppLogger.warning("Direct profile lookup by auth_user_id failed: $e");
         final errStr = e.toString().toLowerCase();
         if (errStr.contains('socketexception') ||
             errStr.contains('clientexception') ||
@@ -169,6 +170,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await supabase.auth.signOut();
     } catch (e) {
       AppLogger.error("Error during Supabase Auth signOut: $e");
+    }
+    try {
+      if (_googleInitialized) {
+        await GoogleSignIn.instance.signOut();
+      }
+    } catch (e) {
+      AppLogger.warning("Error during GoogleSignIn signOut: $e");
     }
   }
 
@@ -351,7 +359,277 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  static const String _googleIosClientId =
+      '705481714469-ao2fjp32ujennto742s80f9lnncq6bsa.apps.googleusercontent.com';
+
+  static const String _googleWebClientId =
+      '705481714469-0vao0o2fj97jcj407fqhi01n9oam5pb9.apps.googleusercontent.com';
+  static bool _googleInitialized = false;
+  Future<void> _initalizeGoogleSignIn() async {
+    if (_googleInitialized) return;
+    await GoogleSignIn.instance.initialize(
+      clientId: _googleIosClientId,
+      serverClientId: _googleWebClientId,
+    );
+    _googleInitialized = true;
+  }
+
+  @override
+  Future<UserModel?> signInWithGoogle() async {
+    try {
+      await _initalizeGoogleSignIn();
+      final GoogleSignInAccount googleUser = await GoogleSignIn.instance
+          .authenticate();
+
+      final String? idToken = googleUser.authentication.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw AppAuthException(
+          'Google authentication failed: missing ID token. Please try again.',
+        );
+      }
+
+      final authResponse = await supabase.auth
+          .signInWithIdToken(provider: OAuthProvider.google, idToken: idToken)
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw ServerException(
+                'Server is taking too long to respond. Please try again.',
+              );
+            },
+          );
+
+      final authUser = authResponse.user ?? supabase.auth.currentUser;
+      final session = authResponse.session ?? supabase.auth.currentSession;
+      if (authUser == null || session == null || authUser.id.isEmpty) {
+        throw AppAuthException(
+          'Supabase authentication session could not be established. Please try again.',
+        );
+      }
+
+      final email = authUser.email?.trim() ?? '';
+      if (email.isEmpty) {
+        await signOut();
+        throw AppAuthException(
+          'Google account email is unavailable. Please use an account with a valid email.',
+        );
+      }
+
+      final profile = await getUserProfileByAuthId(authUser.id);
+      if (profile == null) {
+        return null;
+      }
+
+      final status = profile['status']?.toString().toLowerCase();
+      final isActive = profile['is_active'];
+      if (status == 'inactive' || isActive == false) {
+        await signOut();
+        throw AccountInactiveException();
+      }
+
+      return UserModel.fromJson(profile);
+    } on GoogleSignInException catch (e) {
+      AppLogger.warning('GoogleSignInException (${e.code}): ${e.description}');
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw GoogleSignInCancelledException();
+      }
+      final desc = (e.description ?? '').toLowerCase();
+      if (desc.contains('network') || desc.contains('connection')) {
+        throw NetworkException();
+      }
+      throw AppAuthException(
+        'Google sign-in could not be completed. Please try again.',
+      );
+    } on AuthException catch (e) {
+      AppLogger.error('Supabase Google AuthException: ${e.message}');
+      throw AppAuthException(
+        e.message.isNotEmpty
+            ? e.message
+            : 'Authentication with Google failed. Please try again.',
+      );
+    } on AppAuthException {
+      rethrow;
+    } catch (e) {
+      AppLogger.error('Error during signInWithGoogle: $e');
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('canceled') || errorStr.contains('cancelled')) {
+        throw GoogleSignInCancelledException();
+      }
+      if (errorStr.contains('socketexception') ||
+          errorStr.contains('clientexception') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('network') ||
+          errorStr.contains('connection')) {
+        throw NetworkException();
+      } else if (errorStr.contains('timeout')) {
+        throw ServerException(
+          'Server is taking too long to respond. Please try again.',
+        );
+      }
+      throw ServerException(
+        'Unable to sign in with Google right now. Please try again.',
+      );
+    }
+  }
+
+  @override
+  Future<UserModel> completeGoogleRegistration({
+    required String name,
+    required String phone,
+  }) async {
+    final trimmedName = name.trim();
+    final trimmedPhone = phone.trim();
+
+    if (trimmedName.isEmpty) {
+      throw AppAuthException('Please enter your full name.');
+    }
+    if (trimmedPhone.isEmpty) {
+      throw AppAuthException('Please enter your phone number.');
+    }
+
+    var session = supabase.auth.currentSession;
+    var authUser = supabase.auth.currentUser;
+
+    if (session == null || authUser == null || authUser.id.isEmpty) {
+      throw SessionExpiredException(
+        'Your Google session has expired. Please sign in again.',
+      );
+    }
+
+    if (session.user.id != authUser.id) {
+      await signOut();
+      throw SessionExpiredException(
+        'Invalid authentication session. Please sign in again.',
+      );
+    }
+
+    if (session.isExpired) {
+      try {
+        final refreshed = await refreshSession();
+        session = refreshed.session ?? supabase.auth.currentSession;
+        authUser = refreshed.user ?? supabase.auth.currentUser;
+      } catch (_) {
+        await signOut();
+        throw SessionExpiredException(
+          'Your Google session has expired. Please sign in again.',
+        );
+      }
+      if (session == null || authUser == null) {
+        throw SessionExpiredException(
+          'Your Google session has expired. Please sign in again.',
+        );
+      }
+    }
+
+    final verifiedAuthUserId = session.user.id;
+    final email = authUser.email?.trim() ?? '';
+    if (email.isEmpty) {
+      throw AppAuthException(
+        'Google account email is unavailable. Please sign in again.',
+      );
+    }
+
+    try {
+      final existingProfile = await getUserProfileByAuthId(verifiedAuthUserId);
+      if (existingProfile != null) {
+        final status = existingProfile['status']?.toString().toLowerCase();
+        final isActive = existingProfile['is_active'];
+        if (status == 'inactive' || isActive == false) {
+          await signOut();
+          throw AccountInactiveException();
+        }
+        return UserModel.fromJson(existingProfile);
+      }
+
+      final response = await supabase
+          .from('users')
+          .insert({
+            'name': trimmedName,
+            'email': email,
+            'phone': trimmedPhone,
+            'auth_user_id': verifiedAuthUserId,
+            'role': 'owner',
+            'currency_code': 'INR',
+          })
+          .select()
+          .single()
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw ServerException(
+                'Server is taking too long to respond. Please try again.',
+              );
+            },
+          );
+
+      final profile = Map<String, dynamic>.from(response);
+      await _attachStaffPermissions(profile);
+      return UserModel.fromJson(profile);
+    } on PostgrestException catch (e) {
+      AppLogger.error(
+        'PostgrestException in completeGoogleRegistration (${e.code}): ${e.message}',
+      );
+      if (e.code == '23505') {
+        final existing = await getUserProfileByAuthId(verifiedAuthUserId);
+        if (existing != null) {
+          return UserModel.fromJson(existing);
+        }
+        throw DuplicateRegistrationException(
+          'An account with these details already exists. Please sign in instead.',
+        );
+      }
+      if (e.code == '42501') {
+        throw AppAuthException(
+          'Permission denied while creating your profile. Please try signing in again.',
+        );
+      }
+      throw ServerException(
+        'Could not create your profile right now. Please try again.',
+      );
+    } on AppAuthException {
+      rethrow;
+    } catch (e) {
+      AppLogger.error('Error in completeGoogleRegistration: $e');
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('socketexception') ||
+          errorStr.contains('clientexception') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('network') ||
+          errorStr.contains('connection')) {
+        throw NetworkException();
+      } else if (errorStr.contains('timeout')) {
+        throw ServerException(
+          'Server is taking too long to respond. Please try again.',
+        );
+      }
+      throw ServerException(
+        'Failed to complete registration. Please try again.',
+      );
+    }
+  }
+
+  @override
+  Future<GoogleRegistrationInfo?> getGoogleRegistrationInfo() async {
+    final session = supabase.auth.currentSession;
+    final user = supabase.auth.currentUser;
+
+    if (session == null || user == null || session.user.id != user.id) {
+      return null;
+    }
+
+    final metadata = user.userMetadata ?? {};
+
+    final fullName = (metadata['full_name'] as String?)?.trim() ?? '';
+    final name = (metadata['name'] as String?)?.trim() ?? '';
+    final suggestedName = fullName.isNotEmpty ? fullName : name;
+
+    return GoogleRegistrationInfo(
+      authUserId: user.id,
+      email: (user.email ?? '').trim(),
+      suggestedName: suggestedName,
+    );
+  }
+
   @override
   Stream<AuthState> get onAuthStateChange => supabase.auth.onAuthStateChange;
 }
-

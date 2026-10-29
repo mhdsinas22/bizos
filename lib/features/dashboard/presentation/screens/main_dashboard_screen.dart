@@ -15,7 +15,7 @@ import 'package:bizos/features/staff/presentation/screens/staff_list_view.dart';
 import 'package:bizos/features/task/presentation/screens/owner_task_dashboard_screen.dart';
 import 'package:bizos/features/task/presentation/screens/staff_task_screen.dart';
 
-/// The root dashboard scaffold for Voryn ERP.
+/// The root dashboard scaffold for Haptic.
 /// Manages top-level navigation, platform-aware bottom navigation,
 /// desktop navigation rail, and displays all 6 role-based destinations:
 /// 1. Dashboard

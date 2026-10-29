@@ -30,8 +30,8 @@ class TransactionStatementPdfGenerator {
     );
 
     // Color Palette
-    final primaryColor = PdfColor.fromHex('#75B809'); // Voryn Green
-    final primaryLight = PdfColor.fromHex('#F7FEE7'); // Voryn Green Light Tint
+    final primaryColor = PdfColor.fromHex('#9ACB4C'); // Haptic Brand Lime
+    final primaryLight = PdfColor.fromHex('#F4F9EC'); // Haptic Lime Light Tint
     final successColor = PdfColor.fromHex('#16A34A');
     final successBg = PdfColor.fromHex('#DCFCE7');
     final dangerColor = PdfColor.fromHex('#EF4444');
@@ -50,7 +50,7 @@ class TransactionStatementPdfGenerator {
     // Determine business display values
     final businessName = business?.name.trim().isNotEmpty == true
         ? business!.name
-        : (isPersonal ? 'Personal Account' : 'Voryn Workspace');
+        : (isPersonal ? 'Personal Account' : 'Haptic Workspace');
     final businessType = business?.type.trim().isNotEmpty == true
         ? business!.type
         : (isPersonal ? 'Personal' : 'Business');
@@ -92,7 +92,7 @@ class TransactionStatementPdfGenerator {
                         borderRadius: pw.BorderRadius.circular(4),
                       ),
                       child: pw.Text(
-                        'VORYN',
+                        'HAPTIC',
                         style: pw.TextStyle(
                           color: PdfColors.white,
                           fontWeight: pw.FontWeight.bold,
@@ -130,7 +130,7 @@ class TransactionStatementPdfGenerator {
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
                     pw.Text(
-                      'VORYN',
+                      'HAPTIC',
                       style: pw.TextStyle(
                         fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
@@ -709,7 +709,7 @@ class TransactionStatementPdfGenerator {
                   style: pw.TextStyle(fontSize: 8, color: neutralGrey),
                 ),
                 pw.Text(
-                  'Powered by VORYN • www.voryn.app',
+                  'Powered by HAPTIC • www.haptic.app',
                   style: pw.TextStyle(
                     fontSize: 8,
                     fontWeight: pw.FontWeight.bold,

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 
+typedef HapticNavDestination = VorynNavDestination;
+typedef HapticBottomNavBar = VorynBottomNavBar;
+
 class VorynNavDestination {
   final String label;
   final IconData icon;

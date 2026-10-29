@@ -64,7 +64,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             } else {
-              final navigator = appNavigatorKey.currentState ??
+              final navigator =
+                  appNavigatorKey.currentState ??
                   Navigator.of(context, rootNavigator: true);
               navigator.pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const LoginScreen()),

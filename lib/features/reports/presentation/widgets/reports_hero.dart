@@ -2,7 +2,7 @@ import 'package:bizos/core/constants/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:bizos/core/theme/app_theme.dart';
 
-/// Hero banner for the Reporting Console matching the Voryn ERP design reference.
+/// Hero banner for the Reporting Console matching the Haptic design reference.
 /// Features a soft lavender gradient, clean typography, and a 3D report illustration.
 class ReportsHero extends StatelessWidget {
   final VoidCallback? onTap;

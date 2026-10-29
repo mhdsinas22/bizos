@@ -29,7 +29,7 @@ class PersonalExpensePdfGenerator {
     );
 
     // Color Palette - Executive Finance Palette
-    final primaryColor = PdfColor.fromHex('#75B809'); // Voryn Green
+    final primaryColor = PdfColor.fromHex('#9ACB4C'); // Haptic Brand Lime
     final primaryLight = PdfColor.fromHex('#F7FEE7'); // Green Tint
     final secondaryDark = PdfColor.fromHex('#1E293B'); // Slate 800
     final textDark = PdfColor.fromHex('#0F172A'); // Slate 900

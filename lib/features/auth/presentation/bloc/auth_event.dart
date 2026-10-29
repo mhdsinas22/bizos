@@ -43,3 +43,14 @@ class UpdateUserCurrencyEvent extends AuthEvent {
 
   UpdateUserCurrencyEvent(this.currencyCode);
 }
+
+class GoogleSignInRequested extends AuthEvent {}
+
+class CompleteGoogleRegistrationRequested extends AuthEvent {
+  final String name;
+  final String phone;
+  CompleteGoogleRegistrationRequested({
+    required this.name,
+    required this.phone,
+  });
+}

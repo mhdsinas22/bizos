@@ -396,7 +396,7 @@ class ShortcutInstructionCard extends StatelessWidget {
               isDark: isDark,
             ),
             _buildShortcutSelectionRow(
-              title: 'Voryn – Quick Add Expense',
+              title: 'Haptic – Quick Add Expense',
               isSelected: true,
               isDark: isDark,
             ),

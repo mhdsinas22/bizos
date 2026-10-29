@@ -8,10 +8,13 @@ import 'package:bizos/core/exceptions/auth_exceptions.dart';
 import 'package:bizos/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:bizos/features/auth/data/models/user_model.dart';
 import 'package:bizos/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:bizos/features/auth/domain/entities/google_registration_info.dart';
 import 'package:bizos/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bizos/features/auth/presentation/bloc/auth_event.dart';
-import 'package:bizos/features/auth/presentation/bloc/auth_state.dart' as app_auth;
+import 'package:bizos/features/auth/presentation/bloc/auth_state.dart'
+    as app_auth;
+import 'package:bizos/features/auth/presentation/screens/auth_onboarding_screen.dart';
 import 'package:bizos/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizos/features/business/data/models/business_model.dart';
 import 'package:bizos/features/business/domain/repo/business_repository.dart';
@@ -28,8 +31,9 @@ class FakeShortcutRepo extends Fake implements ShortcutRepository {
   @override
   Future<String?> getToken() async => 'test-token';
   @override
-  Future<ShortcutSetupEntity> provisionShortcutToken({required String deviceName}) async =>
-      const ShortcutSetupEntity();
+  Future<ShortcutSetupEntity> provisionShortcutToken({
+    required String deviceName,
+  }) async => const ShortcutSetupEntity();
   @override
   Future<void> revokeAndDeleteToken() async {}
 }
@@ -86,7 +90,8 @@ class MockRemoteDataSource implements AuthRemoteDataSource {
     return customRefreshResponse ??
         AuthResponse(
           session: mockSession,
-          user: mockAuthUser ??
+          user:
+              mockAuthUser ??
               const User(
                 id: 'auth-uid-1',
                 appMetadata: {},
@@ -98,22 +103,25 @@ class MockRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>?> getUserProfileByAuthId(String authUserId) async {
+  Future<Map<String, dynamic>?> getUserProfileByAuthId(
+    String authUserId,
+  ) async {
     return mockProfile;
   }
 
   @override
-  Future<Map<String, dynamic>?> getUserProfileByEmail(String email) async => mockProfile;
+  Future<Map<String, dynamic>?> getUserProfileByEmail(String email) async =>
+      mockProfile;
 
   @override
-  Future<Map<String, dynamic>?> getUserByUserId(String userId) async => mockProfile;
+  Future<Map<String, dynamic>?> getUserByUserId(String userId) async =>
+      mockProfile;
 
   @override
   Future<AuthResponse> signInWithEmailAndPassword({
     required String email,
     required String password,
-  }) async =>
-      AuthResponse(session: mockSession, user: mockAuthUser);
+  }) async => AuthResponse(session: mockSession, user: mockAuthUser);
 
   @override
   Future<void> signOut() async {
@@ -132,13 +140,29 @@ class MockRemoteDataSource implements AuthRemoteDataSource {
       });
 
   @override
-  Future<bool> changePassword(String userId, String oldPassword, String newPassword) async => true;
+  Future<bool> changePassword(
+    String userId,
+    String oldPassword,
+    String newPassword,
+  ) async => true;
 
   @override
   Future<void> updateUserCurrency({
     required String userId,
     required String currencyCode,
   }) async {}
+
+  @override
+  Future<UserModel?> signInWithGoogle() async => null;
+
+  @override
+  Future<UserModel> completeGoogleRegistration({
+    required String name,
+    required String phone,
+  }) async => UserModel(id: 'app-user-1', name: name, phone: phone);
+
+  @override
+  Future<GoogleRegistrationInfo?> getGoogleRegistrationInfo() async => null;
 }
 
 String createJwtWithExp(int exp) {
@@ -214,81 +238,103 @@ void main() {
   });
 
   group('Session Refresh & Expiration Logic in AuthRepositoryImpl', () {
-    test('Valid unexpired session does not trigger refresh and returns user', () async {
-      final unexpiredSession = createValidSession();
+    test(
+      'Valid unexpired session does not trigger refresh and returns user',
+      () async {
+        final unexpiredSession = createValidSession();
 
-      remoteDataSource.mockSession = unexpiredSession;
-      remoteDataSource.mockAuthUser = unexpiredSession.user;
-      remoteDataSource.mockProfile = testProfile;
+        remoteDataSource.mockSession = unexpiredSession;
+        remoteDataSource.mockAuthUser = unexpiredSession.user;
+        remoteDataSource.mockProfile = testProfile;
 
-      final user = await authRepo.checkAuthStatus();
+        final user = await authRepo.checkAuthStatus();
 
-      expect(user, isNotNull);
-      expect(user!.email, 'owner@voryn.com');
-      expect(remoteDataSource.refreshCalled, isFalse);
-    });
+        expect(user, isNotNull);
+        expect(user!.email, 'owner@voryn.com');
+        expect(remoteDataSource.refreshCalled, isFalse);
+      },
+    );
 
-    test('Expired access token triggers refreshSession() automatically', () async {
-      final expiredSession = createExpiredSession();
-      final newSession = createValidSession();
+    test(
+      'Expired access token triggers refreshSession() automatically',
+      () async {
+        final expiredSession = createExpiredSession();
+        final newSession = createValidSession();
 
-      remoteDataSource.mockSession = expiredSession;
-      remoteDataSource.mockAuthUser = expiredSession.user;
-      remoteDataSource.mockProfile = testProfile;
-      remoteDataSource.customRefreshResponse = AuthResponse(
-        session: newSession,
-        user: newSession.user,
-      );
+        remoteDataSource.mockSession = expiredSession;
+        remoteDataSource.mockAuthUser = expiredSession.user;
+        remoteDataSource.mockProfile = testProfile;
+        remoteDataSource.customRefreshResponse = AuthResponse(
+          session: newSession,
+          user: newSession.user,
+        );
 
-      final user = await authRepo.checkAuthStatus();
+        final user = await authRepo.checkAuthStatus();
 
-      expect(remoteDataSource.refreshCalled, isTrue);
-      expect(user, isNotNull);
-      expect(user!.email, 'owner@voryn.com');
+        expect(remoteDataSource.refreshCalled, isTrue);
+        expect(user, isNotNull);
+        expect(user!.email, 'owner@voryn.com');
 
-      // Verify cached in SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('logged_in_user'), isTrue);
-    });
+        // Verify cached in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.containsKey('logged_in_user'), isTrue);
+      },
+    );
 
-    test('Failed refresh due to invalid grant throws SessionExpiredException and clears cache', () async {
-      final expiredSession = createExpiredSession();
+    test(
+      'Failed refresh due to invalid grant throws SessionExpiredException and clears cache',
+      () async {
+        final expiredSession = createExpiredSession();
 
-      // Seed cached user
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('logged_in_user', jsonEncode(cachedUserModel.toJson()));
+        // Seed cached user
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          'logged_in_user',
+          jsonEncode(cachedUserModel.toJson()),
+        );
 
-      remoteDataSource.mockSession = expiredSession;
-      remoteDataSource.mockAuthUser = expiredSession.user;
-      remoteDataSource.refreshException = const AuthException('Invalid Refresh Token: Refresh Token Not Found');
+        remoteDataSource.mockSession = expiredSession;
+        remoteDataSource.mockAuthUser = expiredSession.user;
+        remoteDataSource.refreshException = const AuthException(
+          'Invalid Refresh Token: Refresh Token Not Found',
+        );
 
-      await expectLater(
-        authRepo.checkAuthStatus(),
-        throwsA(isA<SessionExpiredException>()),
-      );
+        await expectLater(
+          authRepo.checkAuthStatus(),
+          throwsA(isA<SessionExpiredException>()),
+        );
 
-      // Verify cache was cleared
-      expect(prefs.containsKey('logged_in_user'), isFalse);
-    });
+        // Verify cache was cleared
+        expect(prefs.containsKey('logged_in_user'), isFalse);
+      },
+    );
 
-    test('Failed refresh due to offline network error preserves session using cached profile', () async {
-      final expiredSession = createExpiredSession();
+    test(
+      'Failed refresh due to offline network error preserves session using cached profile',
+      () async {
+        final expiredSession = createExpiredSession();
 
-      // Seed cached user
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('logged_in_user', jsonEncode(cachedUserModel.toJson()));
+        // Seed cached user
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          'logged_in_user',
+          jsonEncode(cachedUserModel.toJson()),
+        );
 
-      remoteDataSource.mockSession = expiredSession;
-      remoteDataSource.mockAuthUser = expiredSession.user;
-      remoteDataSource.refreshException = NetworkException('No internet connection');
+        remoteDataSource.mockSession = expiredSession;
+        remoteDataSource.mockAuthUser = expiredSession.user;
+        remoteDataSource.refreshException = NetworkException(
+          'No internet connection',
+        );
 
-      // Should NOT throw SessionExpiredException and NOT log out the user
-      final user = await authRepo.checkAuthStatus();
+        // Should NOT throw SessionExpiredException and NOT log out the user
+        final user = await authRepo.checkAuthStatus();
 
-      expect(user, isNotNull);
-      expect(user!.email, 'owner@voryn.com');
-      expect(prefs.containsKey('logged_in_user'), isTrue);
-    });
+        expect(user, isNotNull);
+        expect(user!.email, 'owner@voryn.com');
+        expect(prefs.containsKey('logged_in_user'), isTrue);
+      },
+    );
   });
 
   group('AuthBloc CheckAuthStatus Session Handling', () {
@@ -306,23 +352,29 @@ void main() {
       authBloc.close();
     });
 
-    test('CheckAuthStatus emits AuthUnauthenticated with message when SessionExpiredException thrown', () async {
-      remoteDataSource.mockSession = createExpiredSession();
-      remoteDataSource.refreshException = const AuthException('invalid_grant');
+    test(
+      'CheckAuthStatus emits AuthUnauthenticated with message when SessionExpiredException thrown',
+      () async {
+        remoteDataSource.mockSession = createExpiredSession();
+        remoteDataSource.refreshException = const AuthException(
+          'invalid_grant',
+        );
 
-      authBloc.add(CheckAuthStatus());
+        authBloc.add(CheckAuthStatus());
 
-      await expectLater(
-        authBloc.stream,
-        emitsInOrder([
-          isA<app_auth.AuthLoading>(),
-          predicate<app_auth.AuthState>((state) {
-            return state.status == app_auth.AuthStatus.unauthenticated &&
-                state.errorMessage == 'Your session has expired. Please log in again.';
-          }),
-        ]),
-      );
-    });
+        await expectLater(
+          authBloc.stream,
+          emitsInOrder([
+            isA<app_auth.AuthLoading>(),
+            predicate<app_auth.AuthState>((state) {
+              return state.status == app_auth.AuthStatus.unauthenticated &&
+                  state.errorMessage ==
+                      'Your session has expired. Please log in again.';
+            }),
+          ]),
+        );
+      },
+    );
   });
 
   group('SplashScreen Navigation based on Session State', () {
@@ -330,14 +382,16 @@ void main() {
       return MultiRepositoryProvider(
         providers: [
           RepositoryProvider<AuthRepository>.value(value: repo),
-          RepositoryProvider<DashboardRepository>(create: (_) => FakeDashboardRepo()),
-          RepositoryProvider<BusinessRepository>(create: (_) => FakeBusinessRepo()),
+          RepositoryProvider<DashboardRepository>(
+            create: (_) => FakeDashboardRepo(),
+          ),
+          RepositoryProvider<BusinessRepository>(
+            create: (_) => FakeBusinessRepo(),
+          ),
         ],
         child: BlocProvider<AuthBloc>.value(
           value: bloc,
-          child: const MaterialApp(
-            home: SplashScreen(),
-          ),
+          child: const MaterialApp(home: SplashScreen()),
         ),
       );
     }
@@ -365,44 +419,58 @@ void main() {
       authBloc.close();
     });
 
-    testWidgets('Expired session routes to LoginScreen with expired session snackbar message', (tester) async {
-      remoteDataSource.mockSession = createExpiredSession();
-      remoteDataSource.refreshException = const AuthException('invalid_grant');
+    testWidgets(
+      'Expired session routes to LoginScreen with expired session snackbar message',
+      (tester) async {
+        remoteDataSource.mockSession = createExpiredSession();
+        remoteDataSource.refreshException = const AuthException(
+          'invalid_grant',
+        );
 
-      final authBloc = AuthBloc(
-        authRepo: authRepo,
-        saveFcmTokenUsecase: SaveFcmToken(FakeNotificationRepo()),
-        shortcutRepository: shortcutRepo,
-      );
+        final authBloc = AuthBloc(
+          authRepo: authRepo,
+          saveFcmTokenUsecase: SaveFcmToken(FakeNotificationRepo()),
+          shortcutRepository: shortcutRepo,
+        );
 
-      await tester.pumpWidget(buildSplashApp(authRepo, authBloc));
-      await tester.pump(const Duration(milliseconds: 1500));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildSplashApp(authRepo, authBloc));
+        await tester.pump(const Duration(milliseconds: 1500));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.text('Your session has expired. Please log in again.'), findsOneWidget);
+        expect(find.byType(LoginScreen), findsOneWidget);
+        expect(
+          find.text('Your session has expired. Please log in again.'),
+          findsOneWidget,
+        );
 
-      authBloc.close();
-    });
+        authBloc.close();
+      },
+    );
 
-    testWidgets('No session routes to LoginScreen without error snackbar', (tester) async {
-      remoteDataSource.mockSession = null;
-      remoteDataSource.mockAuthUser = null;
+    testWidgets(
+      'No session routes to AuthOnboardingScreen without error snackbar',
+      (tester) async {
+        remoteDataSource.mockSession = null;
+        remoteDataSource.mockAuthUser = null;
 
-      final authBloc = AuthBloc(
-        authRepo: authRepo,
-        saveFcmTokenUsecase: SaveFcmToken(FakeNotificationRepo()),
-        shortcutRepository: shortcutRepo,
-      );
+        final authBloc = AuthBloc(
+          authRepo: authRepo,
+          saveFcmTokenUsecase: SaveFcmToken(FakeNotificationRepo()),
+          shortcutRepository: shortcutRepo,
+        );
 
-      await tester.pumpWidget(buildSplashApp(authRepo, authBloc));
-      await tester.pump(const Duration(milliseconds: 1500));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildSplashApp(authRepo, authBloc));
+        await tester.pump(const Duration(milliseconds: 1500));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.text('Your session has expired. Please log in again.'), findsNothing);
+        expect(find.byType(AuthOnboardingScreen), findsOneWidget);
+        expect(
+          find.text('Your session has expired. Please log in again.'),
+          findsNothing,
+        );
 
-      authBloc.close();
-    });
+        authBloc.close();
+      },
+    );
   });
 }
